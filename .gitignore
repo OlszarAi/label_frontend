@@ -10,6 +10,9 @@ frontend/.yarn/*
 !frontend/.yarn/releases
 !frontend/.yarn/versions
 
+# ignore entire client folder
+client/
+
 # testing
 frontend/coverage/
 frontend/test-results/

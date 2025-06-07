@@ -1,36 +1,28 @@
-import * as fabric from 'fabric';
+export interface LabelDimensions {
+  width: number;  // in mm
+  height: number; // in mm
+}
+
+export interface CanvasObject {
+  id: string;
+  type: 'text' | 'rectangle' | 'circle' | 'line';
+  x: number;      // position in mm
+  y: number;      // position in mm
+  width?: number; // in mm
+  height?: number; // in mm
+  text?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+}
 
 export interface EditorState {
+  dimensions: LabelDimensions;
   zoom: number;
-  canvas: fabric.Canvas | null;
-  activeObject: fabric.Object | null;
-  selectedTool: EditorTool;
-}
-
-export enum EditorTool {
-  SELECT = 'select',
-  TEXT = 'text',
-  RECTANGLE = 'rectangle',
-  CIRCLE = 'circle',
-  LINE = 'line',
-}
-
-export interface CanvasSize {
-  width: number;
-  height: number;
-}
-
-export interface EditorConfig {
-  canvasSize: CanvasSize;
-  minZoom: number;
-  maxZoom: number;
-  zoomStep: number;
-  backgroundColor: string;
-}
-
-export interface ToolbarButton {
-  id: EditorTool;
-  label: string;
-  icon: string;
-  isActive?: boolean;
+  panX: number;
+  panY: number;
+  objects: CanvasObject[];
+  selectedObjectId: string | null;
 }
