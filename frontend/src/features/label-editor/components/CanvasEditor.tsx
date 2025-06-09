@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Canvas, FabricObject, Text, Rect, Circle, Line } from 'fabric';
 import { LabelDimensions, CanvasObject } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
@@ -14,8 +14,6 @@ interface CanvasEditorProps {
   selectedObjectId: string | null;
   onObjectUpdate: (id: string, updates: Partial<CanvasObject>) => void;
   onObjectSelect: (id: string | null) => void;
-  onPanChange: (panX: number, panY: number) => void;
-  onZoomChange: (zoom: number) => void;
 }
 
 // Extend FabricObject to include our custom data
@@ -31,15 +29,11 @@ export const CanvasEditor = ({
   objects,
   selectedObjectId,
   onObjectUpdate,
-  onObjectSelect,
-  onPanChange,
-  onZoomChange
+  onObjectSelect
 }: CanvasEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
   // Initialize Fabric.js canvas
   useEffect(() => {
@@ -131,53 +125,6 @@ export const CanvasEditor = ({
     canvas.renderAll();
   }, [dimensions, zoom]);
 
-  // Handle mouse events for panning
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.altKey)) { // Middle mouse or Alt+Left mouse
-      e.preventDefault();
-      setIsPanning(true);
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-    }
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning) return;
-
-    const deltaX = e.clientX - lastPanPoint.x;
-    const deltaY = e.clientY - lastPanPoint.y;
-
-    onPanChange(panX + deltaX, panY + deltaY);
-    setLastPanPoint({ x: e.clientX, y: e.clientY });
-  }, [isPanning, lastPanPoint, panX, panY, onPanChange]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
-  }, []);
-
-  // Handle wheel zoom
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-      const newZoom = Math.max(0.1, Math.min(5, zoom * zoomFactor));
-      
-      // Get mouse position relative to container
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        
-        // Calculate pan adjustment to keep zoom centered on mouse
-        const panAdjustX = (mouseX - rect.width / 2) * (1 - newZoom / zoom);
-        const panAdjustY = (mouseY - rect.height / 2) * (1 - newZoom / zoom);
-        
-        onPanChange(panX + panAdjustX, panY + panAdjustY);
-      }
-      
-      onZoomChange(newZoom);
-    }
-  }, [zoom, panX, panY, onPanChange, onZoomChange]);
-
   // Sync fabric objects with state
   useEffect(() => {
     if (!fabricCanvasRef.current) return;
@@ -206,47 +153,43 @@ export const CanvasEditor = ({
       const existingFabricObj = existingObjectsMap.get(obj.id);
       
       if (existingFabricObj) {
-        // Update existing object without recreating it (unless it's currently being edited)
-        const isTextBeingEdited = existingFabricObj.type === 'text' && (existingFabricObj as any).isEditing;
-        
-        if (!isTextBeingEdited) {
-          // Update properties
-          existingFabricObj.set({
-            left: mmToPx(obj.x),
-            top: mmToPx(obj.y),
-          });
+        // Update existing object without recreating it
+        // Update properties
+        existingFabricObj.set({
+          left: mmToPx(obj.x),
+          top: mmToPx(obj.y),
+        });
 
-          if (obj.type === 'text' && existingFabricObj.type === 'text') {
-            const textObj = existingFabricObj as Text;
-            textObj.set({
-              text: obj.text || 'Tekst',
-              fontSize: obj.fontSize || 12,
-              fontFamily: obj.fontFamily || 'Arial',
-              fill: obj.fill || '#000000',
-            });
-          } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
-            existingFabricObj.set({
-              width: mmToPx(obj.width || 20),
-              height: mmToPx(obj.height || 10),
-              fill: obj.fill || 'transparent',
-              stroke: obj.stroke || '#000000',
-              strokeWidth: obj.strokeWidth || 1,
-            });
-          } else if (obj.type === 'circle' && existingFabricObj.type === 'circle') {
-            existingFabricObj.set({
-              radius: mmToPx((obj.width || 20) / 2),
-              fill: obj.fill || 'transparent',
-              stroke: obj.stroke || '#000000',
-              strokeWidth: obj.strokeWidth || 1,
-            });
-          } else if (obj.type === 'line' && existingFabricObj.type === 'line') {
-            existingFabricObj.set({
-              x2: mmToPx(obj.x + (obj.width || 20)),
-              y2: mmToPx(obj.y),
-              stroke: obj.stroke || '#000000',
-              strokeWidth: obj.strokeWidth || 1,
-            });
-          }
+        if (obj.type === 'text' && existingFabricObj.type === 'text') {
+          const textObj = existingFabricObj as Text;
+          textObj.set({
+            text: obj.text || 'Tekst',
+            fontSize: obj.fontSize || 12,
+            fontFamily: obj.fontFamily || 'Arial',
+            fill: obj.fill || '#000000',
+          });
+        } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
+          existingFabricObj.set({
+            width: mmToPx(obj.width || 20),
+            height: mmToPx(obj.height || 10),
+            fill: obj.fill || 'transparent',
+            stroke: obj.stroke || '#000000',
+            strokeWidth: obj.strokeWidth || 1,
+          });
+        } else if (obj.type === 'circle' && existingFabricObj.type === 'circle') {
+          existingFabricObj.set({
+            radius: mmToPx((obj.width || 20) / 2),
+            fill: obj.fill || 'transparent',
+            stroke: obj.stroke || '#000000',
+            strokeWidth: obj.strokeWidth || 1,
+          });
+        } else if (obj.type === 'line' && existingFabricObj.type === 'line') {
+          existingFabricObj.set({
+            x2: mmToPx(obj.x + (obj.width || 20)),
+            y2: mmToPx(obj.y),
+            stroke: obj.stroke || '#000000',
+            strokeWidth: obj.strokeWidth || 1,
+          });
         }
       } else {
         // Create new object
@@ -333,12 +276,7 @@ export const CanvasEditor = ({
   return (
     <div 
       ref={containerRef}
-      className={`flex-1 flex items-center justify-center p-8 bg-gray-100 overflow-hidden canvas-container zoom-hint ${isPanning ? 'panning' : ''}`}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
+      className="flex-1 flex items-center justify-center p-8 bg-gray-100 overflow-hidden canvas-container"
     >
       <div className="relative">
         <canvas

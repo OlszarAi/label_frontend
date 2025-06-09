@@ -52,15 +52,7 @@ export const HelpPanel = ({ isOpen, onClose }: HelpPanelProps) => {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Przybliż/oddal</span>
-                <kbd className="bg-gray-100 px-2 py-1 rounded">Ctrl+Scroll</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span>Przesuń widok</span>
-                <kbd className="bg-gray-100 px-2 py-1 rounded">Środkowy myszy</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span>Przesuń widok</span>
-                <kbd className="bg-gray-100 px-2 py-1 rounded">Alt+Lewy myszy</kbd>
+                <kbd className="bg-gray-100 px-2 py-1 rounded">Kontrolki zoom</kbd>
               </div>
             </div>
           </div>
@@ -95,7 +87,7 @@ export const HelpPanel = ({ isOpen, onClose }: HelpPanelProps) => {
         
         <div className="mt-6 pt-4 border-t text-xs text-gray-500">
           Tip: Wszystkie obiekty można edytować w panelu właściwości po prawej stronie. 
-          Tekst można edytować w sekcji "Tekst" w panelu właściwości.
+          Tekst można edytować w sekcji &ldquo;Tekst&rdquo; w panelu właściwości.
         </div>
       </div>
     </div>

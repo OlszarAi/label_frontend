@@ -85,7 +85,7 @@ export const LabelEditor = () => {
     }
   };
 
-  const handleCopySelected = () => {
+  const handleCopySelected = useCallback(() => {
     if (state.selectedObjectId) {
       const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId);
       if (selectedObject) {
@@ -93,9 +93,9 @@ export const LabelEditor = () => {
         setClipboardState(true);
       }
     }
-  };
+  }, [state.selectedObjectId, state.objects]);
 
-  const handlePaste = () => {
+  const handlePaste = useCallback(() => {
     if (hasClipboard()) {
       const pastedObject = pasteObject();
       if (pastedObject) {
@@ -103,7 +103,7 @@ export const LabelEditor = () => {
         selectObject(newId);
       }
     }
-  };
+  }, [addObject, selectObject]);
 
   const handleResetView = () => {
     updateZoom(1);
@@ -113,10 +113,6 @@ export const LabelEditor = () => {
   const handleShowHelp = () => {
     setShowHelp(true);
   };
-
-  const handleWheelZoom = useCallback((newZoom: number) => {
-    updateZoom(newZoom);
-  }, [updateZoom]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -184,8 +180,6 @@ export const LabelEditor = () => {
         selectedObjectId={state.selectedObjectId}
         onObjectUpdate={updateObject}
         onObjectSelect={selectObject}
-        onPanChange={updatePan}
-        onZoomChange={handleWheelZoom}
       />
 
       {/* Right Sidebar */}

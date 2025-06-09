@@ -17,7 +17,6 @@ export const LabelEditor = () => {
     updateObject,
     deleteObject,
     selectObject,
-    resetEditor,
   } = useEditorState();
 
   const handleAddText = () => {
@@ -107,7 +106,6 @@ export const LabelEditor = () => {
         selectedObjectId={state.selectedObjectId}
         onObjectUpdate={updateObject}
         onObjectSelect={selectObject}
-        onPanChange={updatePan}
       />
 
       {/* Right Sidebar */}
