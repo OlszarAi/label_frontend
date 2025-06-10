@@ -8,8 +8,17 @@ export interface UUIDPreferences {
   qrPrefix: string; // Prefix used in QR code (e.g., "https://example.com/")
 }
 
+export interface GridPreferences {
+  enabled: boolean;
+  size: number; // Grid size in mm
+  snapToGrid: boolean;
+  color: string;
+  opacity: number; // 0 to 1
+}
+
 export interface EditorPreferences {
   uuid: UUIDPreferences;
+  grid: GridPreferences;
 }
 
 export interface CanvasObject {

@@ -9,6 +9,13 @@ const initialPreferences: EditorPreferences = {
     uuidLength: 8,
     qrPrefix: 'https://example.com/',
   },
+  grid: {
+    enabled: false,
+    size: 5, // 5mm grid by default
+    snapToGrid: false,
+    color: '#e0e0e0',
+    opacity: 0.5,
+  },
 };
 
 const initialState: EditorState = {

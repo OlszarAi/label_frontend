@@ -3,8 +3,9 @@
 import React, { useRef, useEffect } from 'react';
 import { Canvas, FabricObject, Text, IText, Rect, Circle, Line, FabricImage } from 'fabric';
 import QRCode from 'qrcode';
-import { LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
+import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
+import { snapToGrid } from '../utils/grid';
 
 interface CanvasEditorProps {
   dimensions: LabelDimensions;
@@ -25,6 +26,22 @@ interface CustomFabricObject extends FabricObject {
   _isReplacingQR?: boolean;
 }
 
+// Grid line interface
+interface GridLine extends FabricObject {
+  isGridLine: boolean;
+}
+
+// Fabric.js event interfaces
+interface FabricEvent {
+  target?: FabricObject;
+  selected?: FabricObject[];
+}
+
+// QR Image interface
+interface QRImage extends FabricImage {
+  _lastQRData?: string;
+}
+
 // Helper function to create QR code data URL
 const createQRCodeDataURL = async (data: string, size: number, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M', foreground = '#000000', background = '#ffffff'): Promise<string> => {
   try {
@@ -41,6 +58,63 @@ const createQRCodeDataURL = async (data: string, size: number, errorCorrectionLe
     console.error('Error generating QR code:', error);
     return '';
   }
+};
+
+// Helper function to draw grid on canvas
+const drawGrid = (canvas: Canvas, dimensions: LabelDimensions, gridPreferences: GridPreferences, zoom: number) => {
+  if (!gridPreferences.enabled) {
+    // Remove existing grid lines
+    const objects = canvas.getObjects();
+    objects.forEach(obj => {
+      if ((obj as GridLine).isGridLine) {
+        canvas.remove(obj);
+      }
+    });
+    canvas.renderAll();
+    return;
+  }
+
+  // Remove existing grid lines first
+  const objects = canvas.getObjects();
+  objects.forEach(obj => {
+    if ((obj as GridLine).isGridLine) {
+      canvas.remove(obj);
+    }
+  });
+
+  const widthPx = mmToPx(dimensions.width);
+  const heightPx = mmToPx(dimensions.height);
+  const gridSizePx = mmToPx(gridPreferences.size);
+
+  // Create vertical lines
+  for (let x = 0; x <= widthPx; x += gridSizePx) {
+    const line = new Line([x, 0, x, heightPx], {
+      stroke: gridPreferences.color,
+      strokeWidth: 1 / zoom, // Adjust stroke width based on zoom
+      selectable: false,
+      evented: false,
+      opacity: gridPreferences.opacity,
+    });
+    (line as unknown as GridLine).isGridLine = true;
+    canvas.add(line);
+    canvas.sendObjectToBack(line);
+  }
+
+  // Create horizontal lines
+  for (let y = 0; y <= heightPx; y += gridSizePx) {
+    const line = new Line([0, y, widthPx, y], {
+      stroke: gridPreferences.color,
+      strokeWidth: 1 / zoom, // Adjust stroke width based on zoom
+      selectable: false,
+      evented: false,
+      opacity: gridPreferences.opacity,
+    });
+    (line as unknown as GridLine).isGridLine = true;
+    canvas.add(line);
+    canvas.sendObjectToBack(line);
+  }
+
+  canvas.renderAll();
 };
 
 export const CanvasEditor = ({
@@ -101,7 +175,7 @@ export const CanvasEditor = ({
 
     // Set up event listeners
     // Handle text changes for editable text objects
-    canvas.on('text:changed', (e: any) => {
+    canvas.on('text:changed', (e: FabricEvent) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData && (obj.type === 'text' || obj.type === 'i-text')) {
         const textObj = obj as IText;
@@ -111,8 +185,7 @@ export const CanvasEditor = ({
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    canvas.on('object:modified', (e: any) => {
+    canvas.on('object:modified', (e: FabricEvent) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData) {
         // Prevent event loops by checking if we're already updating or replacing QR
@@ -212,8 +285,7 @@ export const CanvasEditor = ({
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    canvas.on('selection:created', (e: any) => {
+    canvas.on('selection:created', (e: FabricEvent) => {
       // Only handle single object selection
       if (e.selected && e.selected.length === 1) {
         const obj = e.selected[0] as CustomFabricObject;
@@ -227,8 +299,7 @@ export const CanvasEditor = ({
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    canvas.on('selection:updated', (e: any) => {
+    canvas.on('selection:updated', (e: FabricEvent) => {
       // Only handle single object selection
       if (e.selected && e.selected.length === 1) {
         const obj = e.selected[0] as CustomFabricObject;
@@ -246,27 +317,43 @@ export const CanvasEditor = ({
       onObjectSelect(null);
     });
 
-    // Additional safety for positioning
+    // Additional safety for positioning and snap to grid
     canvas.on('object:moving', (e) => {
       const obj = e.target as CustomFabricObject;
       if (obj) {
+        let left = obj.left || 0;
+        let top = obj.top || 0;
+
+        // Apply snap to grid if enabled
+        if (preferences.grid.snapToGrid && preferences.grid.enabled) {
+          const leftMm = pxToMm(left);
+          const topMm = pxToMm(top);
+          const snappedLeftMm = snapToGrid(leftMm, preferences.grid.size, true);
+          const snappedTopMm = snapToGrid(topMm, preferences.grid.size, true);
+          left = mmToPx(snappedLeftMm);
+          top = mmToPx(snappedTopMm);
+        }
+
         // Ensure object stays within reasonable bounds
         const minX = -100;
         const minY = -100;
         const maxX = mmToPx(dimensions.width) + 100;
         const maxY = mmToPx(dimensions.height) + 100;
 
-        if (obj.left! < minX) obj.set({ left: minX });
-        if (obj.top! < minY) obj.set({ top: minY });
-        if (obj.left! > maxX) obj.set({ left: maxX });
-        if (obj.top! > maxY) obj.set({ top: maxY });
+        if (left < minX) left = minX;
+        if (top < minY) top = minY;
+        if (left > maxX) left = maxX;
+        if (top > maxY) top = maxY;
+
+        obj.set({ left, top });
       }
     });
 
     return () => {
       canvas.dispose();
     };
-  }, [onObjectUpdate, onObjectSelect, dimensions.width, dimensions.height]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onObjectUpdate, onObjectSelect, dimensions.width, dimensions.height, preferences.grid]);
 
   // Update canvas size and sync objects
   useEffect(() => {
@@ -284,6 +371,9 @@ export const CanvasEditor = ({
     });
 
     canvas.setZoom(zoom);
+
+    // Draw grid after canvas size update
+    drawGrid(canvas, dimensions, preferences.grid, zoom);
 
     // Then sync objects
     const currentObjects = canvas.getObjects() as CustomFabricObject[];
@@ -362,11 +452,10 @@ export const CanvasEditor = ({
           const currentQRData = `${preferences.uuid.qrPrefix}${obj.sharedUUID || ''}`;
           const imageObj = existingFabricObj as FabricImage;
           const currentSize = mmToPx(obj.width || 20);
-          
-          const needsRegeneration = (
-            imageObj.width !== currentSize || 
+           const needsRegeneration = (
+            imageObj.width !== currentSize ||
             imageObj.height !== currentSize ||
-            (imageObj as any)._lastQRData !== currentQRData
+            (imageObj as QRImage)._lastQRData !== currentQRData
           );
           
           if (needsRegeneration && !existingFabricObj._isReplacingQR) {
@@ -392,7 +481,7 @@ export const CanvasEditor = ({
                     lockUniScaling: true,
                   });
                   (newImg as CustomFabricObject).customData = { id: obj.id };
-                  (newImg as any)._lastQRData = currentQRData;
+                  (newImg as QRImage)._lastQRData = currentQRData;
                   
                   // Safely remove all objects with this ID to prevent duplicates
                   const objectsToRemove = canvas.getObjects().filter(o => 
@@ -517,7 +606,7 @@ export const CanvasEditor = ({
                     lockUniScaling: true,
                   });
                   (img as CustomFabricObject).customData = { id: obj.id };
-                  (img as any)._lastQRData = qrData;
+                  (img as QRImage)._lastQRData = qrData;
                   
                   // Remove any existing objects with the same ID to prevent duplicates
                   const existingObjects = canvas.getObjects().filter(o => 
@@ -555,8 +644,11 @@ export const CanvasEditor = ({
       }
     });
 
+    // Draw grid after all objects are synced
+    drawGrid(canvas, dimensions, preferences.grid, zoom);
+
     canvas.renderAll();
-  }, [dimensions, zoom, objects, selectedObjectId]);
+  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix]);
 
   const canvasStyle = {
     transform: `translate(${panX}px, ${panY}px)`,

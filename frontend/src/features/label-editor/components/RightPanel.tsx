@@ -11,7 +11,7 @@ import {
   AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 import { LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
-import { DimensionControls } from './DimensionControls';
+import { CanvasProperties } from './CanvasProperties';
 import { ObjectProperties } from './ObjectProperties';
 import { Preferences } from './Preferences';
 
@@ -110,9 +110,11 @@ export const RightPanel = ({
               className="overflow-hidden"
             >
               <div className="p-4 bg-gray-850">
-                <DimensionControls
+                <CanvasProperties
                   dimensions={dimensions}
                   onDimensionsChange={onDimensionsChange}
+                  preferences={preferences}
+                  onPreferencesUpdate={onPreferencesUpdate}
                 />
               </div>
             </motion.div>

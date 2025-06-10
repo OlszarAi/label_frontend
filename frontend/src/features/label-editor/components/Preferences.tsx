@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { EditorPreferences } from '../types/editor.types';
-import { validateUUIDLength, validatePrefix } from '../utils/uuid';
+import { validateUUIDLength } from '../utils/uuid';
 
 interface PreferencesProps {
   preferences: EditorPreferences;

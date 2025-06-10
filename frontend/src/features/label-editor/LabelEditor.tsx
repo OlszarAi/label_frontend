@@ -8,6 +8,7 @@ import { LeftPanel } from './components/LeftPanel';
 import { RightPanel } from './components/RightPanel';
 import { TopPanel } from './components/TopPanel';
 import { generateUUID } from './utils/uuid';
+import { snapCoordinatesToGrid } from './utils/grid';
 import './styles/editor.css';
 
 export const LabelEditor = () => {
@@ -28,49 +29,69 @@ export const LabelEditor = () => {
   } = useEditorState();
 
   const handleAddText = useCallback(() => {
+    const coords = snapCoordinatesToGrid(
+      10, 10, 
+      state.preferences.grid.size, 
+      state.preferences.grid.snapToGrid
+    );
     addObject({
       type: 'text',
-      x: 10,
-      y: 10,
+      x: coords.x,
+      y: coords.y,
       text: 'New Text',
       fontSize: 12,
       fontFamily: 'Arial',
       fill: '#000000',
     });
-  }, [addObject]);
+  }, [addObject, state.preferences.grid]);
 
   const handleAddRectangle = useCallback(() => {
+    const coords = snapCoordinatesToGrid(
+      10, 10, 
+      state.preferences.grid.size, 
+      state.preferences.grid.snapToGrid
+    );
     addObject({
       type: 'rectangle',
-      x: 10,
-      y: 10,
+      x: coords.x,
+      y: coords.y,
       width: 20,
       height: 10,
       fill: 'transparent',
       stroke: '#000000',
       strokeWidth: 1,
     });
-  }, [addObject]);
+  }, [addObject, state.preferences.grid]);
 
   const handleAddCircle = useCallback(() => {
+    const coords = snapCoordinatesToGrid(
+      10, 10, 
+      state.preferences.grid.size, 
+      state.preferences.grid.snapToGrid
+    );
     addObject({
       type: 'circle',
-      x: 10,
-      y: 10,
+      x: coords.x,
+      y: coords.y,
       width: 20,
       height: 20,
       fill: 'transparent',
       stroke: '#000000',
       strokeWidth: 1,
     });
-  }, [addObject]);
+  }, [addObject, state.preferences.grid]);
 
   const handleAddQRCode = useCallback(() => {
+    const coords = snapCoordinatesToGrid(
+      10, 10, 
+      state.preferences.grid.size, 
+      state.preferences.grid.snapToGrid
+    );
     const newUUID = generateUUID(state.preferences.uuid.uuidLength);
     addObject({
       type: 'qrcode',
-      x: 10,
-      y: 10,
+      x: coords.x,
+      y: coords.y,
       width: 20,
       height: 20,
       qrErrorCorrectionLevel: 'M',
@@ -78,21 +99,26 @@ export const LabelEditor = () => {
       stroke: '#ffffff',
       sharedUUID: newUUID,
     });
-  }, [addObject, state.preferences.uuid.uuidLength]);
+  }, [addObject, state.preferences.uuid.uuidLength, state.preferences.grid]);
 
   const handleAddUUID = useCallback(() => {
+    const coords = snapCoordinatesToGrid(
+      10, 10, 
+      state.preferences.grid.size, 
+      state.preferences.grid.snapToGrid
+    );
     const newUUID = generateUUID(state.preferences.uuid.uuidLength);
     addObject({
       type: 'uuid',
-      x: 10,
-      y: 10,
+      x: coords.x,
+      y: coords.y,
       text: newUUID,
       fontSize: 12,
       fontFamily: 'Arial',
       fill: '#000000',
       sharedUUID: newUUID,
     });
-  }, [addObject, state.preferences.uuid.uuidLength]);
+  }, [addObject, state.preferences.uuid.uuidLength, state.preferences.grid]);
 
   const handleResetView = useCallback(() => {
     updateZoom(1);
