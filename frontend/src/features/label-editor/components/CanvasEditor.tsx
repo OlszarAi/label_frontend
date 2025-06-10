@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { Canvas, FabricObject, Text, Rect, Circle, Line, FabricImage } from 'fabric';
+import { Canvas, FabricObject, Text, IText, Rect, Circle, Line, FabricImage } from 'fabric';
 import QRCode from 'qrcode';
 import { LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
@@ -74,9 +74,43 @@ export const CanvasEditor = ({
       skipTargetFind: false,
     });
 
+    // Configure canvas to enable proportional scaling from corners
+    canvas.on('object:scaling', (e) => {
+      const obj = e.target;
+      if (!obj) return;
+      
+      // Check if we're scaling from a corner control
+      if (obj.__corner) {
+        const corner = obj.__corner;
+        // Corner controls: tl, tr, bl, br (top-left, top-right, bottom-left, bottom-right)
+        if (['tl', 'tr', 'bl', 'br'].includes(corner)) {
+          const scaleX = obj.scaleX || 1;
+          const scaleY = obj.scaleY || 1;
+          const scale = Math.max(Math.abs(scaleX), Math.abs(scaleY));
+          obj.set({
+            scaleX: scaleX < 0 ? -scale : scale,
+            scaleY: scaleY < 0 ? -scale : scale
+          });
+          obj.setCoords();
+          canvas.renderAll();
+        }
+      }
+    });
+
     fabricCanvasRef.current = canvas;
 
     // Set up event listeners
+    // Handle text changes for editable text objects
+    canvas.on('text:changed', (e: any) => {
+      const obj = e.target as CustomFabricObject;
+      if (obj && obj.customData && (obj.type === 'text' || obj.type === 'i-text')) {
+        const textObj = obj as IText;
+        if (textObj.text) {
+          onObjectUpdate(obj.customData.id, { text: textObj.text });
+        }
+      }
+    });
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     canvas.on('object:modified', (e: any) => {
       const obj = e.target as CustomFabricObject;
@@ -91,8 +125,8 @@ export const CanvasEditor = ({
         };
 
         // Handle text objects differently for scaling
-        if (obj.type === 'text') {
-          const textObj = obj as Text;
+        if (obj.type === 'text' || obj.type === 'i-text') {
+          const textObj = obj as IText;
           // For text objects, scale affects fontSize instead of width/height
           if (textObj.fontSize && (textObj.scaleX || textObj.scaleY)) {
             const originalFontSize = textObj.fontSize;
@@ -118,7 +152,26 @@ export const CanvasEditor = ({
           // Get the object type from our canvas objects state
           const canvasObjData = obj.customData && obj.customData.id ? objects.find(o => o.id === obj.customData!.id) : null;
           
-          if (canvasObjData?.type === 'qrcode') {
+          if (canvasObjData?.type === 'uuid') {
+            // Handle UUID objects similarly to text but without text content updates
+            const textObj = obj as Text;
+            if (textObj.fontSize && (textObj.scaleX || textObj.scaleY)) {
+              const originalFontSize = textObj.fontSize;
+              const scaleX = textObj.scaleX || 1;
+              const scaleY = textObj.scaleY || 1;
+              const newFontSize = originalFontSize * Math.max(scaleX, scaleY);
+              const finalFontSize = Math.max(1, Math.round(newFontSize));
+              
+              updates.fontSize = finalFontSize;
+              textObj.set({ 
+                scaleX: 1, 
+                scaleY: 1,
+                fontSize: finalFontSize
+              });
+              canvas.renderAll();
+            }
+            // Don't update text content for UUID objects - it should remain as sharedUUID
+          } else if (canvasObjData?.type === 'qrcode') {
             // For QR codes, maintain square proportions
             const scale = Math.max(obj.scaleX || 1, obj.scaleY || 1);
             const newSize = obj.width ? obj.width * scale : 0;
@@ -266,8 +319,8 @@ export const CanvasEditor = ({
           top: mmToPx(obj.y),
         });
 
-        if (obj.type === 'text' && existingFabricObj.type === 'text') {
-          const textObj = existingFabricObj as Text;
+        if (obj.type === 'text' && (existingFabricObj.type === 'text' || existingFabricObj.type === 'i-text')) {
+          const textObj = existingFabricObj as IText;
           textObj.set({
             text: obj.text || 'Tekst',
             fontSize: obj.fontSize || 12,
@@ -378,7 +431,7 @@ export const CanvasEditor = ({
 
         switch (obj.type) {
           case 'text':
-            fabricObj = new Text(obj.text || 'Tekst', {
+            fabricObj = new IText(obj.text || 'Tekst', {
               left: mmToPx(obj.x),
               top: mmToPx(obj.y),
               fontSize: obj.fontSize || 12,
@@ -387,6 +440,7 @@ export const CanvasEditor = ({
               selectable: true,
               hasControls: true,
               hasBorders: true,
+              editable: true,
             }) as CustomFabricObject;
             break;
 
