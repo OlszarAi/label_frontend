@@ -171,11 +171,13 @@ export const CanvasEditor = ({
     };
   }, [onObjectUpdate, onObjectSelect, dimensions.width, dimensions.height]);
 
-  // Update canvas size based on dimensions and zoom
+  // Update canvas size and sync objects
   useEffect(() => {
     if (!fabricCanvasRef.current) return;
 
     const canvas = fabricCanvasRef.current;
+    
+    // First update canvas size
     const widthPx = mmToPx(dimensions.width) * zoom;
     const heightPx = mmToPx(dimensions.height) * zoom;
 
@@ -185,14 +187,8 @@ export const CanvasEditor = ({
     });
 
     canvas.setZoom(zoom);
-    canvas.renderAll();
-  }, [dimensions, zoom]);
 
-  // Sync fabric objects with state
-  useEffect(() => {
-    if (!fabricCanvasRef.current) return;
-
-    const canvas = fabricCanvasRef.current;
+    // Then sync objects
     const currentObjects = canvas.getObjects() as CustomFabricObject[];
     
     // Create a map of existing objects by their custom data ID
@@ -332,7 +328,7 @@ export const CanvasEditor = ({
     });
 
     canvas.renderAll();
-  }, [objects, selectedObjectId]);
+  }, [dimensions, zoom, objects, selectedObjectId]);
 
   const canvasStyle = {
     transform: `translate(${panX}px, ${panY}px)`,
