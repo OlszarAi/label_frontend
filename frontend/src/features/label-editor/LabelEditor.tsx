@@ -1,19 +1,16 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import { useEditorState } from './hooks/useEditorState';
 import { CanvasEditor } from './components/CanvasEditor';
-import { DimensionControls } from './components/DimensionControls';
-import { ZoomControls } from './components/ZoomControls';
-import { Toolbar } from './components/Toolbar';
-import { ObjectProperties } from './components/ObjectProperties';
-import { HelpPanel } from './components/HelpPanel';
-import { copyObject, pasteObject, hasClipboard } from './utils/clipboard';
+import { LeftPanel } from './components/LeftPanel';
+import { RightPanel } from './components/RightPanel';
+import { TopPanel } from './components/TopPanel';
+import { Minimap } from './components/Minimap';
 import './styles/editor.css';
 
 export const LabelEditor = () => {
-  const [clipboardState, setClipboardState] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   const {
     state,
     updateDimensions,
@@ -29,19 +26,19 @@ export const LabelEditor = () => {
     moveDown,
   } = useEditorState();
 
-  const handleAddText = () => {
+  const handleAddText = useCallback(() => {
     addObject({
       type: 'text',
       x: 10,
       y: 10,
-      text: 'Nowy tekst',
+      text: 'New Text',
       fontSize: 12,
       fontFamily: 'Arial',
       fill: '#000000',
     });
-  };
+  }, [addObject]);
 
-  const handleAddRectangle = () => {
+  const handleAddRectangle = useCallback(() => {
     addObject({
       type: 'rectangle',
       x: 10,
@@ -52,9 +49,9 @@ export const LabelEditor = () => {
       stroke: '#000000',
       strokeWidth: 1,
     });
-  };
+  }, [addObject]);
 
-  const handleAddCircle = () => {
+  const handleAddCircle = useCallback(() => {
     addObject({
       type: 'circle',
       x: 10,
@@ -65,54 +62,12 @@ export const LabelEditor = () => {
       stroke: '#000000',
       strokeWidth: 1,
     });
-  };
+  }, [addObject]);
 
-  const handleAddLine = () => {
-    addObject({
-      type: 'line',
-      x: 10,
-      y: 10,
-      width: 20,
-      height: 0,
-      stroke: '#000000',
-      strokeWidth: 1,
-    });
-  };
-
-  const handleDeleteSelected = () => {
-    if (state.selectedObjectId) {
-      deleteObject(state.selectedObjectId);
-    }
-  };
-
-  const handleCopySelected = useCallback(() => {
-    if (state.selectedObjectId) {
-      const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId);
-      if (selectedObject) {
-        copyObject(selectedObject);
-        setClipboardState(true);
-      }
-    }
-  }, [state.selectedObjectId, state.objects]);
-
-  const handlePaste = useCallback(() => {
-    if (hasClipboard()) {
-      const pastedObject = pasteObject();
-      if (pastedObject) {
-        const newId = addObject(pastedObject);
-        selectObject(newId);
-      }
-    }
-  }, [addObject, selectObject]);
-
-  const handleResetView = () => {
+  const handleResetView = useCallback(() => {
     updateZoom(1);
     updatePan(0, 0);
-  };
-
-  const handleShowHelp = () => {
-    setShowHelp(true);
-  };
+  }, [updateZoom, updatePan]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -126,22 +81,32 @@ export const LabelEditor = () => {
         if (state.selectedObjectId) {
           deleteObject(state.selectedObjectId);
         }
-      } else if (e.ctrlKey || e.metaKey) {
+      } else if (!e.ctrlKey && !e.metaKey) {
+        // Quick object creation shortcuts
         switch (e.key.toLowerCase()) {
+          case 't':
+            e.preventDefault();
+            handleAddText();
+            break;
+          case 'r':
+            e.preventDefault();
+            handleAddRectangle();
+            break;
           case 'c':
             e.preventDefault();
-            handleCopySelected();
+            handleAddCircle();
             break;
-          case 'v':
+          case 'escape':
             e.preventDefault();
-            handlePaste();
+            selectObject(null);
             break;
-          case 'd':
+        }
+      } else if (e.ctrlKey || e.metaKey) {
+        // Ctrl/Cmd shortcuts
+        switch (e.key.toLowerCase()) {
+          case '0':
             e.preventDefault();
-            if (state.selectedObjectId) {
-              handleCopySelected();
-              handlePaste();
-            }
+            handleResetView();
             break;
         }
       }
@@ -149,71 +114,80 @@ export const LabelEditor = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.selectedObjectId, state.objects, deleteObject, handleCopySelected, handlePaste]);
+  }, [state.selectedObjectId, deleteObject, selectObject, handleAddText, handleAddRectangle, handleAddCircle, handleResetView]);
 
   const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId) || null;
 
   return (
-    <div className="h-screen flex">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-gray-50 p-4 space-y-4 overflow-y-auto">
-        <Toolbar
-          onAddText={handleAddText}
-          onAddRectangle={handleAddRectangle}
-          onAddCircle={handleAddCircle}
-          onAddLine={handleAddLine}
-          onDeleteSelected={handleDeleteSelected}
-          onCopySelected={handleCopySelected}
-          onPaste={handlePaste}
-          selectedObject={selectedObject}
-          hasClipboard={clipboardState}
-        />
-      </div>
-
-      {/* Main Canvas Area */}
-      <CanvasEditor
-        dimensions={state.dimensions}
+    <div className="h-screen flex flex-col bg-gray-900">
+      {/* Top Panel */}
+      <TopPanel
         zoom={state.zoom}
-        panX={state.panX}
-        panY={state.panY}
-        objects={state.objects}
-        selectedObjectId={state.selectedObjectId}
-        onObjectUpdate={updateObject}
-        onObjectSelect={selectObject}
+        onZoomChange={updateZoom}
+        onResetView={handleResetView}
+        dimensions={state.dimensions}
+        objectCount={state.objects.length}
       />
 
-      {/* Right Sidebar */}
-      <div className="w-64 bg-gray-50 p-4 space-y-4 overflow-y-auto">
-        <DimensionControls
-          dimensions={state.dimensions}
-          onDimensionsChange={updateDimensions}
-        />
-        
-        <ZoomControls
-          zoom={state.zoom}
-          onZoomChange={updateZoom}
-          onResetView={handleResetView}
-          onShowHelp={handleShowHelp}
-        />
+      {/* Main Content Area */}
+      <div className="flex-1 flex">
+        <PanelGroup direction="horizontal">
+          {/* Left Panel */}
+          <Panel defaultSize={15} minSize={10} maxSize={25}>
+            <LeftPanel
+              onAddText={handleAddText}
+              onAddRectangle={handleAddRectangle}
+              onAddCircle={handleAddCircle}
+            />
+          </Panel>
 
-        {/* Object Properties */}
-        {selectedObject && (
-          <ObjectProperties
-            selectedObject={selectedObject}
-            onObjectUpdate={updateObject}
-            onBringToFront={bringToFront}
-            onSendToBack={sendToBack}
-            onMoveUp={moveUp}
-            onMoveDown={moveDown}
-          />
-        )}
+          <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
+
+          {/* Center Panel - Canvas */}
+          <Panel defaultSize={70} minSize={50}>
+            <div className="h-full relative">
+              <CanvasEditor
+                dimensions={state.dimensions}
+                zoom={state.zoom}
+                panX={state.panX}
+                panY={state.panY}
+                objects={state.objects}
+                selectedObjectId={state.selectedObjectId}
+                onObjectUpdate={updateObject}
+                onObjectSelect={selectObject}
+              />
+              
+              {/* Minimap in bottom-right corner of canvas */}
+              <div className="absolute bottom-4 right-4 z-10 fade-in">
+                <Minimap
+                  dimensions={state.dimensions}
+                  objects={state.objects}
+                  zoom={state.zoom}
+                  panX={state.panX}
+                  panY={state.panY}
+                  className="w-48 minimap-container"
+                />
+              </div>
+            </div>
+          </Panel>
+
+          <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
+
+          {/* Right Panel */}
+          <Panel defaultSize={15} minSize={10} maxSize={25}>
+            <RightPanel
+              dimensions={state.dimensions}
+              onDimensionsChange={updateDimensions}
+              selectedObject={selectedObject}
+              onObjectUpdate={updateObject}
+              onBringToFront={bringToFront}
+              onSendToBack={sendToBack}
+              onMoveUp={moveUp}
+              onMoveDown={moveDown}
+            />
+          </Panel>
+        </PanelGroup>
       </div>
-
-      {/* Help Panel */}
-      <HelpPanel
-        isOpen={showHelp}
-        onClose={() => setShowHelp(false)}
-      />
     </div>
   );
 };

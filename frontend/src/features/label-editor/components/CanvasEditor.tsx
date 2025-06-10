@@ -19,6 +19,7 @@ interface CanvasEditorProps {
 // Extend FabricObject to include our custom data
 interface CustomFabricObject extends FabricObject {
   customData?: { id: string };
+  _isUpdating?: boolean;
 }
 
 export const CanvasEditor = ({
@@ -43,6 +44,12 @@ export const CanvasEditor = ({
       backgroundColor: '#ffffff',
       selection: true,
       preserveObjectStacking: true,
+      allowTouchScrolling: false,
+      enableRetinaScaling: true,
+      uniformScaling: false,
+      centeredScaling: false,
+      centeredRotation: false,
+      skipTargetFind: false,
     });
 
     fabricCanvasRef.current = canvas;
@@ -52,6 +59,10 @@ export const CanvasEditor = ({
     canvas.on('object:modified', (e: any) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData) {
+        // Prevent event loops by checking if we're already updating
+        if (obj._isUpdating) return;
+        obj._isUpdating = true;
+
         const updates: Partial<CanvasObject> = {
           x: pxToMm(obj.left || 0),
           y: pxToMm(obj.top || 0),
@@ -83,19 +94,54 @@ export const CanvasEditor = ({
           }
         } else {
           // For other objects, handle width/height scaling normally
-          if (obj.width) updates.width = pxToMm(obj.width * (obj.scaleX || 1));
-          if (obj.height) updates.height = pxToMm(obj.height * (obj.scaleY || 1));
+          const newWidth = obj.width ? obj.width * (obj.scaleX || 1) : 0;
+          const newHeight = obj.height ? obj.height * (obj.scaleY || 1) : 0;
+          
+          if (newWidth > 0) updates.width = pxToMm(newWidth);
+          if (newHeight > 0) updates.height = pxToMm(newHeight);
+          
+          // Reset scale to prevent compound scaling
+          obj.set({ scaleX: 1, scaleY: 1 });
+          if (obj.width && newWidth > 0) obj.set({ width: newWidth });
+          if (obj.height && newHeight > 0) obj.set({ height: newHeight });
         }
 
         onObjectUpdate(obj.customData.id, updates);
+        
+        // Clear the updating flag after a brief delay
+        setTimeout(() => {
+          obj._isUpdating = false;
+        }, 50);
       }
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     canvas.on('selection:created', (e: any) => {
-      const obj = e.selected?.[0] as CustomFabricObject;
-      if (obj && obj.customData) {
-        onObjectSelect(obj.customData.id);
+      // Only handle single object selection
+      if (e.selected && e.selected.length === 1) {
+        const obj = e.selected[0] as CustomFabricObject;
+        if (obj && obj.customData) {
+          onObjectSelect(obj.customData.id);
+        }
+      } else if (e.selected && e.selected.length > 1) {
+        // Disable multi-selection by clearing it
+        canvas.discardActiveObject();
+        canvas.renderAll();
+      }
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    canvas.on('selection:updated', (e: any) => {
+      // Only handle single object selection
+      if (e.selected && e.selected.length === 1) {
+        const obj = e.selected[0] as CustomFabricObject;
+        if (obj && obj.customData) {
+          onObjectSelect(obj.customData.id);
+        }
+      } else if (e.selected && e.selected.length > 1) {
+        // Disable multi-selection by clearing it
+        canvas.discardActiveObject();
+        canvas.renderAll();
       }
     });
 
@@ -103,10 +149,27 @@ export const CanvasEditor = ({
       onObjectSelect(null);
     });
 
+    // Additional safety for positioning
+    canvas.on('object:moving', (e) => {
+      const obj = e.target as CustomFabricObject;
+      if (obj) {
+        // Ensure object stays within reasonable bounds
+        const minX = -100;
+        const minY = -100;
+        const maxX = mmToPx(dimensions.width) + 100;
+        const maxY = mmToPx(dimensions.height) + 100;
+
+        if (obj.left! < minX) obj.set({ left: minX });
+        if (obj.top! < minY) obj.set({ top: minY });
+        if (obj.left! > maxX) obj.set({ left: maxX });
+        if (obj.top! > maxY) obj.set({ top: maxY });
+      }
+    });
+
     return () => {
       canvas.dispose();
     };
-  }, [onObjectUpdate, onObjectSelect]);
+  }, [onObjectUpdate, onObjectSelect, dimensions.width, dimensions.height]);
 
   // Update canvas size based on dimensions and zoom
   useEffect(() => {
@@ -154,6 +217,9 @@ export const CanvasEditor = ({
       
       if (existingFabricObj) {
         // Update existing object without recreating it
+        // Skip update if object is currently being modified to prevent loops
+        if (existingFabricObj._isUpdating) return;
+        
         // Update properties
         existingFabricObj.set({
           left: mmToPx(obj.x),
@@ -191,6 +257,8 @@ export const CanvasEditor = ({
             strokeWidth: obj.strokeWidth || 1,
           });
         }
+        
+        existingFabricObj.setCoords();
       } else {
         // Create new object
         let fabricObj: CustomFabricObject;
@@ -276,7 +344,7 @@ export const CanvasEditor = ({
   return (
     <div 
       ref={containerRef}
-      className="flex-1 flex items-center justify-center p-8 bg-gray-100 overflow-hidden canvas-container"
+      className="flex-1 flex items-center justify-center p-8 canvas-container overflow-hidden relative"
     >
       <div className="relative">
         <canvas
@@ -286,10 +354,10 @@ export const CanvasEditor = ({
         
         {/* Coordinate system indicator */}
         <div 
-          className="absolute text-xs text-gray-500 pointer-events-none"
+          className="absolute text-xs text-gray-600 pointer-events-none bg-white px-2 py-1 rounded shadow-sm"
           style={{ 
-            left: `${panX - 20}px`, 
-            top: `${panY - 20}px` 
+            left: `${panX - 30}px`, 
+            top: `${panY - 30}px` 
           }}
         >
           0,0

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, ChangeEvent } from 'react';
+import { motion } from 'framer-motion';
 import { LabelDimensions } from '../types/editor.types';
 import { formatMm } from '../utils/dimensions';
 
@@ -40,13 +41,15 @@ export const DimensionControls = ({ dimensions, onDimensionsChange }: DimensionC
   }, [dimensions.width, dimensions.height]);
 
   return (
-    <div className="bg-white p-4 rounded-lg border shadow-sm">
-      <h3 className="text-lg font-semibold mb-4">Rozmiar Etykiety</h3>
-      
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Szerokość
+          <label className="block text-xs text-gray-400 mb-2">
+            Width
           </label>
           <div className="flex items-center space-x-2">
             <input
@@ -56,15 +59,17 @@ export const DimensionControls = ({ dimensions, onDimensionsChange }: DimensionC
               min="1"
               max="1000"
               step="0.1"
-              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 text-xs bg-gray-800 border border-gray-600 
+                       text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-blue-500 input-dark"
             />
-            <span className="text-sm text-gray-500">mm</span>
+            <span className="text-xs text-gray-400">mm</span>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Wysokość
+          <label className="block text-xs text-gray-400 mb-2">
+            Height
           </label>
           <div className="flex items-center space-x-2">
             <input
@@ -74,19 +79,27 @@ export const DimensionControls = ({ dimensions, onDimensionsChange }: DimensionC
               min="1"
               max="1000"
               step="0.1"
-              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 text-xs bg-gray-800 border border-gray-600 
+                       text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-blue-500 input-dark"
             />
-            <span className="text-sm text-gray-500">mm</span>
+            <span className="text-xs text-gray-400">mm</span>
           </div>
         </div>
 
-        <div className="pt-2 border-t">
-          <div className="text-sm text-gray-600">
-            <div>Rozmiar: {formatMm(dimensions.width)} × {formatMm(dimensions.height)}</div>
-            <div>Proporcje: {(dimensions.width / dimensions.height).toFixed(2)}:1</div>
+        <div className="pt-3 border-t border-gray-700">
+          <div className="text-xs text-gray-400 space-y-1">
+            <div className="flex justify-between">
+              <span>Size:</span>
+              <span className="text-white">{formatMm(dimensions.width)} × {formatMm(dimensions.height)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Ratio:</span>
+              <span className="text-white">{(dimensions.width / dimensions.height).toFixed(2)}:1</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
