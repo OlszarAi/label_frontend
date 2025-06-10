@@ -7,7 +7,6 @@ import { CanvasEditor } from './components/CanvasEditor';
 import { LeftPanel } from './components/LeftPanel';
 import { RightPanel } from './components/RightPanel';
 import { TopPanel } from './components/TopPanel';
-import { Minimap } from './components/Minimap';
 import './styles/editor.css';
 
 export const LabelEditor = () => {
@@ -145,30 +144,16 @@ export const LabelEditor = () => {
 
           {/* Center Panel - Canvas */}
           <Panel defaultSize={70} minSize={50}>
-            <div className="h-full relative">
-              <CanvasEditor
-                dimensions={state.dimensions}
-                zoom={state.zoom}
-                panX={state.panX}
-                panY={state.panY}
-                objects={state.objects}
-                selectedObjectId={state.selectedObjectId}
-                onObjectUpdate={updateObject}
-                onObjectSelect={selectObject}
-              />
-              
-              {/* Minimap in bottom-right corner of canvas */}
-              <div className="absolute bottom-4 right-4 z-10 fade-in">
-                <Minimap
-                  dimensions={state.dimensions}
-                  objects={state.objects}
-                  zoom={state.zoom}
-                  panX={state.panX}
-                  panY={state.panY}
-                  className="w-48 minimap-container"
-                />
-              </div>
-            </div>
+            <CanvasEditor
+              dimensions={state.dimensions}
+              zoom={state.zoom}
+              panX={state.panX}
+              panY={state.panY}
+              objects={state.objects}
+              selectedObjectId={state.selectedObjectId}
+              onObjectUpdate={updateObject}
+              onObjectSelect={selectObject}
+            />
           </Panel>
 
           <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
