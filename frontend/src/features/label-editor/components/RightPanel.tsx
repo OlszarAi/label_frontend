@@ -42,7 +42,7 @@ export const RightPanel = ({
 }: RightPanelProps) => {
   const [expandedSections, setExpandedSections] = useState({
     canvas: true,
-    objects: true,
+    objects: false,
     preferences: false
   });
 
@@ -85,110 +85,113 @@ export const RightPanel = ({
   return (
     <div className="h-full bg-gray-900 border-l border-gray-800 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 border-b border-gray-800 flex-shrink-0">
         <h2 className="text-white font-semibold text-sm flex items-center gap-2">
           <CogIcon className="w-4 h-4" />
           Properties
         </h2>
       </div>
 
-      {/* Canvas Section */}
-      <div className="border-b border-gray-800">
-        <SectionHeader 
-          title="Canvas" 
-          icon={ViewColumnsIcon} 
-          section="canvas" 
-          expanded={expandedSections.canvas}
-        />
-        <AnimatePresence>
-          {expandedSections.canvas && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="p-4 bg-gray-850">
-                <CanvasProperties
-                  dimensions={dimensions}
-                  onDimensionsChange={onDimensionsChange}
-                  preferences={preferences}
-                  onPreferencesUpdate={onPreferencesUpdate}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Canvas Section */}
+        <div className="border-b border-gray-800">
+          <SectionHeader 
+            title="Canvas" 
+            icon={ViewColumnsIcon} 
+            section="canvas" 
+            expanded={expandedSections.canvas}
+          />
+          <AnimatePresence>
+            {expandedSections.canvas && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="p-4 bg-gray-850">
+                  <CanvasProperties
+                    dimensions={dimensions}
+                    onDimensionsChange={onDimensionsChange}
+                    preferences={preferences}
+                    onPreferencesUpdate={onPreferencesUpdate}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-      {/* Objects Section */}
-      <div className="flex-1 flex flex-col">
-        <SectionHeader 
-          title="Objects" 
-          icon={CubeIcon} 
-          section="objects" 
-          expanded={expandedSections.objects}
-        />
-        <AnimatePresence>
-          {expandedSections.objects && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 overflow-hidden flex flex-col"
-            >
-              <div className="flex-1 overflow-y-auto">
-                {selectedObject ? (
-                  <div className="p-4 bg-gray-850">
-                    <ObjectProperties
-                      selectedObject={selectedObject}
-                      onObjectUpdate={onObjectUpdate}
-                      onBringToFront={onBringToFront}
-                      onSendToBack={onSendToBack}
-                      onMoveUp={onMoveUp}
-                      onMoveDown={onMoveDown}
-                    />
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-gray-500 text-sm">
-                    <CubeIcon className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                    Select an object to edit its properties
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+        {/* Objects Section */}
+        <div className="border-b border-gray-800">
+          <SectionHeader 
+            title="Objects" 
+            icon={CubeIcon} 
+            section="objects" 
+            expanded={expandedSections.objects}
+          />
+          <AnimatePresence>
+            {expandedSections.objects && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-gray-850">
+                  {selectedObject ? (
+                    <div className="p-4">
+                      <ObjectProperties
+                        selectedObject={selectedObject}
+                        onObjectUpdate={onObjectUpdate}
+                        onBringToFront={onBringToFront}
+                        onSendToBack={onSendToBack}
+                        onMoveUp={onMoveUp}
+                        onMoveDown={onMoveDown}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      <CubeIcon className="w-8 h-8 mx-auto mb-2 text-gray-600" />
+                      Select an object to edit its properties
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-      {/* Preferences Section */}
-      <div className="border-t border-gray-800">
-        <SectionHeader 
-          title="Preferences" 
-          icon={AdjustmentsHorizontalIcon} 
-          section="preferences" 
-          expanded={expandedSections.preferences}
-        />
-        <AnimatePresence>
-          {expandedSections.preferences && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="p-4 bg-gray-850">
-                <Preferences
-                  preferences={preferences}
-                  onPreferencesUpdate={onPreferencesUpdate}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Preferences Section */}
+        <div className="border-b border-gray-800">
+          <SectionHeader 
+            title="Preferences" 
+            icon={AdjustmentsHorizontalIcon} 
+            section="preferences" 
+            expanded={expandedSections.preferences}
+          />
+          <AnimatePresence>
+            {expandedSections.preferences && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="p-4 bg-gray-850">
+                  <Preferences
+                    preferences={preferences}
+                    onPreferencesUpdate={onPreferencesUpdate}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

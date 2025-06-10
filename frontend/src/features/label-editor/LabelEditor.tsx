@@ -183,7 +183,7 @@ export const LabelEditor = () => {
   const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId) || null;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900">
+    <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
       {/* Top Panel */}
       <TopPanel
         zoom={state.zoom}
@@ -194,7 +194,7 @@ export const LabelEditor = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         <PanelGroup direction="horizontal">
           {/* Left Panel */}
           <Panel defaultSize={15} minSize={10} maxSize={25}>
