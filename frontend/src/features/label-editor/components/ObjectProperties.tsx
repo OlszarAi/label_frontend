@@ -38,6 +38,8 @@ export const ObjectProperties = ({
     fill: selectedObject.fill || '#000000',
     stroke: selectedObject.stroke || '#000000',
     strokeWidth: selectedObject.strokeWidth?.toString() || '1',
+    // QR Code properties
+    qrErrorCorrectionLevel: selectedObject.qrErrorCorrectionLevel || 'M',
   });
 
   const updateValue = (key: keyof typeof localValues, value: string) => {
@@ -73,6 +75,11 @@ export const ObjectProperties = ({
           updates.strokeWidth = strokeValue;
         }
         break;
+      case 'qrErrorCorrectionLevel':
+        if (value === 'L' || value === 'M' || value === 'Q' || value === 'H') {
+          updates.qrErrorCorrectionLevel = value;
+        }
+        break;
       case 'text':
       case 'fill':
       case 'stroke':
@@ -99,6 +106,7 @@ export const ObjectProperties = ({
       fill: selectedObject.fill || '#000000',
       stroke: selectedObject.stroke || '#000000',
       strokeWidth: selectedObject.strokeWidth?.toString() || '1',
+      qrErrorCorrectionLevel: selectedObject.qrErrorCorrectionLevel || 'M',
     });
   }, [selectedObject]);
 
@@ -145,7 +153,7 @@ export const ObjectProperties = ({
         </div>
 
         {/* Size (for shapes) */}
-        {(selectedObject.type === 'rectangle' || selectedObject.type === 'circle' || selectedObject.type === 'line') && (
+        {(selectedObject.type === 'rectangle' || selectedObject.type === 'circle' || selectedObject.type === 'line' || selectedObject.type === 'qrcode') && (
           <div className="space-y-3">
             <h4 className="text-xs font-medium text-gray-300">Size</h4>
             <div className="grid grid-cols-2 gap-3">
@@ -235,11 +243,115 @@ export const ObjectProperties = ({
           </div>
         )}
 
+        {/* QR Code properties */}
+        {selectedObject.type === 'qrcode' && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-gray-300">QR Code</h4>
+            <div className="space-y-2">
+              <div className="text-xs text-gray-400">
+                QR Code settings are managed in Preferences
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2">Size (mm)</label>
+                  <input
+                    type="number"
+                    value={localValues.width}
+                    onChange={(e) => updateValue('width', e.target.value)}
+                    step="0.1"
+                    min="5"
+                    className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-600 
+                             text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+                             focus:border-blue-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2">Error Correction</label>
+                  <select
+                    value={localValues.qrErrorCorrectionLevel}
+                    onChange={(e) => updateValue('qrErrorCorrectionLevel', e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-600 
+                             text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+                             focus:border-blue-500 transition-colors"
+                  >
+                    <option value="L">Low (7%)</option>
+                    <option value="M">Medium (15%)</option>
+                    <option value="Q">Quartile (25%)</option>
+                    <option value="H">High (30%)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* UUID properties */}
+        {selectedObject.type === 'uuid' && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-gray-300">UUID</h4>
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">
+                Display Text
+              </label>
+              <input
+                type="text"
+                value={localValues.text}
+                readOnly
+                placeholder="Generated UUID will appear here"
+                className="w-full px-3 py-2 text-xs bg-gray-700 border border-gray-600 
+                         text-gray-400 rounded-md cursor-not-allowed"
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                UUID is generated automatically (read-only)
+              </div>
+            </div>
+            <div className="text-xs text-gray-400 mb-2">
+              UUID settings are managed in Preferences
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-2">Font Size</label>
+                <input
+                  type="number"
+                  value={localValues.fontSize}
+                  onChange={(e) => updateValue('fontSize', e.target.value)}
+                  min="1"
+                  max="200"
+                  className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-600 
+                           text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+                           focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-2">Font</label>
+                <select
+                  value={localValues.fontFamily}
+                  onChange={(e) => updateValue('fontFamily', e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-600 
+                           text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+                           focus:border-blue-500 transition-colors"
+                >
+                  <option value="Arial">Arial</option>
+                  <option value="Helvetica">Helvetica</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Courier New">Courier New</option>
+                  <option value="Comic Sans MS">Comic Sans MS</option>
+                  <option value="Impact">Impact</option>
+                  <option value="Trebuchet MS">Trebuchet MS</option>
+                  <option value="Arial Black">Arial Black</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Colors */}
         <div className="space-y-3">
           <h4 className="text-xs font-medium text-gray-300">Colors</h4>
           <div className="grid grid-cols-2 gap-3">
-            {selectedObject.type === 'text' ? (
+            {(selectedObject.type === 'text' || selectedObject.type === 'uuid') ? (
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Text Color</label>
                 <input
@@ -249,6 +361,27 @@ export const ObjectProperties = ({
                   className="w-full h-10 bg-gray-800 border border-gray-600 rounded-md cursor-pointer"
                 />
               </div>
+            ) : selectedObject.type === 'qrcode' ? (
+              <>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Foreground</label>
+                  <input
+                    type="color"
+                    value={localValues.fill}
+                    onChange={(e) => updateValue('fill', e.target.value)}
+                    className="w-full h-10 bg-gray-800 border border-gray-600 rounded-md cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Background</label>
+                  <input
+                    type="color"
+                    value={localValues.stroke}
+                    onChange={(e) => updateValue('stroke', e.target.value)}
+                    className="w-full h-10 bg-gray-800 border border-gray-600 rounded-md cursor-pointer"
+                  />
+                </div>
+              </>
             ) : (
               <>
                 <div>
@@ -275,7 +408,7 @@ export const ObjectProperties = ({
         </div>
 
         {/* Stroke width for shapes */}
-        {selectedObject.type !== 'text' && (
+        {(selectedObject.type !== 'text' && selectedObject.type !== 'qrcode' && selectedObject.type !== 'uuid') && (
           <div className="space-y-3">
             <h4 className="text-xs font-medium text-gray-300">Stroke</h4>
             <div>

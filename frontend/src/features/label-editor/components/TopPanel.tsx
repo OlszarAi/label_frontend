@@ -67,7 +67,7 @@ export const TopPanel = ({
 
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Shortcuts:</span>
-            <span className="text-xs text-gray-400">T - Text, R - Rectangle, C - Circle, Del - Delete</span>
+            <span className="text-xs text-gray-400">T - Text, R - Rectangle, C - Circle, Q - QR Code, U - UUID, Del - Delete</span>
           </div>
         </div>
       </div>

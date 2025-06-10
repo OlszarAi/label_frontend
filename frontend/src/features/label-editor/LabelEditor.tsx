@@ -7,6 +7,7 @@ import { CanvasEditor } from './components/CanvasEditor';
 import { LeftPanel } from './components/LeftPanel';
 import { RightPanel } from './components/RightPanel';
 import { TopPanel } from './components/TopPanel';
+import { generateUUID } from './utils/uuid';
 import './styles/editor.css';
 
 export const LabelEditor = () => {
@@ -19,6 +20,7 @@ export const LabelEditor = () => {
     updateObject,
     deleteObject,
     selectObject,
+    updatePreferences,
     bringToFront,
     sendToBack,
     moveUp,
@@ -63,6 +65,35 @@ export const LabelEditor = () => {
     });
   }, [addObject]);
 
+  const handleAddQRCode = useCallback(() => {
+    const newUUID = generateUUID(state.preferences.uuid.uuidLength);
+    addObject({
+      type: 'qrcode',
+      x: 10,
+      y: 10,
+      width: 20,
+      height: 20,
+      qrErrorCorrectionLevel: 'M',
+      fill: '#000000',
+      stroke: '#ffffff',
+      sharedUUID: newUUID,
+    });
+  }, [addObject, state.preferences.uuid.uuidLength]);
+
+  const handleAddUUID = useCallback(() => {
+    const newUUID = generateUUID(state.preferences.uuid.uuidLength);
+    addObject({
+      type: 'uuid',
+      x: 10,
+      y: 10,
+      text: newUUID,
+      fontSize: 12,
+      fontFamily: 'Arial',
+      fill: '#000000',
+      sharedUUID: newUUID,
+    });
+  }, [addObject, state.preferences.uuid.uuidLength]);
+
   const handleResetView = useCallback(() => {
     updateZoom(1);
     updatePan(0, 0);
@@ -95,6 +126,14 @@ export const LabelEditor = () => {
             e.preventDefault();
             handleAddCircle();
             break;
+          case 'q':
+            e.preventDefault();
+            handleAddQRCode();
+            break;
+          case 'u':
+            e.preventDefault();
+            handleAddUUID();
+            break;
           case 'escape':
             e.preventDefault();
             selectObject(null);
@@ -113,7 +152,7 @@ export const LabelEditor = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.selectedObjectId, deleteObject, selectObject, handleAddText, handleAddRectangle, handleAddCircle, handleResetView]);
+  }, [state.selectedObjectId, deleteObject, selectObject, handleAddText, handleAddRectangle, handleAddCircle, handleAddQRCode, handleAddUUID, handleResetView]);
 
   const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId) || null;
 
@@ -137,6 +176,8 @@ export const LabelEditor = () => {
               onAddText={handleAddText}
               onAddRectangle={handleAddRectangle}
               onAddCircle={handleAddCircle}
+              onAddQRCode={handleAddQRCode}
+              onAddUUID={handleAddUUID}
             />
           </Panel>
 
@@ -151,6 +192,7 @@ export const LabelEditor = () => {
               panY={state.panY}
               objects={state.objects}
               selectedObjectId={state.selectedObjectId}
+              preferences={state.preferences}
               onObjectUpdate={updateObject}
               onObjectSelect={selectObject}
             />
@@ -169,6 +211,8 @@ export const LabelEditor = () => {
               onSendToBack={sendToBack}
               onMoveUp={moveUp}
               onMoveDown={moveDown}
+              preferences={state.preferences}
+              onPreferencesUpdate={updatePreferences}
             />
           </Panel>
         </PanelGroup>

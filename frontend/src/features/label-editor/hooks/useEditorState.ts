@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { EditorState, LabelDimensions, CanvasObject } from '../types/editor.types';
+import { EditorState, LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
+import { generateUUID } from '../utils/uuid';
+
+const initialPreferences: EditorPreferences = {
+  uuid: {
+    uuidLength: 8,
+    qrPrefix: 'https://example.com/',
+  },
+};
 
 const initialState: EditorState = {
   dimensions: { width: 100, height: 50 }, // Default 100x50mm
@@ -10,6 +18,7 @@ const initialState: EditorState = {
   panY: 0,
   objects: [],
   selectedObjectId: null,
+  preferences: initialPreferences,
 };
 
 export const useEditorState = () => {
@@ -59,6 +68,33 @@ export const useEditorState = () => {
 
   const selectObject = useCallback((id: string | null) => {
     setState(prev => ({ ...prev, selectedObjectId: id }));
+  }, []);
+
+  const updatePreferences = useCallback((preferences: EditorPreferences) => {
+    setState(prev => {
+      const newState = { ...prev, preferences };
+      
+      // Update all existing UUID and QR objects with new preferences
+      const updatedObjects = newState.objects.map(obj => {
+        if (obj.type === 'uuid' || obj.type === 'qrcode') {
+          // Generate new UUID if length changed or object doesn't have one
+          const needsNewUUID = !obj.sharedUUID || 
+            (obj.sharedUUID.length !== preferences.uuid.uuidLength);
+          
+          if (needsNewUUID) {
+            const newUUID = generateUUID(preferences.uuid.uuidLength);
+            return {
+              ...obj,
+              sharedUUID: newUUID,
+              text: obj.type === 'uuid' ? newUUID : obj.text
+            };
+          }
+        }
+        return obj;
+      });
+      
+      return { ...newState, objects: updatedObjects };
+    });
   }, []);
 
   const resetEditor = useCallback(() => {
@@ -120,6 +156,7 @@ export const useEditorState = () => {
     updateObject,
     deleteObject,
     selectObject,
+    updatePreferences,
     resetEditor,
     bringToFront,
     sendToBack,

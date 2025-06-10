@@ -2,15 +2,17 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { PlusIcon, ChatBubbleLeftEllipsisIcon, RectangleStackIcon, RectangleGroupIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ChatBubbleLeftEllipsisIcon, RectangleStackIcon, RectangleGroupIcon, QrCodeIcon, HashtagIcon } from '@heroicons/react/24/outline';
 
 interface LeftPanelProps {
   onAddText: () => void;
   onAddRectangle: () => void;
   onAddCircle?: () => void;
+  onAddQRCode: () => void;
+  onAddUUID: () => void;
 }
 
-export const LeftPanel = ({ onAddText, onAddRectangle, onAddCircle }: LeftPanelProps) => {
+export const LeftPanel = ({ onAddText, onAddRectangle, onAddCircle, onAddQRCode, onAddUUID }: LeftPanelProps) => {
   const tools = [
     {
       id: 'text',
@@ -25,6 +27,20 @@ export const LeftPanel = ({ onAddText, onAddRectangle, onAddCircle }: LeftPanelP
       icon: RectangleStackIcon,
       action: onAddRectangle,
       description: 'Add rectangle shape'
+    },
+    {
+      id: 'qrcode',
+      name: 'QR Code',
+      icon: QrCodeIcon,
+      action: onAddQRCode,
+      description: 'Add QR code'
+    },
+    {
+      id: 'uuid',
+      name: 'UUID',
+      icon: HashtagIcon,
+      action: onAddUUID,
+      description: 'Add UUID text'
     },
     ...(onAddCircle ? [{
       id: 'circle',

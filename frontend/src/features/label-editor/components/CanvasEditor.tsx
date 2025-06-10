@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { Canvas, FabricObject, Text, Rect, Circle, Line } from 'fabric';
-import { LabelDimensions, CanvasObject } from '../types/editor.types';
+import { Canvas, FabricObject, Text, Rect, Circle, Line, FabricImage } from 'fabric';
+import QRCode from 'qrcode';
+import { LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
 
 interface CanvasEditorProps {
@@ -12,6 +13,7 @@ interface CanvasEditorProps {
   panY: number;
   objects: CanvasObject[];
   selectedObjectId: string | null;
+  preferences: EditorPreferences;
   onObjectUpdate: (id: string, updates: Partial<CanvasObject>) => void;
   onObjectSelect: (id: string | null) => void;
 }
@@ -20,7 +22,26 @@ interface CanvasEditorProps {
 interface CustomFabricObject extends FabricObject {
   customData?: { id: string };
   _isUpdating?: boolean;
+  _isReplacingQR?: boolean;
 }
+
+// Helper function to create QR code data URL
+const createQRCodeDataURL = async (data: string, size: number, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M', foreground = '#000000', background = '#ffffff'): Promise<string> => {
+  try {
+    return await QRCode.toDataURL(data, {
+      width: size,
+      errorCorrectionLevel,
+      color: {
+        dark: foreground,
+        light: background,
+      },
+      margin: 1,
+    });
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    return '';
+  }
+};
 
 export const CanvasEditor = ({
   dimensions,
@@ -29,6 +50,7 @@ export const CanvasEditor = ({
   panY,
   objects,
   selectedObjectId,
+  preferences,
   onObjectUpdate,
   onObjectSelect
 }: CanvasEditorProps) => {
@@ -59,8 +81,8 @@ export const CanvasEditor = ({
     canvas.on('object:modified', (e: any) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData) {
-        // Prevent event loops by checking if we're already updating
-        if (obj._isUpdating) return;
+        // Prevent event loops by checking if we're already updating or replacing QR
+        if (obj._isUpdating || obj._isReplacingQR) return;
         obj._isUpdating = true;
 
         const updates: Partial<CanvasObject> = {
@@ -93,17 +115,39 @@ export const CanvasEditor = ({
             updates.text = textObj.text;
           }
         } else {
-          // For other objects, handle width/height scaling normally
-          const newWidth = obj.width ? obj.width * (obj.scaleX || 1) : 0;
-          const newHeight = obj.height ? obj.height * (obj.scaleY || 1) : 0;
+          // Get the object type from our canvas objects state
+          const canvasObjData = obj.customData && obj.customData.id ? objects.find(o => o.id === obj.customData!.id) : null;
           
-          if (newWidth > 0) updates.width = pxToMm(newWidth);
-          if (newHeight > 0) updates.height = pxToMm(newHeight);
-          
-          // Reset scale to prevent compound scaling
-          obj.set({ scaleX: 1, scaleY: 1 });
-          if (obj.width && newWidth > 0) obj.set({ width: newWidth });
-          if (obj.height && newHeight > 0) obj.set({ height: newHeight });
+          if (canvasObjData?.type === 'qrcode') {
+            // For QR codes, maintain square proportions
+            const scale = Math.max(obj.scaleX || 1, obj.scaleY || 1);
+            const newSize = obj.width ? obj.width * scale : 0;
+            
+            if (newSize > 0) {
+              updates.width = pxToMm(newSize);
+              updates.height = pxToMm(newSize); // Keep it square
+            }
+            
+            // Reset scale and apply uniform size
+            obj.set({ 
+              scaleX: 1, 
+              scaleY: 1,
+              width: newSize > 0 ? newSize : obj.width,
+              height: newSize > 0 ? newSize : obj.height
+            });
+          } else {
+            // For other objects, handle width/height scaling normally
+            const newWidth = obj.width ? obj.width * (obj.scaleX || 1) : 0;
+            const newHeight = obj.height ? obj.height * (obj.scaleY || 1) : 0;
+            
+            if (newWidth > 0) updates.width = pxToMm(newWidth);
+            if (newHeight > 0) updates.height = pxToMm(newHeight);
+            
+            // Reset scale to prevent compound scaling
+            obj.set({ scaleX: 1, scaleY: 1 });
+            if (obj.width && newWidth > 0) obj.set({ width: newWidth });
+            if (obj.height && newHeight > 0) obj.set({ height: newHeight });
+          }
         }
 
         onObjectUpdate(obj.customData.id, updates);
@@ -252,6 +296,79 @@ export const CanvasEditor = ({
             stroke: obj.stroke || '#000000',
             strokeWidth: obj.strokeWidth || 1,
           });
+        } else if (obj.type === 'uuid' && existingFabricObj.type === 'text') {
+          const textObj = existingFabricObj as Text;
+          textObj.set({
+            text: obj.text || obj.sharedUUID || 'UUID',
+            fontSize: obj.fontSize || 12,
+            fontFamily: obj.fontFamily || 'Arial',
+            fill: obj.fill || '#000000',
+          });
+        } else if (obj.type === 'qrcode' && existingFabricObj.type === 'image') {
+          // For QR codes, only regenerate if data or size actually changed
+          const currentQRData = `${preferences.uuid.qrPrefix}${obj.sharedUUID || ''}`;
+          const imageObj = existingFabricObj as FabricImage;
+          const currentSize = mmToPx(obj.width || 20);
+          
+          const needsRegeneration = (
+            imageObj.width !== currentSize || 
+            imageObj.height !== currentSize ||
+            (imageObj as any)._lastQRData !== currentQRData
+          );
+          
+          if (needsRegeneration && !existingFabricObj._isReplacingQR) {
+            existingFabricObj._isReplacingQR = true;
+            
+            createQRCodeDataURL(
+              currentQRData,
+              currentSize,
+              obj.qrErrorCorrectionLevel || 'M',
+              obj.fill || '#000000',
+              obj.stroke || '#ffffff'
+            ).then((dataURL) => {
+              if (dataURL && existingFabricObj._isReplacingQR) {
+                FabricImage.fromURL(dataURL).then((newImg) => {
+                  newImg.set({
+                    left: mmToPx(obj.x),
+                    top: mmToPx(obj.y),
+                    scaleX: 1,
+                    scaleY: 1,
+                    selectable: true,
+                    hasControls: true,
+                    hasBorders: true,
+                    lockUniScaling: true,
+                  });
+                  (newImg as CustomFabricObject).customData = { id: obj.id };
+                  (newImg as any)._lastQRData = currentQRData;
+                  
+                  // Safely remove all objects with this ID to prevent duplicates
+                  const objectsToRemove = canvas.getObjects().filter(o => 
+                    (o as CustomFabricObject).customData?.id === obj.id
+                  );
+                  objectsToRemove.forEach(oldObj => canvas.remove(oldObj));
+                  
+                  canvas.add(newImg);
+                  canvas.renderAll();
+                  
+                  if (obj.id === selectedObjectId) {
+                    canvas.setActiveObject(newImg);
+                  }
+                }).catch(() => {
+                  if (existingFabricObj) existingFabricObj._isReplacingQR = false;
+                });
+              } else {
+                if (existingFabricObj) existingFabricObj._isReplacingQR = false;
+              }
+            }).catch(() => {
+              if (existingFabricObj) existingFabricObj._isReplacingQR = false;
+            });
+          } else if (!needsRegeneration) {
+            // Just update position if no regeneration needed
+            existingFabricObj.set({
+              left: mmToPx(obj.x),
+              top: mmToPx(obj.y),
+            });
+          }
         }
         
         existingFabricObj.setCoords();
@@ -307,6 +424,63 @@ export const CanvasEditor = ({
               strokeWidth: obj.strokeWidth || 1,
             }) as CustomFabricObject;
             break;
+
+          case 'uuid':
+            const uuidText = obj.sharedUUID || obj.text || 'UUID';
+            fabricObj = new Text(uuidText, {
+              left: mmToPx(obj.x),
+              top: mmToPx(obj.y),
+              fontSize: obj.fontSize || 12,
+              fontFamily: obj.fontFamily || 'Arial',
+              fill: obj.fill || '#000000',
+              selectable: true,
+              hasControls: true,
+              hasBorders: true,
+            }) as CustomFabricObject;
+            break;
+
+          case 'qrcode':
+            const qrData = `${preferences.uuid.qrPrefix}${obj.sharedUUID || ''}`;
+            const qrSize = mmToPx(obj.width || 20);
+            
+            createQRCodeDataURL(
+              qrData,
+              qrSize,
+              obj.qrErrorCorrectionLevel || 'M',
+              obj.fill || '#000000',
+              obj.stroke || '#ffffff'
+            ).then((dataURL) => {
+              if (dataURL) {
+                FabricImage.fromURL(dataURL).then((img) => {
+                  img.set({
+                    left: mmToPx(obj.x),
+                    top: mmToPx(obj.y),
+                    scaleX: 1,
+                    scaleY: 1,
+                    selectable: true,
+                    hasControls: true,
+                    hasBorders: true,
+                    lockUniScaling: true,
+                  });
+                  (img as CustomFabricObject).customData = { id: obj.id };
+                  (img as any)._lastQRData = qrData;
+                  
+                  // Remove any existing objects with the same ID to prevent duplicates
+                  const existingObjects = canvas.getObjects().filter(o => 
+                    (o as CustomFabricObject).customData?.id === obj.id
+                  );
+                  existingObjects.forEach(oldObj => canvas.remove(oldObj));
+                  
+                  canvas.add(img);
+                  canvas.renderAll();
+                  
+                  if (obj.id === selectedObjectId) {
+                    canvas.setActiveObject(img);
+                  }
+                });
+              }
+            });
+            return; // Exit early for async QR code creation
 
           default:
             return;

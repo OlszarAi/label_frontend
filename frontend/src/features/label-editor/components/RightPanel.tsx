@@ -7,11 +7,13 @@ import {
   CubeIcon, 
   ViewColumnsIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
-import { LabelDimensions, CanvasObject } from '../types/editor.types';
+import { LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
 import { DimensionControls } from './DimensionControls';
 import { ObjectProperties } from './ObjectProperties';
+import { Preferences } from './Preferences';
 
 interface RightPanelProps {
   dimensions: LabelDimensions;
@@ -22,6 +24,8 @@ interface RightPanelProps {
   onSendToBack: (id: string) => void;
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
+  preferences: EditorPreferences;
+  onPreferencesUpdate: (preferences: EditorPreferences) => void;
 }
 
 export const RightPanel = ({
@@ -32,14 +36,17 @@ export const RightPanel = ({
   onBringToFront,
   onSendToBack,
   onMoveUp,
-  onMoveDown
+  onMoveDown,
+  preferences,
+  onPreferencesUpdate
 }: RightPanelProps) => {
   const [expandedSections, setExpandedSections] = useState({
     canvas: true,
-    objects: true
+    objects: true,
+    preferences: false
   });
 
-  const toggleSection = (section: 'canvas' | 'objects') => {
+  const toggleSection = (section: 'canvas' | 'objects' | 'preferences') => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
@@ -54,7 +61,7 @@ export const RightPanel = ({
   }: { 
     title: string; 
     icon: React.ComponentType<{ className?: string }>; 
-    section: 'canvas' | 'objects';
+    section: 'canvas' | 'objects' | 'preferences';
     expanded: boolean;
   }) => (
     <button
@@ -148,6 +155,34 @@ export const RightPanel = ({
                     Select an object to edit its properties
                   </div>
                 )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Preferences Section */}
+      <div className="border-t border-gray-800">
+        <SectionHeader 
+          title="Preferences" 
+          icon={AdjustmentsHorizontalIcon} 
+          section="preferences" 
+          expanded={expandedSections.preferences}
+        />
+        <AnimatePresence>
+          {expandedSections.preferences && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="p-4 bg-gray-850">
+                <Preferences
+                  preferences={preferences}
+                  onPreferencesUpdate={onPreferencesUpdate}
+                />
               </div>
             </motion.div>
           )}
