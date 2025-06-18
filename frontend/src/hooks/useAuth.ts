@@ -9,6 +9,10 @@ interface User {
   firstName?: string;
   lastName?: string;
   role: string;
+  subscriptionType: 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+  subscriptionStatus: 'INACTIVE' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
 }
 
 interface AuthState {
