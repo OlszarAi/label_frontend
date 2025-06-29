@@ -183,65 +183,73 @@ export const LabelEditor = () => {
   const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId) || null;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
+    <div className="label-editor-container">
+      {/* Animated background */}
+      <div className="editor-background">
+        <div className="editor-background-grid"></div>
+        <div className="editor-background-glow"></div>
+      </div>
+      
       {/* Top Panel */}
-      <TopPanel
-        zoom={state.zoom}
-        onZoomChange={updateZoom}
-        onResetView={handleResetView}
-        dimensions={state.dimensions}
-        objectCount={state.objects.length}
-      />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <TopPanel
+          zoom={state.zoom}
+          onZoomChange={updateZoom}
+          onResetView={handleResetView}
+          dimensions={state.dimensions}
+          objectCount={state.objects.length}
+        />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
-        <PanelGroup direction="horizontal">
-          {/* Left Panel */}
-          <Panel defaultSize={15} minSize={10} maxSize={25}>
-            <LeftPanel
-              onAddText={handleAddText}
-              onAddRectangle={handleAddRectangle}
-              onAddCircle={handleAddCircle}
-              onAddQRCode={handleAddQRCode}
-              onAddUUID={handleAddUUID}
-            />
-          </Panel>
+        {/* Main Content Area */}
+        <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
+          <PanelGroup direction="horizontal">
+            {/* Left Panel */}
+            <Panel defaultSize={18} minSize={15} maxSize={25}>
+              <LeftPanel
+                onAddText={handleAddText}
+                onAddRectangle={handleAddRectangle}
+                onAddCircle={handleAddCircle}
+                onAddQRCode={handleAddQRCode}
+                onAddUUID={handleAddUUID}
+              />
+            </Panel>
 
-          <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
+            <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
 
-          {/* Center Panel - Canvas */}
-          <Panel defaultSize={70} minSize={50}>
-            <CanvasEditor
-              dimensions={state.dimensions}
-              zoom={state.zoom}
-              panX={state.panX}
-              panY={state.panY}
-              objects={state.objects}
-              selectedObjectId={state.selectedObjectId}
-              preferences={state.preferences}
-              onObjectUpdate={updateObject}
-              onObjectSelect={selectObject}
-            />
-          </Panel>
+            {/* Center Panel - Canvas */}
+            <Panel defaultSize={64} minSize={40}>
+              <CanvasEditor
+                dimensions={state.dimensions}
+                zoom={state.zoom}
+                panX={state.panX}
+                panY={state.panY}
+                objects={state.objects}
+                selectedObjectId={state.selectedObjectId}
+                preferences={state.preferences}
+                onObjectUpdate={updateObject}
+                onObjectSelect={selectObject}
+              />
+            </Panel>
 
-          <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
+            <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
 
-          {/* Right Panel */}
-          <Panel defaultSize={15} minSize={10} maxSize={25}>
-            <RightPanel
-              dimensions={state.dimensions}
-              onDimensionsChange={updateDimensions}
-              selectedObject={selectedObject}
-              onObjectUpdate={updateObject}
-              onBringToFront={bringToFront}
-              onSendToBack={sendToBack}
-              onMoveUp={moveUp}
-              onMoveDown={moveDown}
-              preferences={state.preferences}
-              onPreferencesUpdate={updatePreferences}
-            />
-          </Panel>
-        </PanelGroup>
+            {/* Right Panel */}
+            <Panel defaultSize={18} minSize={15} maxSize={25}>
+              <RightPanel
+                dimensions={state.dimensions}
+                onDimensionsChange={updateDimensions}
+                selectedObject={selectedObject}
+                onObjectUpdate={updateObject}
+                onBringToFront={bringToFront}
+                onSendToBack={sendToBack}
+                onMoveUp={moveUp}
+                onMoveDown={moveDown}
+                preferences={state.preferences}
+                onPreferencesUpdate={updatePreferences}
+              />
+            </Panel>
+          </PanelGroup>
+        </div>
       </div>
     </div>
   );
