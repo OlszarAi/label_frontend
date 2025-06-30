@@ -7,7 +7,6 @@ import {
   CubeIcon, 
   ViewColumnsIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
   AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 import { LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
@@ -66,38 +65,54 @@ export const RightPanel = ({
   }) => (
     <button
       onClick={() => toggleSection(section)}
-      className="w-full p-3 bg-gray-800 hover:bg-gray-700 border-b border-gray-700 
+      className="w-full p-3 bg-gray-800/70 hover:bg-gray-700/70 border-b border-gray-700/50 
                text-white text-sm font-medium transition-all duration-200 
                flex items-center gap-3 justify-between group"
     >
       <div className="flex items-center gap-3">
         <Icon className="w-4 h-4 text-blue-400 group-hover:text-blue-300 transition-colors" />
-        {title}
+        <span className="font-semibold">{title}</span>
       </div>
-      {expanded ? (
+      <motion.div
+        animate={{ rotate: expanded ? 180 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
         <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-      ) : (
-        <ChevronRightIcon className="w-4 h-4 text-gray-400" />
-      )}
+      </motion.div>
     </button>
   );
 
   return (
-    <div className="h-full bg-gray-900 border-l border-gray-800 flex flex-col">
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
+      className="h-full panel-glass border-l border-gray-800/50 flex flex-col"
+    >
       {/* Header */}
-      <div className="p-4 border-b border-gray-800 flex-shrink-0">
-        <h2 className="text-white font-semibold text-sm flex items-center gap-2">
-          <CogIcon className="w-4 h-4" />
-          Properties
-        </h2>
+      <div className="p-4 border-b border-gray-800/50 flex-shrink-0">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex items-center gap-3"
+        >
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <CogIcon className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-white font-semibold text-sm">Właściwości</h2>
+            <p className="text-xs text-gray-400">Dostosuj ustawienia</p>
+          </div>
+        </motion.div>
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Canvas Section */}
-        <div className="border-b border-gray-800">
+        <div className="border-b border-gray-800/50">
           <SectionHeader 
-            title="Canvas" 
+            title="Płótno" 
             icon={ViewColumnsIcon} 
             section="canvas" 
             expanded={expandedSections.canvas}
@@ -111,7 +126,7 @@ export const RightPanel = ({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="p-4 bg-gray-850">
+                <div className="p-4 bg-gray-850/70">
                   <CanvasProperties
                     dimensions={dimensions}
                     onDimensionsChange={onDimensionsChange}
@@ -125,9 +140,9 @@ export const RightPanel = ({
         </div>
 
         {/* Objects Section */}
-        <div className="border-b border-gray-800">
+        <div className="border-b border-gray-800/50">
           <SectionHeader 
-            title="Objects" 
+            title={selectedObject ? `Obiekt: ${selectedObject.type}` : "Obiekt"} 
             icon={CubeIcon} 
             section="objects" 
             expanded={expandedSections.objects}
@@ -141,7 +156,7 @@ export const RightPanel = ({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="bg-gray-850">
+                <div className="bg-gray-850/70">
                   {selectedObject ? (
                     <div className="p-4">
                       <ObjectProperties
@@ -154,9 +169,12 @@ export const RightPanel = ({
                       />
                     </div>
                   ) : (
-                    <div className="p-4 text-center text-gray-500 text-sm">
-                      <CubeIcon className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                      Select an object to edit its properties
+                    <div className="p-6 text-center text-gray-400 text-sm">
+                      <div className="w-12 h-12 bg-gray-700/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <CubeIcon className="w-6 h-6 text-gray-500" />
+                      </div>
+                      <p className="mb-2">Brak zaznaczenia</p>
+                      <p className="text-xs text-gray-500">Wybierz obiekt na płótnie, aby edytować jego właściwości</p>
                     </div>
                   )}
                 </div>
@@ -166,9 +184,9 @@ export const RightPanel = ({
         </div>
 
         {/* Preferences Section */}
-        <div className="border-b border-gray-800">
+        <div>
           <SectionHeader 
-            title="Preferences" 
+            title="Preferencje" 
             icon={AdjustmentsHorizontalIcon} 
             section="preferences" 
             expanded={expandedSections.preferences}
@@ -182,7 +200,7 @@ export const RightPanel = ({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="p-4 bg-gray-850">
+                <div className="p-4 bg-gray-850/70">
                   <Preferences
                     preferences={preferences}
                     onPreferencesUpdate={onPreferencesUpdate}
@@ -193,6 +211,6 @@ export const RightPanel = ({
           </AnimatePresence>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

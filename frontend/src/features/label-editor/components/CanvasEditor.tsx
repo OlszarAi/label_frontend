@@ -662,21 +662,39 @@ export const CanvasEditor = ({
       ref={containerRef}
       className="flex-1 flex items-center justify-center p-8 canvas-container overflow-hidden relative"
     >
-      <div className="relative">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-4 left-4 w-2 h-2 bg-blue-500/20 rounded-full animate-pulse"></div>
+        <div className="absolute top-8 right-8 w-1 h-1 bg-purple-500/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-12 left-12 w-1.5 h-1.5 bg-green-500/20 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+      
+      {/* Main canvas area */}
+      <div className="relative bg-white/5 p-4 rounded-2xl backdrop-blur-sm border border-white/10 shadow-2xl">
         <canvas
           ref={canvasRef}
           style={canvasStyle}
+          className="rounded-lg shadow-lg"
         />
         
-        {/* Coordinate system indicator */}
+        {/* Enhanced coordinate system indicator */}
         <div 
-          className="absolute text-xs text-gray-600 pointer-events-none bg-white px-2 py-1 rounded shadow-sm"
+          className="absolute text-xs text-gray-300 pointer-events-none bg-gray-800/80 px-3 py-1.5 rounded-lg shadow-lg border border-blue-500/20 backdrop-blur-sm"
           style={{ 
-            left: `${panX - 30}px`, 
-            top: `${panY - 30}px` 
+            left: `${panX - 40}px`, 
+            top: `${panY - 40}px`,
+            fontFamily: 'Inter, sans-serif'
           }}
         >
-          0,0
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+            <span className="font-mono">0,0</span>
+          </div>
+        </div>
+        
+        {/* Canvas info overlay */}
+        <div className="absolute top-2 right-2 text-xs text-gray-400 bg-gray-900/70 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
+          {dimensions.width} × {dimensions.height} mm
         </div>
       </div>
     </div>
