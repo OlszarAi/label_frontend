@@ -1,6 +1,12 @@
 /* Import Inter font for consistency */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+/* Utility classes for the editor */
+.grid-cols-auto-fill-200 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
 /* Main editor container - matching landing page background */
 .label-editor-container {
   font-family: 'Inter', sans-serif;
@@ -756,4 +762,69 @@
 .overflow-y-auto::-webkit-scrollbar-thumb {
   border-radius: 4px;
   margin: 2px;
+}
+
+/* Bottom panel styles */
+.bottom-panel {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(59, 130, 246, 0.1);
+  box-shadow: 
+    0 -4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 0 0 12px 12px;
+}
+
+.bottom-panel .panel-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.bottom-panel .panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bottom-panel button {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.bottom-panel button:hover {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.bottom-panel .divider {
+  height: 24px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Bottom panel specific to certain views */
+.view-with-bottom-panel .label-editor-container {
+  padding-bottom: 80px;
+}
+
+.view-with-bottom-panel .bottom-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 
+    0 -4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }

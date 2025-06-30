@@ -139,6 +139,33 @@ export function UserMenu() {
                 Profil
               </Link>
 
+              <Link href="/projects" className="user-menu-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M2 2C1.44772 2 1 2.44772 1 3V13C1 13.5523 1.44772 14 2 14H14C14.5523 14 15 13.5523 15 13V3C15 2.44772 14.5523 2 14 2H2Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                  <path
+                    d="M1 6H15"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M5 2V6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M11 2V6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                </svg>
+                Projekty
+              </Link>
+
               <Link href="/editor" className="user-menu-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path

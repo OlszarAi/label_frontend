@@ -1,19 +1,34 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
+import { useRouter } from 'next/navigation';
 import { useEditorState } from './hooks/useEditorState';
+import { useProjectLabels } from './hooks/useProjectLabels';
 import { CanvasEditor } from './components/CanvasEditor';
 import { LeftPanel } from './components/LeftPanel';
 import { RightPanel } from './components/RightPanel';
 import { TopPanel } from './components/TopPanel';
+import { BottomPanel } from './components/BottomPanel';
 import { generateUUID } from './utils/uuid';
 import { snapCoordinatesToGrid } from './utils/grid';
 import './styles/editor.css';
 
-export const LabelEditor = () => {
+interface LabelEditorProps {
+  labelId?: string;
+  projectId?: string | null;
+}
+
+export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
+  const router = useRouter();
+  const [bottomPanelExpanded, setBottomPanelExpanded] = useState(false);
+
   const {
     state,
+    currentLabel,
+    autoSave,
+    setAutoSave,
+    lastSaved,
     updateDimensions,
     updateZoom,
     updatePan,
@@ -26,7 +41,17 @@ export const LabelEditor = () => {
     sendToBack,
     moveUp,
     moveDown,
-  } = useEditorState();
+    saveLabel,
+    updateLabelName,
+    updateLabelDescription,
+    setCanvasRef,
+  } = useEditorState(labelId, projectId);
+
+  const { labels, createLabelAndNavigate } = useProjectLabels(currentLabel?.projectId);
+
+  const selectedObject = state.selectedObjectId 
+    ? state.objects.find(obj => obj.id === state.selectedObjectId) || null
+    : null;
 
   const handleAddText = useCallback(() => {
     const coords = snapCoordinatesToGrid(
@@ -180,7 +205,19 @@ export const LabelEditor = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [state.selectedObjectId, deleteObject, selectObject, handleAddText, handleAddRectangle, handleAddCircle, handleAddQRCode, handleAddUUID, handleResetView]);
 
-  const selectedObject = state.objects.find(obj => obj.id === state.selectedObjectId) || null;
+  const handleLabelSelect = useCallback((selectedLabelId: string) => {
+    // Show loading state briefly
+    const currentUrl = window.location.pathname;
+    if (!currentUrl.includes(selectedLabelId)) {
+      window.location.href = `/editor/${selectedLabelId}`;
+    }
+  }, []);
+
+  const handleCreateLabel = useCallback(async () => {
+    if (currentLabel?.projectId) {
+      await createLabelAndNavigate();
+    }
+  }, [currentLabel?.projectId, createLabelAndNavigate]);
 
   return (
     <div className="label-editor-container">
@@ -201,54 +238,73 @@ export const LabelEditor = () => {
         />
 
         {/* Main Content Area */}
-        <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
-          <PanelGroup direction="horizontal">
-            {/* Left Panel */}
-            <Panel defaultSize={18} minSize={15} maxSize={25}>
-              <LeftPanel
-                onAddText={handleAddText}
-                onAddRectangle={handleAddRectangle}
-                onAddCircle={handleAddCircle}
-                onAddQRCode={handleAddQRCode}
-                onAddUUID={handleAddUUID}
-              />
-            </Panel>
+        <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
+          <div className="flex-1 flex overflow-hidden">
+            <PanelGroup direction="horizontal">
+              {/* Left Panel */}
+              <Panel defaultSize={18} minSize={15} maxSize={25}>
+                <LeftPanel
+                  onAddText={handleAddText}
+                  onAddRectangle={handleAddRectangle}
+                  onAddCircle={handleAddCircle}
+                  onAddQRCode={handleAddQRCode}
+                  onAddUUID={handleAddUUID}
+                />
+              </Panel>
 
-            <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
+              <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
 
-            {/* Center Panel - Canvas */}
-            <Panel defaultSize={64} minSize={40}>
-              <CanvasEditor
-                dimensions={state.dimensions}
-                zoom={state.zoom}
-                panX={state.panX}
-                panY={state.panY}
-                objects={state.objects}
-                selectedObjectId={state.selectedObjectId}
-                preferences={state.preferences}
-                onObjectUpdate={updateObject}
-                onObjectSelect={selectObject}
-              />
-            </Panel>
+              {/* Center Panel - Canvas */}
+              <Panel defaultSize={64} minSize={40}>
+                <CanvasEditor
+                  dimensions={state.dimensions}
+                  zoom={state.zoom}
+                  panX={state.panX}
+                  panY={state.panY}
+                  objects={state.objects}
+                  selectedObjectId={state.selectedObjectId}
+                  preferences={state.preferences}
+                  onObjectUpdate={updateObject}
+                  onObjectSelect={selectObject}
+                  onCanvasReady={setCanvasRef}
+                />
+              </Panel>
 
-            <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
+              <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
 
-            {/* Right Panel */}
-            <Panel defaultSize={18} minSize={15} maxSize={25}>
-              <RightPanel
-                dimensions={state.dimensions}
-                onDimensionsChange={updateDimensions}
-                selectedObject={selectedObject}
-                onObjectUpdate={updateObject}
-                onBringToFront={bringToFront}
-                onSendToBack={sendToBack}
-                onMoveUp={moveUp}
-                onMoveDown={moveDown}
-                preferences={state.preferences}
-                onPreferencesUpdate={updatePreferences}
-              />
-            </Panel>
-          </PanelGroup>
+              {/* Right Panel */}
+              <Panel defaultSize={18} minSize={15} maxSize={25}>
+                <RightPanel
+                  dimensions={state.dimensions}
+                  onDimensionsChange={updateDimensions}
+                  selectedObject={selectedObject}
+                  onObjectUpdate={updateObject}
+                  onBringToFront={bringToFront}
+                  onSendToBack={sendToBack}
+                  onMoveUp={moveUp}
+                  onMoveDown={moveDown}
+                  preferences={state.preferences}
+                  onPreferencesUpdate={updatePreferences}
+                />
+              </Panel>
+            </PanelGroup>
+          </div>
+          
+          {/* Bottom Panel */}
+          <BottomPanel
+            currentLabel={currentLabel}
+            labels={labels}
+            isExpanded={bottomPanelExpanded}
+            onToggle={() => setBottomPanelExpanded(!bottomPanelExpanded)}
+            onLabelSelect={handleLabelSelect}
+            onCreateLabel={handleCreateLabel}
+            onSave={saveLabel}
+            onLabelNameChange={updateLabelName}
+            onLabelDescriptionChange={updateLabelDescription}
+            autoSave={autoSave}
+            onAutoSaveToggle={() => setAutoSave(!autoSave)}
+            lastSaved={lastSaved}
+          />
         </div>
       </div>
     </div>

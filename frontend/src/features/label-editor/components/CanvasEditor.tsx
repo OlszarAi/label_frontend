@@ -17,6 +17,7 @@ interface CanvasEditorProps {
   preferences: EditorPreferences;
   onObjectUpdate: (id: string, updates: Partial<CanvasObject>) => void;
   onObjectSelect: (id: string | null) => void;
+  onCanvasReady?: (canvas: Canvas) => void;
 }
 
 // Extend FabricObject to include our custom data
@@ -126,7 +127,8 @@ export const CanvasEditor = ({
   selectedObjectId,
   preferences,
   onObjectUpdate,
-  onObjectSelect
+  onObjectSelect,
+  onCanvasReady
 }: CanvasEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
@@ -172,6 +174,11 @@ export const CanvasEditor = ({
     });
 
     fabricCanvasRef.current = canvas;
+
+    // Notify parent component that canvas is ready for thumbnail generation
+    if (onCanvasReady) {
+      onCanvasReady(canvas);
+    }
 
     // Set up event listeners
     // Handle text changes for editable text objects
