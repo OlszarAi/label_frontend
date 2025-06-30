@@ -18,7 +18,7 @@ export interface Label {
   name: string;
   description?: string;
   projectId: string;
-  fabricData?: any; // Fabric.js canvas JSON data
+  fabricData?: unknown; // Fabric.js canvas JSON data
   thumbnail?: string;
   width: number;
   height: number;
@@ -54,7 +54,7 @@ export interface CreateLabelRequest {
   description?: string;
   width?: number;
   height?: number;
-  fabricData?: any;
+  fabricData?: unknown;
   thumbnail?: string;
   status?: LabelStatus;
 }
@@ -64,7 +64,7 @@ export interface UpdateLabelRequest {
   description?: string;
   width?: number;
   height?: number;
-  fabricData?: any;
+  fabricData?: unknown;
   thumbnail?: string;
   status?: LabelStatus;
 }

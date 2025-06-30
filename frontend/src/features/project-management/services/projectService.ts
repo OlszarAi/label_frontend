@@ -13,8 +13,6 @@ import {
   LabelsParams
 } from '../types/project.types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 class ProjectService {
   private getHeaders(token: string) {
     return {
@@ -31,7 +29,7 @@ class ProjectService {
       if (params?.limit) searchParams.append('limit', params.limit.toString());
       if (params?.search) searchParams.append('search', params.search);
 
-      const response = await fetch(`${API_BASE_URL}/api/projects?${searchParams}`, {
+      const response = await fetch(`/api/projects?${searchParams}`, {
         headers: this.getHeaders(token)
       });
 
@@ -50,7 +48,7 @@ class ProjectService {
 
   async getProject(token: string, projectId: string): Promise<{ success: boolean; data?: Project; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         headers: this.getHeaders(token)
       });
 
@@ -69,7 +67,7 @@ class ProjectService {
 
   async createProject(token: string, projectData: CreateProjectRequest): Promise<{ success: boolean; data?: Project; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects`, {
+      const response = await fetch(`/api/projects`, {
         method: 'POST',
         headers: this.getHeaders(token),
         body: JSON.stringify(projectData)
@@ -90,7 +88,7 @@ class ProjectService {
 
   async updateProject(token: string, projectId: string, projectData: UpdateProjectRequest): Promise<{ success: boolean; data?: Project; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: this.getHeaders(token),
         body: JSON.stringify(projectData)
@@ -111,7 +109,7 @@ class ProjectService {
 
   async deleteProject(token: string, projectId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: this.getHeaders(token)
       });
@@ -138,7 +136,7 @@ class ProjectService {
       if (params?.status) searchParams.append('status', params.status);
       if (params?.search) searchParams.append('search', params.search);
 
-      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/labels?${searchParams}`, {
+      const response = await fetch(`/api/projects/${projectId}/labels?${searchParams}`, {
         headers: this.getHeaders(token)
       });
 
@@ -157,7 +155,7 @@ class ProjectService {
 
   async getLabel(token: string, labelId: string): Promise<{ success: boolean; data?: Label; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/labels/${labelId}`, {
+      const response = await fetch(`/api/projects/labels/${labelId}`, {
         headers: this.getHeaders(token)
       });
 
@@ -176,7 +174,7 @@ class ProjectService {
 
   async createLabel(token: string, projectId: string, labelData: CreateLabelRequest): Promise<{ success: boolean; data?: Label; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/labels`, {
+      const response = await fetch(`/api/projects/${projectId}/labels`, {
         method: 'POST',
         headers: this.getHeaders(token),
         body: JSON.stringify(labelData)
@@ -197,7 +195,7 @@ class ProjectService {
 
   async updateLabel(token: string, labelId: string, labelData: UpdateLabelRequest): Promise<{ success: boolean; data?: Label; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/labels/${labelId}`, {
+      const response = await fetch(`/api/projects/labels/${labelId}`, {
         method: 'PUT',
         headers: this.getHeaders(token),
         body: JSON.stringify(labelData)
@@ -218,7 +216,7 @@ class ProjectService {
 
   async deleteLabel(token: string, labelId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/labels/${labelId}`, {
+      const response = await fetch(`/api/projects/labels/${labelId}`, {
         method: 'DELETE',
         headers: this.getHeaders(token)
       });
@@ -238,7 +236,7 @@ class ProjectService {
 
   async duplicateLabel(token: string, labelId: string): Promise<{ success: boolean; data?: Label; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/projects/labels/${labelId}/duplicate`, {
+      const response = await fetch(`/api/projects/labels/${labelId}/duplicate`, {
         method: 'POST',
         headers: this.getHeaders(token)
       });

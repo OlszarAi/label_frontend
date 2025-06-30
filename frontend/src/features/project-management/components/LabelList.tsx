@@ -9,6 +9,7 @@ interface LabelListProps {
   onLabelClick: (label: Label) => void;
   onEditLabel: (label: Label) => void;
   onDeleteLabel: (labelId: string) => void;
+  onAddNewLabel?: () => void;
   loading?: boolean;
 }
 
@@ -18,6 +19,7 @@ export function LabelList({
   onLabelClick, 
   onEditLabel, 
   onDeleteLabel,
+  onAddNewLabel,
   loading = false 
 }: LabelListProps) {
   if (loading) {
@@ -48,6 +50,19 @@ export function LabelList({
   if (viewMode === 'grid') {
     return (
       <div className="projects-grid">
+        {onAddNewLabel && (
+          <div className="projects-card projects-add-new-card" onClick={onAddNewLabel}>
+            <div className="projects-add-new-content">
+              <div className="projects-add-new-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h3>Add New Label</h3>
+              <p>Create a new label for this project</p>
+            </div>
+          </div>
+        )}
         {labels.map((label) => (
           <LabelCard
             key={label.id}

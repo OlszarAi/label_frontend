@@ -85,17 +85,17 @@ export default function ProjectLabelsPage() {
 
   const handleCreateLabel = () => {
     // Navigate to label editor with project context
-    router.push(`/editor?projectId=${projectId}&mode=create`);
+    router.push(`/editor/new?projectId=${projectId}`);
   };
 
   const handleEditLabel = (label: Label) => {
     // Navigate to label editor with label data
-    router.push(`/editor?projectId=${projectId}&labelId=${label.id}&mode=edit`);
+    router.push(`/editor/${label.id}`);
   };
 
   const handleLabelClick = (label: Label) => {
-    // Navigate to label editor in view mode
-    router.push(`/editor?projectId=${projectId}&labelId=${label.id}&mode=view`);
+    // Navigate to label editor 
+    router.push(`/editor/${label.id}`);
   };
 
   const handleDeleteLabel = async (labelId: string) => {
@@ -235,6 +235,7 @@ export default function ProjectLabelsPage() {
               onLabelClick={handleLabelClick}
               onEditLabel={handleEditLabel}
               onDeleteLabel={(labelId) => setDeleteConfirm(labelId)}
+              onAddNewLabel={handleCreateLabel}
               loading={isLoading}
             />
           )}

@@ -39,20 +39,25 @@ export const useAuth = () => {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedUser = localStorage.getItem(USER_KEY);
 
+      console.log('Auth check - storedToken:', !!storedToken, 'storedUser:', !!storedUser);
+
       if (!storedToken || !storedUser) {
         setAuthState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
       // Validate token with backend
-      const response = await fetch('http://localhost:3001/api/auth/session', {
+      const response = await fetch('/api/auth/session', {
         headers: {
           'Authorization': `Bearer ${storedToken}`
         }
       });
 
+      console.log('Auth validation response:', response.status, response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Auth validation successful:', data);
         setAuthState({
           user: JSON.parse(storedUser),
           token: storedToken,
@@ -60,6 +65,7 @@ export const useAuth = () => {
           isAuthenticated: true,
         });
       } else {
+        console.log('Auth validation failed, clearing storage');
         // Token is invalid, clear storage
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
@@ -87,7 +93,7 @@ export const useAuth = () => {
   // Login function
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +140,7 @@ export const useAuth = () => {
     lastName?: string;
   }) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +166,7 @@ export const useAuth = () => {
     try {
       if (authState.token) {
         // Call backend logout
-        await fetch('http://localhost:3001/api/auth/logout', {
+        await fetch('/api/auth/logout', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authState.token}`
@@ -189,7 +195,7 @@ export const useAuth = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/profile', {
+      const response = await fetch('/api/auth/profile', {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
@@ -215,7 +221,7 @@ export const useAuth = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/session', {
+      const response = await fetch('/api/auth/session', {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
