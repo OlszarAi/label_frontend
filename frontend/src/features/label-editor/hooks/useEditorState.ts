@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { Canvas } from 'fabric';
 import { EditorState, LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
 import { generateUUID } from '../utils/uuid';
 import { generateThumbnailFromCanvas } from '../utils/thumbnailGenerator';
@@ -24,6 +25,7 @@ const initialPreferences: EditorPreferences = {
     enabled: false,
     size: 5, // 5mm grid by default
     snapToGrid: false,
+    showGrid: false, // Don't show grid by default
     color: '#e0e0e0',
     opacity: 0.5,
   },
@@ -41,7 +43,7 @@ const initialState: EditorState = {
 
 export const useEditorState = (labelId?: string, projectId?: string | null) => {
   // Canvas reference for thumbnail generation
-  const canvasRef = useRef<any>(null);
+  const canvasRef = useRef<Canvas | null>(null);
 
   const [state, setState] = useState<EditorState>(initialState);
   const [currentLabel, setCurrentLabel] = useState<LabelData | null>(null);
@@ -317,7 +319,7 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
     });
   }, []);
 
-  const setCanvasRef = useCallback((canvas: any) => {
+  const setCanvasRef = useCallback((canvas: Canvas | null) => {
     canvasRef.current = canvas;
   }, []);
 

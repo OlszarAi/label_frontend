@@ -12,6 +12,7 @@ export interface GridPreferences {
   enabled: boolean;
   size: number; // Grid size in mm
   snapToGrid: boolean;
+  showGrid: boolean; // Whether to visually show the grid
   color: string;
   opacity: number; // 0 to 1
 }

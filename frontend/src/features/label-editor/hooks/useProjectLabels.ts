@@ -11,6 +11,7 @@ interface Label {
   height: number;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   updatedAt: string;
+  createdAt: string;
   projectId: string;
 }
 
