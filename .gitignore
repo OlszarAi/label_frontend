@@ -1,82 +1,51 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-frontend/node_modules/
-frontend/.pnp
-frontend/.pnp.*
-frontend/.yarn/*
-!frontend/.yarn/patches
-!frontend/.yarn/plugins
-!frontend/.yarn/releases
-!frontend/.yarn/versions
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+jspm_packages/
 
-# ignore entire client folder
-client/
+# Testing
+coverage/
+test-results/
+playwright-report/
+playwright/.cache/
+*.lcov
+.nyc_output/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
 
-# testing
-frontend/coverage/
-frontend/test-results/
-frontend/playwright-report/
-frontend/playwright/.cache/
-frontend/*.lcov
+# Next.js
+.next/
+out/
+*.trace
+.next/analyze/
 
-# next.js
-frontend/.next/
-frontend/out/
-frontend/*.trace
+# Production builds
+build/
+dist/
 
-# production
-frontend/build/
-frontend/dist/
-
-# misc
-.DS_Store
-*.pem
-Thumbs.db
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-lerna-debug.log*
-
-# local env files
+# Environment files
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+.env.sentry-build-plugin
 
-# vercel
-frontend/.vercel
+# Vercel
+.vercel
 
-# typescript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
-
-# IDE and Editor files
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
 # Logs
 logs/
@@ -84,7 +53,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+.pnpm-debug.log*
 lerna-debug.log*
 
 # Runtime data
@@ -93,27 +62,12 @@ pids/
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output/
-
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# Optional npm cache directory
+# Cache directories
 .npm/
-
-# Optional eslint cache
 .eslintcache
-
-# Optional stylelint cache
 .stylelintcache
-
-# Microbundle cache
+.cache/
+.parcel-cache/
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
@@ -128,10 +82,6 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache/
-.parcel-cache/
-
 # Storybook build outputs
 .out/
 .storybook-out/
@@ -141,27 +91,33 @@ storybook-static/
 tmp/
 temp/
 
-# Editor directories and files
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.pem
+
+# IDE and Editor files
 .vscode/*
 !.vscode/settings.json.example
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Cypress
-frontend/cypress/screenshots/
-frontend/cypress/videos/
-frontend/cypress/downloads/
-
-# Bundle analysis
-frontend/.next/analyze/
-
-# Sentry
+# Monitoring and analytics
 .sentryclirc
 
 # Turbo
@@ -176,7 +132,7 @@ docker-compose.override.yml
 docs/build/
 docs/.docusaurus/
 
-# Package-lock files (wybierz jeden menedżer pakietów)
+# Package-lock files (choose one package manager)
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
@@ -190,10 +146,6 @@ docs/.docusaurus/
 local-*
 dev-*
 
-# Monitoring and analytics
-.sentryclirc
-.env.sentry-build-plugin
-
 # Database
 *.db
 *.sqlite
@@ -204,3 +156,6 @@ dev-*
 *.tar.gz
 *.rar
 *.7z
+
+# Ignore entire client folder (if exists)
+client/
