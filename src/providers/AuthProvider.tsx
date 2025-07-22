@@ -41,6 +41,7 @@ interface AuthContextType extends AuthState {
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -64,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Validate token with backend
-      const response = await fetch('http://localhost:3001/api/auth/session', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
         headers: {
           'Authorization': `Bearer ${storedToken}`
         }
@@ -106,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     lastName?: string;
   }) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (authState.token) {
         // Call backend logout
-        await fetch('http://localhost:3001/api/auth/logout', {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authState.token}`
@@ -208,7 +209,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
@@ -234,7 +235,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/session', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 interface BackendStatus {
   connected: boolean;
   message: string;
@@ -73,7 +75,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
 
     try {
-      const response = await fetch('http://localhost:3001/health/ping');
+      const response = await fetch(`${API_BASE_URL}/health/ping`);
       const duration = Date.now() - startTime;
       
       if (response.ok) {
@@ -127,7 +129,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
     
     try {
-      const response = await fetch('http://localhost:3001/health');
+      const response = await fetch(`${API_BASE_URL}/health`);
       const data = await response.json();
       const duration = Date.now() - startTime;
       
@@ -167,7 +169,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
     
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,7 +245,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
     
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -322,7 +324,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
     
     try {
-      const response = await fetch('http://localhost:3001/api/auth/session', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -397,7 +399,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
     
     try {
-      const response = await fetch('http://localhost:3001/api/auth/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -464,7 +466,7 @@ export default function BackendTestPage() {
     const startTime = Date.now();
     
     try {
-      const response = await fetch('http://localhost:3001/api/auth/logout', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -882,7 +884,7 @@ export default function BackendTestPage() {
               <p><strong>2. Test użytkownika:</strong> Wypełnij formularz i przetestuj rejestrację/logowanie</p>
               <p><strong>3. Zarządzanie sesjami:</strong> Sprawdź status sesji przed kolejnymi logowaniami</p>
               <p><strong>4. Pełny test:</strong> Kliknij &quot;Pełny Test Auth&quot; dla automatycznego testu całego flow</p>
-              <p><strong>5. Backend URL:</strong> <code className="bg-blue-100 px-2 py-1 rounded">http://localhost:3001</code></p>
+              <p><strong>5. Backend URL:</strong> <code className="bg-blue-100 px-2 py-1 rounded">{API_BASE_URL}</code></p>
             </div>
             
             <div className="mt-4 p-3 bg-blue-100 rounded-lg">
