@@ -15,6 +15,14 @@ interface User {
   subscriptionEndDate?: string;
 }
 
+interface RegisterUserData {
+  email: string;
+  username: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -23,11 +31,11 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<any>;
-  register: (userData: any) => Promise<any>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: unknown }>;
+  register: (userData: RegisterUserData) => Promise<{ success: boolean; error?: string; user?: unknown }>;
   logout: () => Promise<void>;
-  getUserProfile: () => Promise<any>;
-  checkSession: () => Promise<any>;
+  getUserProfile: () => Promise<{ success: boolean; error?: string; user?: unknown }>;
+  checkSession: () => Promise<{ success: boolean; error?: string; user?: unknown }>;
   checkAuthOnMount: () => Promise<void>;
 }
 
@@ -63,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json(); // We don't need the data but need to consume the response
         setAuthState({
           user: JSON.parse(storedUser),
           token: storedToken,

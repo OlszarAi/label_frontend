@@ -79,8 +79,8 @@ export function CTASection() {
           >
             <div className="testimonial-content">
               <p className="testimonial-text">
-                "Label Editor całkowicie zmienił sposób w jaki tworzymy etykiety dla naszych produktów. 
-                To co wcześniej zajmowało godziny, teraz robimy w kilka minut!"
+                &quot;Label Editor całkowicie zmienił sposób w jaki tworzymy etykiety dla naszych produktów. 
+                To co wcześniej zajmowało godziny, teraz robimy w kilka minut!&quot;
               </p>
               <div className="testimonial-author">
                 <div className="testimonial-avatar">

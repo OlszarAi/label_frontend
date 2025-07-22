@@ -6,9 +6,6 @@ import {
   CreateLabelRequest, 
   UpdateLabelRequest,
   ProjectsResponse,
-  ProjectResponse,
-  LabelsResponse,
-  LabelResponse,
   ProjectsParams,
   LabelsParams
 } from '../types/project.types';

@@ -148,7 +148,7 @@ const ResponsiveGrid: React.FC<{
     const maxColumns = Math.floor((availableWidth + minGap) / (scaledCardWidth + minGap));
     
     // Ensure sensible column limits based on scale
-    let minColumns = 1;
+    const minColumns = 1;
     let maxColumnLimit = 5; // Allow up to 5 columns for very small zoom
     
     // Adjust column limits based on zoom level for better UX
@@ -168,8 +168,8 @@ const ResponsiveGrid: React.FC<{
 
   const columns = getOptimalColumns();
 
-  // Dynamic grid template
-  const gridClass = `grid gap-4 grid-cols-${columns}`;
+  // Dynamic grid template (kept for potential future use)
+  // const gridClass = `grid gap-4 grid-cols-${columns}`;
   
   // For very dynamic layouts, use inline styles instead of classes
   const gridStyle = {
@@ -288,33 +288,43 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Measure container width for responsive grid
-  useEffect(() => {
-    const measureWidth = () => {
-      if (containerRef.current) {
-        const { width } = containerRef.current.getBoundingClientRect();
-        setContainerWidth(width);
-      }
-    };
+  const measureWidth = useCallback(() => {
+    if (containerRef.current) {
+      const { width } = containerRef.current.getBoundingClientRect();
+      setContainerWidth(width);
+    }
+  }, []);
 
+  useEffect(() => {
     measureWidth();
     
     // Use ResizeObserver for better performance
+    let resizeObserver: ResizeObserver | null = null;
+    let resizeHandler: (() => void) | null = null;
+    
     if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
-      const resizeObserver = new ResizeObserver(() => {
+      resizeObserver = new ResizeObserver(() => {
         measureWidth();
       });
       
       if (containerRef.current) {
         resizeObserver.observe(containerRef.current);
       }
-      
-      return () => resizeObserver.disconnect();
-    } else {
+    } else if (typeof window !== 'undefined') {
       // Fallback for browsers without ResizeObserver
-      window.addEventListener('resize', measureWidth);
-      return () => window.removeEventListener('resize', measureWidth);
+      resizeHandler = () => measureWidth();
+      (window as unknown as { addEventListener: (event: string, handler: () => void) => void }).addEventListener('resize', resizeHandler);
     }
-  }, []);
+    
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      if (resizeHandler && typeof window !== 'undefined') {
+        (window as unknown as { removeEventListener: (event: string, handler: () => void) => void }).removeEventListener('resize', resizeHandler);
+      }
+    };
+  }, [measureWidth]);
 
   const filteredAndSortedLabels = useMemo(() => {
     const filtered = labels.filter(label => {

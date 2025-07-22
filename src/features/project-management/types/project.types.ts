@@ -18,7 +18,7 @@ export interface Label {
   name: string;
   description?: string;
   projectId: string;
-  fabricData?: any; // Fabric.js canvas JSON data
+  fabricData?: Record<string, unknown>; // Fabric.js canvas JSON data
   thumbnail?: string; // Base64 or URL to label thumbnail
   width: number; // Label width in mm
   height: number; // Label height in mm
@@ -46,7 +46,7 @@ export interface CreateLabelRequest {
   description?: string;
   width?: number;
   height?: number;
-  fabricData?: any;
+  fabricData?: Record<string, unknown>;
   thumbnail?: string;
 }
 
@@ -55,7 +55,7 @@ export interface UpdateLabelRequest {
   description?: string;
   width?: number;
   height?: number;
-  fabricData?: any;
+  fabricData?: Record<string, unknown>;
   thumbnail?: string;
   version?: number;
 }
@@ -97,7 +97,7 @@ export interface ProjectsParams {
 export interface LabelsParams {
   sortBy?: 'name' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
-  status?: LabelStatus;
+  status?: string; // Changed from LabelStatus to string since LabelStatus is not defined
   search?: string;
 }
 

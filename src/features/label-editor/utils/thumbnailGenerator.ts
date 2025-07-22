@@ -59,21 +59,21 @@ export const generateThumbnailFromFabric = async (
           const offsetY = (thumbnailHeight - scaledHeight) / 2;
 
           // Scale and position all objects
-          fabricCanvas.getObjects().forEach((obj: Record<string, unknown>) => {
+          fabricCanvas.getObjects().forEach((obj) => {
             if (obj.type === 'image') {
               // Handle images specially to maintain quality
               obj.set({
-                scaleX: ((obj.scaleX as number) || 1) * scale,
-                scaleY: ((obj.scaleY as number) || 1) * scale,
-                left: (((obj.left as number) || 0) * scale) + offsetX,
-                top: (((obj.top as number) || 0) * scale) + offsetY,
+                scaleX: (obj.scaleX || 1) * scale,
+                scaleY: (obj.scaleY || 1) * scale,
+                left: ((obj.left || 0) * scale) + offsetX,
+                top: ((obj.top || 0) * scale) + offsetY,
               });
             } else {
               obj.set({
-                scaleX: ((obj.scaleX as number) || 1) * scale,
-                scaleY: ((obj.scaleY as number) || 1) * scale,
-                left: (((obj.left as number) || 0) * scale) + offsetX,
-                top: (((obj.top as number) || 0) * scale) + offsetY,
+                scaleX: (obj.scaleX || 1) * scale,
+                scaleY: (obj.scaleY || 1) * scale,
+                left: ((obj.left || 0) * scale) + offsetX,
+                top: ((obj.top || 0) * scale) + offsetY,
               });
             }
             obj.setCoords();

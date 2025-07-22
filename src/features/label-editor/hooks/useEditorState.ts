@@ -161,14 +161,14 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
                   }).catch(() => {
                     // Silently fail thumbnail updates to avoid disrupting user experience
                   });
-                } catch (error) {
+                } catch {
                   // Ignore thumbnail generation errors during autosave
                 }
               }, 500);
             }
           }
         } catch (error) {
-          if (error.name !== 'AbortError') {
+          if (error instanceof Error && error.name !== 'AbortError') {
             console.error('Auto-save failed:', error);
           }
         }

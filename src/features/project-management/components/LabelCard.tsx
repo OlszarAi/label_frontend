@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Label } from '../types/project.types';
 
 interface LabelCardProps {
@@ -17,27 +18,16 @@ export function LabelCard({ label, onClick, onEdit, onDelete }: LabelCardProps) 
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PUBLISHED':
-        return 'projects-status-published';
-      case 'DRAFT':
-        return 'projects-status-draft';
-      case 'ARCHIVED':
-        return 'projects-status-archived';
-      default:
-        return 'projects-status-default';
-    }
-  };
-
   return (
     <div className="projects-card" onClick={onClick}>
       {/* Thumbnail/Preview */}
       <div className="projects-card-image">
         {label.thumbnail ? (
-          <img 
+          <Image 
             src={label.thumbnail} 
             alt={label.name}
+            width={200}
+            height={150}
             className="projects-card-thumbnail"
           />
         ) : (
@@ -88,14 +78,11 @@ export function LabelCard({ label, onClick, onEdit, onDelete }: LabelCardProps) 
           </div>
         </div>
 
-        {/* Status and dimensions */}
+        {/* Dimensions */}
         <div className="projects-card-meta">
           <div className="projects-card-status-row">
-            <span className={`projects-status ${getStatusColor(label.status)}`}>
-              {label.status}
-            </span>
             <span className="projects-card-dimensions">
-              {label.width} × {label.height}
+              {label.width} × {label.height} mm
             </span>
           </div>
         </div>

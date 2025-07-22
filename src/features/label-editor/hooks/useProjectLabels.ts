@@ -254,8 +254,11 @@ export const useProjectLabels = ({ projectId }: UseProjectLabelsProps) => {
         clearTimeout(thumbnailUpdateTimer.current);
         thumbnailUpdateTimer.current = null;
       }
-      thumbnailUpdateQueue.current.clear();
-      lastThumbnailUpdate.current.clear();
+      // Copy current values to avoid stale closure warnings
+      const currentQueue = thumbnailUpdateQueue.current;
+      const currentLastUpdate = lastThumbnailUpdate.current;
+      currentQueue.clear();
+      currentLastUpdate.clear();
     };
   }, [projectId, loadLabels]); // Use projectId directly instead of fetchLabels
 

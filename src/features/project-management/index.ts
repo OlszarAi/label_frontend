@@ -28,6 +28,5 @@ export type {
   LabelsResponse,
   LabelResponse,
   ProjectsParams,
-  LabelsParams,
-  LabelStatus
+  LabelsParams
 } from './types/project.types';

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 interface BackendStatus {
   connected: boolean;
   message: string;
-  data?: any;
+  data?: unknown;
   error?: string;
 }
 
@@ -17,10 +17,18 @@ interface UserData {
   lastName: string;
 }
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 interface TestResult {
   test: string;
   success: boolean;
-  data?: any;
+  data?: string | Record<string, unknown>;
   error?: string;
   duration?: number;
 }
@@ -32,7 +40,7 @@ export default function BackendTestPage() {
   });
   const [loading, setLoading] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   
   // Form data for user creation
@@ -559,7 +567,10 @@ export default function BackendTestPage() {
   };
 
   useEffect(() => {
-    testConnection();
+    const initTest = async () => {
+      await testConnection();
+    };
+    initTest();
   }, []);
 
   return (
@@ -867,10 +878,10 @@ export default function BackendTestPage() {
               🔧 Instrukcje testowania
             </h3>
             <div className="text-blue-800 space-y-2">
-              <p><strong>1. Test podstawowy:</strong> Kliknij "Test Ping" i "Health Check"</p>
+              <p><strong>1. Test podstawowy:</strong> Kliknij &quot;Test Ping&quot; i &quot;Health Check&quot;</p>
               <p><strong>2. Test użytkownika:</strong> Wypełnij formularz i przetestuj rejestrację/logowanie</p>
               <p><strong>3. Zarządzanie sesjami:</strong> Sprawdź status sesji przed kolejnymi logowaniami</p>
-              <p><strong>4. Pełny test:</strong> Kliknij "Pełny Test Auth" dla automatycznego testu całego flow</p>
+              <p><strong>4. Pełny test:</strong> Kliknij &quot;Pełny Test Auth&quot; dla automatycznego testu całego flow</p>
               <p><strong>5. Backend URL:</strong> <code className="bg-blue-100 px-2 py-1 rounded">http://localhost:3001</code></p>
             </div>
             
@@ -888,7 +899,7 @@ export default function BackendTestPage() {
               <div className="text-sm text-yellow-800 space-y-1">
                 <p>• Logowanie gdy już jesteś zalogowany pokazuje ostrzeżenie</p>
                 <p>• Backend sprawdza czy token już istnieje i go wykorzystuje</p>
-                <p>• Używaj "Status Sesji" aby sprawdzić ważność tokenu</p>
+                <p>• Używaj &quot;Status Sesji&quot; aby sprawdzić ważność tokenu</p>
                 <p>• Stare tokeny są automatycznie usuwane przy nowym logowaniu</p>
               </div>
             </div>

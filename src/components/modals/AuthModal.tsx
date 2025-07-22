@@ -69,7 +69,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           setError(result.error || 'Błąd rejestracji');
         }
       }
-    } catch (error) {
+    } catch {
       setError('Wystąpił nieoczekiwany błąd');
     } finally {
       setIsLoading(false);

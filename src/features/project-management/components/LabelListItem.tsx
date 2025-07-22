@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Label } from '../types/project.types';
 
 interface LabelListItemProps {
@@ -17,19 +18,6 @@ export function LabelListItem({ label, onClick, onEdit, onDelete }: LabelListIte
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PUBLISHED':
-        return 'projects-status-published';
-      case 'DRAFT':
-        return 'projects-status-draft';
-      case 'ARCHIVED':
-        return 'projects-status-archived';
-      default:
-        return 'projects-status-default';
-    }
-  };
-
   return (
     <div className="projects-list-item" onClick={onClick}>
       <div className="projects-list-item-content">
@@ -37,9 +25,11 @@ export function LabelListItem({ label, onClick, onEdit, onDelete }: LabelListIte
         <div className="projects-list-item-info">
           <div className="projects-list-item-icon">
             {label.thumbnail ? (
-              <img 
+              <Image 
                 src={label.thumbnail} 
                 alt={label.name}
+                width={40}
+                height={30}
                 className="projects-list-item-thumbnail"
               />
             ) : (
@@ -62,11 +52,8 @@ export function LabelListItem({ label, onClick, onEdit, onDelete }: LabelListIte
         {/* Center - Meta info */}
         <div className="projects-list-item-meta">
           <div className="projects-list-item-meta-row">
-            <span className={`projects-status ${getStatusColor(label.status)}`}>
-              {label.status}
-            </span>
             <span className="projects-list-item-dimensions">
-              {label.width} × {label.height}
+              {label.width} × {label.height} mm
             </span>
           </div>
           <div className="projects-list-item-meta-row">

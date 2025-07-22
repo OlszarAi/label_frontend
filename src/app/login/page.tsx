@@ -18,7 +18,7 @@ export default function LoginPage() {
     const result = await login(email, password);
     
     if (!result.success) {
-      setError(result.error);
+      setError(result.error || 'Wystąpił błąd podczas logowania');
     }
     
     setLoading(false);
