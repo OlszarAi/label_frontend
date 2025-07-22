@@ -11,6 +11,7 @@ import {
   CogIcon
 } from '@heroicons/react/24/outline';
 import { CanvasObject, EditorPreferences } from '../types/editor.types';
+import { CanvasProperties } from './CanvasProperties';
 
 interface PropertiesPanelProps {
   dimensions: { width: number; height: number };
@@ -48,16 +49,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       ...prev,
       [section]: !prev[section]
     }));
-  };
-
-  const handleCanvasSizeChange = (field: 'width' | 'height', value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      onDimensionsChange({
-        ...dimensions,
-        [field]: numValue
-      });
-    }
   };
 
   const handleObjectUpdate = (field: string, value: string | number | boolean) => {
@@ -266,28 +257,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             </div>
           </Collapsible.Trigger>
           <Collapsible.Content className="collapsible-content">
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Width (mm)</label>
-                  <input
-                    type="number"
-                    value={dimensions.width}
-                    onChange={(e) => handleCanvasSizeChange('width', e.target.value)}
-                    className="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Height (mm)</label>
-                  <input
-                    type="number"
-                    value={dimensions.height}
-                    onChange={(e) => handleCanvasSizeChange('height', e.target.value)}
-                    className="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
+            <CanvasProperties
+              dimensions={dimensions}
+              onDimensionsChange={onDimensionsChange}
+              preferences={preferences}
+              onPreferencesUpdate={onPreferencesUpdate}
+            />
           </Collapsible.Content>
         </Collapsible.Root>
 

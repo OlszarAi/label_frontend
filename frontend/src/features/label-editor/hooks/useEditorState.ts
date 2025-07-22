@@ -14,6 +14,7 @@ interface LabelData {
   width: number;
   height: number;
   projectId: string;
+  version?: number; // Add version for optimistic locking
 }
 
 const initialPreferences: EditorPreferences = {
@@ -22,12 +23,18 @@ const initialPreferences: EditorPreferences = {
     qrPrefix: 'https://example.com/',
   },
   grid: {
-    enabled: false,
     size: 5, // 5mm grid by default
     snapToGrid: false,
     showGrid: false, // Don't show grid by default
     color: '#e0e0e0',
     opacity: 0.5,
+  },
+  ruler: {
+    showRulers: false, // Rulers disabled by default
+    color: '#ffffff',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    opacity: 0.9,
+    size: 24, // Default ruler size in pixels
   },
 };
 
@@ -44,11 +51,34 @@ const initialState: EditorState = {
 export const useEditorState = (labelId?: string, projectId?: string | null) => {
   // Canvas reference for thumbnail generation
   const canvasRef = useRef<Canvas | null>(null);
+  
+  // Auto-save timer references for proper cleanup
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveAbortControllerRef = useRef<AbortController | null>(null);
+  
+  // Track if we're currently switching labels to prevent auto-save race conditions
+  const isSwitchingLabelsRef = useRef(false);
+  
+  // Track loading state to prevent auto-save during initial load
+  const isLoadingRef = useRef(false);
 
   const [state, setState] = useState<EditorState>(initialState);
   const [currentLabel, setCurrentLabel] = useState<LabelData | null>(null);
   const [autoSave, setAutoSave] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Cleanup function to cancel pending operations
+  const cleanup = useCallback(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (saveAbortControllerRef.current) {
+      saveAbortControllerRef.current.abort();
+      saveAbortControllerRef.current = null;
+    }
+  }, []);
 
   // Load label data when labelId changes, or create new label when projectId is provided
   useEffect(() => {
@@ -57,21 +87,61 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
     } else if (projectId) {
       createNewLabel(projectId);
     }
-  }, [labelId, projectId]);
+    
+    // Cleanup on unmount or when dependencies change
+    return cleanup;
+  }, [labelId, projectId, cleanup]);
 
-  // Auto-save functionality
-  useEffect(() => {
-    if (autoSave && currentLabel && state.objects.length > 0) {
-      const timer = setTimeout(() => {
-        saveLabel();
-      }, 5000); // Auto-save every 5 seconds
-
-      return () => clearTimeout(timer);
+  // Debounced auto-save with proper race condition prevention
+  const debouncedAutoSave = useCallback(() => {
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
     }
-  }, [state.objects, autoSave, currentLabel]);
+
+    // Don't auto-save if we're switching labels or loading
+    if (isSwitchingLabelsRef.current || isLoadingRef.current || !hasUnsavedChanges || !currentLabel) {
+      return;
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      // Double-check conditions before saving
+      if (!isSwitchingLabelsRef.current && !isLoadingRef.current && hasUnsavedChanges && currentLabel) {
+        try {
+          const result = await saveLabel();
+          if (result) {
+            setHasUnsavedChanges(false);
+          }
+        } catch (error) {
+          console.error('Auto-save failed:', error);
+        }
+      }
+    }, 2000);
+  }, [hasUnsavedChanges, currentLabel]);
+
+  // Auto-save effect with improved dependencies
+  useEffect(() => {
+    if (autoSave && hasUnsavedChanges && currentLabel && !isSwitchingLabelsRef.current && !isLoadingRef.current) {
+      debouncedAutoSave();
+    }
+    
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [autoSave, hasUnsavedChanges, currentLabel, debouncedAutoSave]);
 
   const loadLabel = async (id: string) => {
     try {
+      // Set loading and switching flags to prevent auto-save race conditions
+      isLoadingRef.current = true;
+      isSwitchingLabelsRef.current = true;
+      
+      // Cleanup any pending operations
+      cleanup();
+
       const response = await fetch(`/api/projects/labels/${id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -80,6 +150,8 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
 
       if (response.ok) {
         const { data: label } = await response.json();
+        
+        // Update current label first
         setCurrentLabel(label);
         
         // Load fabric data into editor state
@@ -88,21 +160,37 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
             ...prev,
             dimensions: { width: label.width, height: label.height },
             objects: label.fabricData.objects || [],
+            selectedObjectId: null, // Clear selection when switching
           }));
         } else {
           setState(prev => ({
             ...prev,
             dimensions: { width: label.width, height: label.height },
+            objects: [],
+            selectedObjectId: null,
           }));
         }
+        
+        // Reset state flags
+        setHasUnsavedChanges(false);
+        setLastSaved(new Date());
       }
     } catch (error) {
       console.error('Error loading label:', error);
+    } finally {
+      // Clear loading and switching flags after a brief delay to ensure state has settled
+      setTimeout(() => {
+        isLoadingRef.current = false;
+        isSwitchingLabelsRef.current = false;
+      }, 100);
     }
   };
 
   const createNewLabel = async (projectId: string) => {
     try {
+      isLoadingRef.current = true;
+      cleanup();
+
       const response = await fetch(`/api/projects/${projectId}/labels`, {
         method: 'POST',
         headers: {
@@ -130,20 +218,36 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
           ...prev,
           dimensions: { width: label.width, height: label.height },
           objects: [],
+          selectedObjectId: null,
         }));
+
+        setHasUnsavedChanges(false);
+        setLastSaved(new Date());
 
         // Navigate to the new label's URL
         window.history.replaceState(null, '', `/editor/${label.id}`);
       }
     } catch (error) {
       console.error('Error creating new label:', error);
+    } finally {
+      setTimeout(() => {
+        isLoadingRef.current = false;
+      }, 100);
     }
   };
 
   const saveLabel = async () => {
-    if (!currentLabel) return;
+    if (!currentLabel || isSwitchingLabelsRef.current) return false;
 
     try {
+      // Cancel any existing save request
+      if (saveAbortControllerRef.current) {
+        saveAbortControllerRef.current.abort();
+      }
+      
+      // Create new abort controller for this save request
+      saveAbortControllerRef.current = new AbortController();
+
       const fabricData = {
         version: '6.0.0',
         objects: state.objects,
@@ -160,44 +264,102 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
         }
       }
 
+      const requestBody = {
+        name: currentLabel.name,
+        description: currentLabel.description,
+        fabricData,
+        width: state.dimensions.width,
+        height: state.dimensions.height,
+        thumbnail: thumbnail || undefined,
+        // Include version for optimistic locking
+        ...(currentLabel.version && { version: currentLabel.version }),
+      };
+
       const response = await fetch(`/api/projects/labels/${currentLabel.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
-        body: JSON.stringify({
-          name: currentLabel.name,
-          description: currentLabel.description,
-          fabricData,
-          width: state.dimensions.width,
-          height: state.dimensions.height,
-          thumbnail: thumbnail || undefined, // Only send thumbnail if we have one
-        }),
+        body: JSON.stringify(requestBody),
+        signal: saveAbortControllerRef.current.signal,
       });
 
       if (response.ok) {
+        const { data: updatedLabel } = await response.json();
+        
+        // Update current label with new version
+        setCurrentLabel(prev => prev ? { ...prev, version: updatedLabel.version } : null);
         setLastSaved(new Date());
+        return true;
+      } else if (response.status === 409) {
+        // Handle version conflict (optimistic locking)
+        console.warn('Label was modified by another session, reloading...');
+        await loadLabel(currentLabel.id);
+        return false;
+      } else {
+        return false;
       }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Save request was cancelled');
+        return false;
+      }
       console.error('Error saving label:', error);
+      return false;
+    } finally {
+      saveAbortControllerRef.current = null;
     }
   };
 
+  // Utility function for safe label switching
+  const switchToLabel = useCallback(async (newLabelId: string) => {
+    // Prevent race conditions during switching
+    isSwitchingLabelsRef.current = true;
+    
+    try {
+      // Cancel any pending auto-save
+      cleanup();
+      
+      // Load the new label
+      await loadLabel(newLabelId);
+      
+      // Update URL without page refresh
+      window.history.pushState(null, '', `/editor/${newLabelId}`);
+      
+    } catch (error) {
+      console.error('Error switching to label:', error);
+    } finally {
+      // Reset switching flag after a delay
+      setTimeout(() => {
+        isSwitchingLabelsRef.current = false;
+      }, 100);
+    }
+  }, [cleanup]);
+
+  // Track changes for unsaved state (only when not loading or switching)
+  useEffect(() => {
+    if (!isLoadingRef.current && !isSwitchingLabelsRef.current) {
+      setHasUnsavedChanges(true);
+    }
+  }, [state.objects, state.dimensions, currentLabel?.name, currentLabel?.description]);
+
   const updateLabelName = useCallback((name: string) => {
-    if (currentLabel) {
+    if (currentLabel && !isLoadingRef.current) {
       setCurrentLabel(prev => prev ? { ...prev, name } : null);
     }
   }, [currentLabel]);
 
   const updateLabelDescription = useCallback((description: string) => {
-    if (currentLabel) {
+    if (currentLabel && !isLoadingRef.current) {
       setCurrentLabel(prev => prev ? { ...prev, description } : null);
     }
   }, [currentLabel]);
 
   const updateDimensions = useCallback((dimensions: LabelDimensions) => {
-    setState(prev => ({ ...prev, dimensions }));
+    if (!isLoadingRef.current) {
+      setState(prev => ({ ...prev, dimensions }));
+    }
   }, []);
 
   const updateZoom = useCallback((zoom: number) => {
@@ -209,33 +371,40 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
   }, []);
 
   const addObject = useCallback((object: Omit<CanvasObject, 'id'>) => {
-    const newObject: CanvasObject = {
-      ...object,
-      id: crypto.randomUUID(),
-    };
-    setState(prev => ({ 
-      ...prev, 
-      objects: [...prev.objects, newObject],
-      selectedObjectId: newObject.id 
-    }));
-    return newObject.id;
+    if (!isLoadingRef.current) {
+      const newObject: CanvasObject = {
+        ...object,
+        id: crypto.randomUUID(),
+      };
+      setState(prev => ({ 
+        ...prev, 
+        objects: [...prev.objects, newObject],
+        selectedObjectId: newObject.id 
+      }));
+      return newObject.id;
+    }
+    return null;
   }, []);
 
   const updateObject = useCallback((id: string, updates: Partial<CanvasObject>) => {
-    setState(prev => ({
-      ...prev,
-      objects: prev.objects.map(obj => 
-        obj.id === id ? { ...obj, ...updates } : obj
-      )
-    }));
+    if (!isLoadingRef.current) {
+      setState(prev => ({
+        ...prev,
+        objects: prev.objects.map(obj => 
+          obj.id === id ? { ...obj, ...updates } : obj
+        )
+      }));
+    }
   }, []);
 
   const deleteObject = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      objects: prev.objects.filter(obj => obj.id !== id),
-      selectedObjectId: prev.selectedObjectId === id ? null : prev.selectedObjectId
-    }));
+    if (!isLoadingRef.current) {
+      setState(prev => ({
+        ...prev,
+        objects: prev.objects.filter(obj => obj.id !== id),
+        selectedObjectId: prev.selectedObjectId === id ? null : prev.selectedObjectId
+      }));
+    }
   }, []);
 
   const selectObject = useCallback((id: string | null) => {
@@ -243,84 +412,106 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
   }, []);
 
   const updatePreferences = useCallback((preferences: EditorPreferences) => {
-    setState(prev => {
-      const newState = { ...prev, preferences };
-      
-      // Update all existing UUID and QR objects with new preferences
-      const updatedObjects = newState.objects.map(obj => {
-        if (obj.type === 'uuid' || obj.type === 'qrcode') {
-          // Generate new UUID if length changed or object doesn't have one
-          const needsNewUUID = !obj.sharedUUID || 
-            (obj.sharedUUID.length !== preferences.uuid.uuidLength);
-          
-          if (needsNewUUID) {
-            const newUUID = generateUUID(preferences.uuid.uuidLength);
-            return {
-              ...obj,
-              sharedUUID: newUUID,
-              text: obj.type === 'uuid' ? newUUID : obj.text
-            };
+    if (!isLoadingRef.current) {
+      setState(prev => {
+        const newState = { ...prev, preferences };
+        
+        // Update all existing UUID and QR objects with new preferences
+        const updatedObjects = newState.objects.map(obj => {
+          if (obj.type === 'uuid' || obj.type === 'qrcode') {
+            // Generate new UUID if length changed or object doesn't have one
+            const needsNewUUID = !obj.sharedUUID || 
+              (obj.sharedUUID.length !== preferences.uuid.uuidLength);
+            
+            if (needsNewUUID) {
+              const newUUID = generateUUID(preferences.uuid.uuidLength);
+              return {
+                ...obj,
+                sharedUUID: newUUID,
+                text: obj.type === 'uuid' ? newUUID : obj.text
+              };
+            }
           }
-        }
-        return obj;
+          return obj;
+        });
+        
+        return { ...newState, objects: updatedObjects };
       });
-      
-      return { ...newState, objects: updatedObjects };
-    });
+    }
   }, []);
 
   const resetEditor = useCallback(() => {
+    cleanup();
     setState(initialState);
-  }, []);
+    setCurrentLabel(null);
+    setHasUnsavedChanges(false);
+    setLastSaved(null);
+  }, [cleanup]);
 
   const bringToFront = useCallback((id: string) => {
-    setState(prev => {
-      const objects = [...prev.objects];
-      const index = objects.findIndex(obj => obj.id === id);
-      if (index > -1 && index < objects.length - 1) {
-        const [obj] = objects.splice(index, 1);
-        objects.push(obj);
-      }
-      return { ...prev, objects };
-    });
+    if (!isLoadingRef.current) {
+      setState(prev => {
+        const objects = [...prev.objects];
+        const index = objects.findIndex(obj => obj.id === id);
+        if (index > -1 && index < objects.length - 1) {
+          const [obj] = objects.splice(index, 1);
+          objects.push(obj);
+        }
+        return { ...prev, objects };
+      });
+    }
   }, []);
 
   const sendToBack = useCallback((id: string) => {
-    setState(prev => {
-      const objects = [...prev.objects];
-      const index = objects.findIndex(obj => obj.id === id);
-      if (index > 0) {
-        const [obj] = objects.splice(index, 1);
-        objects.unshift(obj);
-      }
-      return { ...prev, objects };
-    });
+    if (!isLoadingRef.current) {
+      setState(prev => {
+        const objects = [...prev.objects];
+        const index = objects.findIndex(obj => obj.id === id);
+        if (index > 0) {
+          const [obj] = objects.splice(index, 1);
+          objects.unshift(obj);
+        }
+        return { ...prev, objects };
+      });
+    }
   }, []);
 
   const moveUp = useCallback((id: string) => {
-    setState(prev => {
-      const objects = [...prev.objects];
-      const index = objects.findIndex(obj => obj.id === id);
-      if (index > -1 && index < objects.length - 1) {
-        [objects[index], objects[index + 1]] = [objects[index + 1], objects[index]];
-      }
-      return { ...prev, objects };
-    });
+    if (!isLoadingRef.current) {
+      setState(prev => {
+        const objects = [...prev.objects];
+        const index = objects.findIndex(obj => obj.id === id);
+        if (index > -1 && index < objects.length - 1) {
+          [objects[index], objects[index + 1]] = [objects[index + 1], objects[index]];
+        }
+        return { ...prev, objects };
+      });
+    }
   }, []);
 
   const moveDown = useCallback((id: string) => {
-    setState(prev => {
-      const objects = [...prev.objects];
-      const index = objects.findIndex(obj => obj.id === id);
-      if (index > 0) {
-        [objects[index], objects[index - 1]] = [objects[index - 1], objects[index]];
-      }
-      return { ...prev, objects };
-    });
+    if (!isLoadingRef.current) {
+      setState(prev => {
+        const objects = [...prev.objects];
+        const index = objects.findIndex(obj => obj.id === id);
+        if (index > 0) {
+          [objects[index], objects[index - 1]] = [objects[index - 1], objects[index]];
+        }
+        return { ...prev, objects };
+      });
+    }
   }, []);
 
   const setCanvasRef = useCallback((canvas: Canvas | null) => {
     canvasRef.current = canvas;
+  }, []);
+
+  const replaceObjects = useCallback((newObjects: CanvasObject[]) => {
+    setState(prev => ({
+      ...prev,
+      objects: newObjects,
+      selectedObjectId: null
+    }));
   }, []);
 
   return {
@@ -329,6 +520,7 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
     autoSave,
     setAutoSave,
     lastSaved,
+    hasUnsavedChanges,
     updateDimensions,
     updateZoom,
     updatePan,
@@ -346,5 +538,8 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
     updateLabelName,
     updateLabelDescription,
     setCanvasRef,
+    replaceObjects,
+    switchToLabel, // New safe switching function
+    setLastSaved,
   };
 };

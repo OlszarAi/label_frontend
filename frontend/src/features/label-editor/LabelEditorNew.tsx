@@ -1,66 +1,105 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
-import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { useEditorState } from './hooks/useEditorState';
 import { useProjectLabels } from './hooks/useProjectLabels';
 import { CanvasEditor } from './components/CanvasEditor';
-import { ToolbarPanel } from './components/ToolbarPanel';
-import { PropertiesPanel } from './components/PropertiesPanel';
-import { LabelsPanel } from './components/LabelsPanel';
-import { EditorStatusBar } from './components/EditorStatusBar';
-import { EditorHeader } from './components/EditorHeader';
+import { MainToolbar } from './components/toolbar/MainToolbar';
+import { ToolboxPanel } from './components/panels/ToolboxPanel';
+import { PropertiesPanel } from './components/panels/PropertiesPanel';
+import { GalleryPanel } from './components/panels/GalleryPanel';
 import { generateUUID } from './utils/uuid';
 import { snapCoordinatesToGrid } from './utils/grid';
 import './styles/editor.css';
 
-interface LabelEditorProps {
+interface LabelEditorNewProps {
   labelId?: string;
   projectId?: string | null;
 }
 
-export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
+export const LabelEditorNew = ({ labelId, projectId }: LabelEditorNewProps) => {
   const router = useRouter();
   const [selectedTool, setSelectedTool] = useState('select');
-  const [showLabelsPanel, setShowLabelsPanel] = useState(true);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [effectiveProjectId, setEffectiveProjectId] = useState<string | null>(projectId || null);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Panel visibility states
+  const [panelVisibility, setPanelVisibility] = useState({
+    properties: true,
+    gallery: true,
+  });
+
+  const {
+    labels,
+    createLabelAndNavigate,
+    refreshLabelThumbnail,
+  } = useProjectLabels(effectiveProjectId);
 
   const {
     state,
     currentLabel,
     autoSave,
-    setAutoSave,
-    lastSaved,
     hasUnsavedChanges,
     updateDimensions,
     updateZoom,
-    updatePan,
     addObject,
     updateObject,
     deleteObject,
     selectObject,
     updatePreferences,
-    bringToFront,
-    sendToBack,
-    moveUp,
-    moveDown,
     saveLabel,
     setCanvasRef,
     switchToLabel, // Use the new safe switching function
-  } = useEditorState(labelId, projectId);
+  } = useEditorState(labelId, effectiveProjectId);
 
-  const { labels, createLabelAndNavigate } = useProjectLabels(currentLabel?.projectId);
+  // Enhanced save function that updates thumbnail in gallery
+  const handleSave = useCallback(async () => {
+    if (isSaving) return; // Prevent multiple concurrent saves
+    
+    setIsSaving(true);
+    try {
+      const result = await saveLabel();
+      if (result && currentLabel) {
+        // Refresh the thumbnail in the gallery after saving
+        await refreshLabelThumbnail(currentLabel.id);
+        toast.success('Label saved successfully');
+      } else {
+        toast.error('Failed to save label');
+      }
+      return result;
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to save label');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [saveLabel, currentLabel, refreshLabelThumbnail, isSaving]);
 
   // Connection monitoring
   const [isConnected] = useState(true);
 
+  // Update effectiveProjectId when currentLabel becomes available
+  useEffect(() => {
+    if (currentLabel?.projectId && !effectiveProjectId) {
+      setEffectiveProjectId(currentLabel.projectId);
+    }
+  }, [currentLabel?.projectId, effectiveProjectId]);
+
   const selectedObject = state.selectedObjectId 
     ? state.objects.find(obj => obj.id === state.selectedObjectId) || null
     : null;
+
+  // Panel toggle handlers
+  const togglePanel = useCallback((panelName: keyof typeof panelVisibility) => {
+    setPanelVisibility(prev => ({
+      ...prev,
+      [panelName]: !prev[panelName]
+    }));
+  }, []);
 
   // Tool handlers with grid snapping
   const handleAddText = useCallback(() => {
@@ -165,31 +204,6 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     toast.success('UUID added');
   }, [addObject, state.preferences.uuid.uuidLength, state.preferences.grid]);
 
-  // Layer management handlers
-  const handleBringToFront = useCallback(() => {
-    if (state.selectedObjectId) {
-      bringToFront(state.selectedObjectId);
-    }
-  }, [state.selectedObjectId, bringToFront]);
-
-  const handleSendToBack = useCallback(() => {
-    if (state.selectedObjectId) {
-      sendToBack(state.selectedObjectId);
-    }
-  }, [state.selectedObjectId, sendToBack]);
-
-  const handleMoveUp = useCallback(() => {
-    if (state.selectedObjectId) {
-      moveUp(state.selectedObjectId);
-    }
-  }, [state.selectedObjectId, moveUp]);
-
-  const handleMoveDown = useCallback(() => {
-    if (state.selectedObjectId) {
-      moveDown(state.selectedObjectId);
-    }
-  }, [state.selectedObjectId, moveDown]);
-
   const handleBack = useCallback(() => {
     if (hasUnsavedChanges && !autoSave) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
@@ -200,44 +214,18 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     }
   }, [router, hasUnsavedChanges, autoSave]);
 
-  const handleSave = useCallback(async () => {
-    if (isSaving) return; // Prevent multiple concurrent saves
-    
-    setIsSaving(true);
-    try {
-      const result = await saveLabel();
-      if (result) {
-        toast.success('Label saved successfully');
-      } else {
-        toast.error('Failed to save label');
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      toast.error('Failed to save label');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [saveLabel, isSaving]);
-
   const handlePreview = useCallback(() => {
-    setIsPreviewMode(!isPreviewMode);
-    toast.info(isPreviewMode ? 'Edit mode enabled' : 'Preview mode enabled');
-  }, [isPreviewMode]);
+    toast.info('Preview functionality coming soon');
+  }, []);
 
   const handleShare = useCallback(() => {
     toast.info('Share functionality coming soon');
   }, []);
 
-  const handleSettings = useCallback(() => {
-    setShowLabelsPanel(!showLabelsPanel);
-    toast.info(showLabelsPanel ? 'Labels panel hidden' : 'Labels panel shown');
-  }, [showLabelsPanel]);
-
   const handleResetView = useCallback(() => {
     updateZoom(1);
-    updatePan(0, 0);
     toast.info('View reset to 100%');
-  }, [updateZoom, updatePan]);
+  }, [updateZoom]);
 
   const handleZoomIn = useCallback(() => {
     const newZoom = Math.min(5, state.zoom + 0.1);
@@ -270,8 +258,11 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   const handleCreateLabel = useCallback(async () => {
     if (currentLabel?.projectId) {
       try {
-        await createLabelAndNavigate();
-        toast.success('New label created');
+        const newLabel = await createLabelAndNavigate();
+        if (newLabel) {
+          // The createLabelAndNavigate function handles navigation
+          toast.success('New label created');
+        }
       } catch (error) {
         console.error('Failed to create label:', error);
         toast.error('Failed to create label');
@@ -286,7 +277,10 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   useHotkeys('q', handleAddQRCode, { preventDefault: true });
   useHotkeys('u', handleAddUUID, { preventDefault: true });
   useHotkeys('v', () => setSelectedTool('select'), { preventDefault: true });
-  useHotkeys('escape', () => selectObject(null), { preventDefault: true });
+  useHotkeys('escape', () => {
+    selectObject(null);
+    setSelectedTool('select');
+  }, { preventDefault: true });
   useHotkeys('delete,backspace', () => {
     if (state.selectedObjectId) {
       deleteObject(state.selectedObjectId);
@@ -299,116 +293,82 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   }, { preventDefault: true });
 
   return (
-    <div className="label-editor-container">
+    <div className="label-editor-container min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Animated background */}
-      <div className="editor-background">
-        <div className="editor-background-grid"></div>
-        <div className="editor-background-glow"></div>
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-purple-50/30 dark:from-blue-900/10 dark:to-purple-900/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
       </div>
       
-      {/* Header */}
-      <EditorHeader
-        currentLabel={currentLabel}
+      {/* Main Toolbar */}
+      <MainToolbar
         onBack={handleBack}
         onSave={handleSave}
         onPreview={handlePreview}
         onShare={handleShare}
-        onSettings={handleSettings}
-        isSaving={isSaving}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 56px - 32px)' }}>
-        <PanelGroup direction="horizontal">
-          {/* Toolbar Panel */}
-          <Panel defaultSize={20} minSize={18} maxSize={25}>
-            <ToolbarPanel
-              onAddText={handleAddText}
-              onAddRectangle={handleAddRectangle}
-              onAddCircle={handleAddCircle}
-              onAddQRCode={handleAddQRCode}
-              onAddUUID={handleAddUUID}
-              selectedTool={selectedTool}
-              onToolSelect={setSelectedTool}
-            />
-          </Panel>
-
-          <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
-
-          {/* Center Panel - Canvas */}
-          <Panel defaultSize={showLabelsPanel ? 45 : 60} minSize={35}>
-            <CanvasEditor
-              dimensions={state.dimensions}
-              zoom={state.zoom}
-              panX={state.panX}
-              panY={state.panY}
-              objects={state.objects}
-              selectedObjectId={state.selectedObjectId}
-              preferences={state.preferences}
-              onObjectUpdate={updateObject}
-              onObjectSelect={selectObject}
-              onCanvasReady={setCanvasRef}
-            />
-          </Panel>
-
-          <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
-
-          {/* Properties Panel */}
-          <Panel defaultSize={20} minSize={18} maxSize={25}>
-            <PropertiesPanel
-              dimensions={state.dimensions}
-              onDimensionsChange={updateDimensions}
-              selectedObject={selectedObject}
-              onObjectUpdate={updateObject}
-              onBringToFront={handleBringToFront}
-              onSendToBack={handleSendToBack}
-              onMoveUp={handleMoveUp}
-              onMoveDown={handleMoveDown}
-              preferences={state.preferences}
-              onPreferencesUpdate={updatePreferences}
-            />
-          </Panel>
-
-          {/* Labels Panel - Collapsible */}
-          {showLabelsPanel && (
-            <>
-              <PanelResizeHandle className="w-2 panel-resize-handle panel-separator" />
-              <Panel defaultSize={15} minSize={12} maxSize={20}>
-                <LabelsPanel
-                  currentLabel={currentLabel}
-                  labels={labels}
-                  onLabelSelect={handleLabelSelect}
-                  onCreateLabel={handleCreateLabel}
-                />
-              </Panel>
-            </>
-          )}
-        </PanelGroup>
-      </div>
-
-      {/* Status Bar */}
-      <EditorStatusBar
-        isConnected={isConnected}
-        lastSaved={lastSaved}
-        autoSave={autoSave}
-        isSaving={isSaving}
-        hasUnsavedChanges={hasUnsavedChanges}
         zoom={state.zoom}
-        objectCount={state.objects.length}
-        canvasSize={state.dimensions}
-        onToggleAutoSave={() => setAutoSave(!autoSave)}
-        onSave={handleSave}
-        onToggleGrid={() => 
-          updatePreferences({
-            ...state.preferences,
-            grid: { ...state.preferences.grid, showGrid: !state.preferences.grid.showGrid }
-          })
-        }
-        showGrid={state.preferences.grid.showGrid}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onResetZoom={handleResetView}
+        onToggleProperties={() => togglePanel('properties')}
+        onToggleGallery={() => togglePanel('gallery')}
+        isSaving={isSaving}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isConnected={isConnected}
+        currentLabel={currentLabel ? { name: currentLabel.name, id: currentLabel.id } : null}
+      />
+
+      {/* Main Canvas Area */}
+      <div className="pt-16 pb-24 h-screen">
+        <div className="relative w-full h-full">
+          <CanvasEditor
+            dimensions={state.dimensions}
+            zoom={state.zoom}
+            panX={state.panX}
+            panY={state.panY}
+            objects={state.objects}
+            selectedObjectId={state.selectedObjectId}
+            preferences={state.preferences}
+            onObjectUpdate={updateObject}
+            onObjectSelect={selectObject}
+            onCanvasReady={setCanvasRef}
+          />
+        </div>
+      </div>
+
+      {/* Quick Toolbar - Always visible */}
+      <ToolboxPanel
+        onAddText={handleAddText}
+        onAddRectangle={handleAddRectangle}
+        onAddCircle={handleAddCircle}
+        onAddQRCode={handleAddQRCode}
+        onAddUUID={handleAddUUID}
+        selectedTool={selectedTool}
+        onToolSelect={setSelectedTool}
+        isVisible={true}
+        onClose={() => {}} // Toolbar is always visible, so no close action
+      />
+
+      {/* Floating Panels */}
+      <PropertiesPanel
+        dimensions={state.dimensions}
+        onDimensionsChange={updateDimensions}
+        selectedObject={selectedObject}
+        onObjectUpdate={updateObject}
+        preferences={state.preferences}
+        onPreferencesUpdate={updatePreferences}
+        isVisible={panelVisibility.properties}
+        onClose={() => togglePanel('properties')}
+      />
+
+      <GalleryPanel
+        currentLabel={currentLabel}
+        labels={labels}
+        onLabelSelect={handleLabelSelect}
+        onCreateLabel={handleCreateLabel}
+        isVisible={panelVisibility.gallery}
+        onClose={() => togglePanel('gallery')}
       />
     </div>
   );
-};
+}; 

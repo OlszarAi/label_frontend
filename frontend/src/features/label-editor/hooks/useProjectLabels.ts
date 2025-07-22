@@ -15,13 +15,16 @@ interface Label {
   projectId: string;
 }
 
-export const useProjectLabels = (projectId?: string) => {
+export const useProjectLabels = (projectId?: string | null) => {
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLabels = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId) {
+      setLabels([]);
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -125,9 +128,50 @@ export const useProjectLabels = (projectId?: string) => {
     }
   }, []);
 
+  const updateLabelInList = useCallback((labelId: string, updates: Partial<Label>) => {
+    setLabels(prev => prev.map(label => 
+      label.id === labelId 
+        ? { ...label, ...updates, updatedAt: new Date().toISOString() }
+        : label
+    ));
+  }, []);
+
+  const refreshLabelThumbnail = useCallback(async (labelId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/projects/labels/${labelId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const { data } = await response.json();
+        updateLabelInList(labelId, {
+          thumbnail: data.thumbnail,
+          name: data.name,
+          description: data.description,
+          width: data.width,
+          height: data.height,
+          updatedAt: data.updatedAt
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to refresh label thumbnail:', err);
+    }
+  }, [updateLabelInList]);
+
   useEffect(() => {
     fetchLabels();
-  }, [fetchLabels]);
+  }, [projectId]); // Use projectId directly instead of fetchLabels
+
+  // Reset state when projectId changes
+  useEffect(() => {
+    if (!projectId) {
+      setLabels([]);
+      setError(null);
+    }
+  }, [projectId]);
 
   return {
     labels,
@@ -137,5 +181,7 @@ export const useProjectLabels = (projectId?: string) => {
     createLabel,
     createLabelAndNavigate,
     deleteLabel,
+    updateLabelInList,
+    refreshLabelThumbnail,
   };
 };

@@ -1,15 +1,14 @@
 'use client';
 
-import { LabelEditor } from '../../../features/label-editor';
-import { useSearchParams } from 'next/navigation';
+import { LabelEditorNew } from '../../../features/label-editor';
+import { use } from 'react';
 
-export default function NewLabelPage() {
-  const searchParams = useSearchParams();
-  const projectId = searchParams.get('projectId');
+export default function NewLabelPage({ searchParams }: { searchParams: Promise<{ projectId?: string }> }) {
+  const { projectId } = use(searchParams);
 
   return (
-    <div className="h-screen bg-gray-50 overflow-hidden">
-      <LabelEditor projectId={projectId} />
+    <div className="min-h-screen">
+      <LabelEditorNew projectId={projectId} />
     </div>
   );
 }

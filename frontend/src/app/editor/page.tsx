@@ -1,11 +1,11 @@
 'use client';
 
-import { LabelEditor } from '../../features/label-editor';
+import { LabelEditorNew } from '../../features/label-editor';
 
 export default function EditorPage() {
   return (
-    <div className="h-screen bg-gray-50 overflow-hidden">
-      <LabelEditor />
+    <div className="min-h-screen">
+      <LabelEditorNew />
     </div>
   );
 }

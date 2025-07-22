@@ -9,7 +9,6 @@ export interface UUIDPreferences {
 }
 
 export interface GridPreferences {
-  enabled: boolean;
   size: number; // Grid size in mm
   snapToGrid: boolean;
   showGrid: boolean; // Whether to visually show the grid
@@ -17,9 +16,18 @@ export interface GridPreferences {
   opacity: number; // 0 to 1
 }
 
+export interface RulerPreferences {
+  showRulers: boolean; // Whether to visually show the rulers
+  color: string;
+  backgroundColor: string;
+  opacity: number; // 0 to 1
+  size: number; // Ruler size in pixels (adaptive)
+}
+
 export interface EditorPreferences {
   uuid: UUIDPreferences;
   grid: GridPreferences;
+  ruler: RulerPreferences;
 }
 
 export interface CanvasObject {
@@ -32,6 +40,13 @@ export interface CanvasObject {
   text?: string;
   fontSize?: number;
   fontFamily?: string;
+  fontWeight?: 'normal' | 'bold';
+  fontStyle?: 'normal' | 'italic';
+  underline?: boolean;
+  linethrough?: boolean;
+  textAlign?: 'left' | 'center' | 'right';
+  lineHeight?: number;
+  charSpacing?: number;
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
