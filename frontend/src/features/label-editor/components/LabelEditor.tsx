@@ -38,7 +38,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     createLabelAndNavigate,
     refreshLabelThumbnail,
     refreshLabelThumbnailImmediate,
-  } = useProjectLabels(effectiveProjectId);
+  } = useProjectLabels({ projectId: effectiveProjectId });
 
   const {
     state,

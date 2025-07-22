@@ -23,7 +23,6 @@ interface Label {
   thumbnail?: string;
   width: number;
   height: number;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   updatedAt: string;
   createdAt: string;
 }
@@ -44,7 +43,6 @@ interface GalleryPanelProps {
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'updated' | 'created' | 'size';
-type FilterBy = 'all' | 'draft' | 'published' | 'archived';
 
 // Thumbnail component with smart scaling
 const SmartThumbnail: React.FC<{
@@ -126,150 +124,147 @@ const SmartThumbnail: React.FC<{
   );
 };
 
-// Virtual scrolling for performance with large lists
-const VirtualizedGrid: React.FC<{
+// Enhanced grid with dynamic columns calculation
+const ResponsiveGrid: React.FC<{
   labels: Label[];
   currentLabelId: string | undefined;
   onLabelSelect: (labelId: string) => void;
   scale: number;
   viewMode: ViewMode;
-  getStatusColor: (status: string) => string;
-}> = ({ labels, currentLabelId, onLabelSelect, scale, viewMode, getStatusColor }) => {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Calculate visible items based on scroll position
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current) return;
+  containerWidth: number;
+}> = ({ labels, currentLabelId, onLabelSelect, scale, viewMode, containerWidth }) => {
+  
+  // Calculate optimal number of columns based on container width and scale
+  const getOptimalColumns = useCallback(() => {
+    if (viewMode === 'list') return 1;
     
-    const { scrollTop, clientHeight } = containerRef.current;
-    const itemHeight = viewMode === 'grid' ? (200 * scale + 32) : (80 * scale + 16);
+    // Improved base card width calculation with better scaling
+    const baseCardWidth = 300; // Base card width in pixels
+    const scaledCardWidth = baseCardWidth * scale;
+    const minGap = 16; // Gap between columns
     
-    const start = Math.floor(scrollTop / itemHeight);
-    const visibleCount = Math.ceil(clientHeight / itemHeight) + 5; // Buffer
-    const end = Math.min(start + visibleCount, labels.length);
+    // Calculate how many columns can fit with better responsive behavior
+    const availableWidth = Math.max(300, containerWidth - 24); // Ensure minimum available width
+    const maxColumns = Math.floor((availableWidth + minGap) / (scaledCardWidth + minGap));
     
-    setVisibleRange({ start, end });
-  }, [scale, viewMode, labels.length]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      handleScroll(); // Initial calculation
-      return () => container.removeEventListener('scroll', handleScroll);
+    // Ensure sensible column limits based on scale
+    let minColumns = 1;
+    let maxColumnLimit = 5; // Allow up to 5 columns for very small zoom
+    
+    // Adjust column limits based on zoom level for better UX
+    if (scale >= 1.4) {
+      maxColumnLimit = 1; // Very large zoom - force single column
+    } else if (scale >= 1.0) {
+      maxColumnLimit = 2; // Large zoom - max 2 columns
+    } else if (scale >= 0.7) {
+      maxColumnLimit = 3; // Medium zoom - max 3 columns
+    } else if (scale >= 0.5) {
+      maxColumnLimit = 4; // Small zoom - max 4 columns
     }
-  }, [handleScroll]);
+    // Below 0.5 scale allows up to 5 columns
+    
+    return Math.max(minColumns, Math.min(maxColumnLimit, maxColumns));
+  }, [containerWidth, scale, viewMode]);
 
-  const visibleLabels = labels.slice(visibleRange.start, visibleRange.end);
-  const totalHeight = labels.length * (viewMode === 'grid' ? (200 * scale + 32) : (80 * scale + 16));
+  const columns = getOptimalColumns();
+
+  // Dynamic grid template
+  const gridClass = `grid gap-4 grid-cols-${columns}`;
+  
+  // For very dynamic layouts, use inline styles instead of classes
+  const gridStyle = {
+    display: 'grid',
+    gap: '1rem',
+    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
+  };
 
   return (
-    <div 
-      ref={containerRef}
-      className="max-h-[500px] overflow-y-auto floating-panel-scrollbar"
-      style={{ height: '500px' }}
-    >
-      <div style={{ height: totalHeight, position: 'relative' }}>
-        <div 
-          style={{ 
-            transform: `translateY(${visibleRange.start * (viewMode === 'grid' ? (200 * scale + 32) : (80 * scale + 16))}px)`,
-            position: 'absolute',
-            width: '100%'
-          }}
-        >
-          <div className={`
-            ${viewMode === 'grid' 
-              ? `grid gap-4 ${scale > 0.8 ? 'grid-cols-1' : 'grid-cols-2'}`
-              : 'space-y-2'
-            }
-          `}>
-            {visibleLabels.map((label, index) => (
-              <motion.div
-                key={label.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2, delay: index * 0.02 }}
-                className={`
-                  group relative cursor-pointer transition-all duration-200
-                  ${viewMode === 'grid' ? 'p-4' : 'p-3'}
-                  border rounded-xl
-                  ${currentLabelId === label.id 
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' 
-                    : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md bg-white dark:bg-gray-800'
-                  }
-                  hover:scale-[1.02] active:scale-[0.98]
-                `}
-                onClick={() => onLabelSelect(label.id)}
-              >
-                {viewMode === 'grid' ? (
-                  <div className="space-y-3">
-                    {/* Grid View - Enhanced */}
-                    <div className="flex justify-center">
-                      <SmartThumbnail label={label} scale={scale} isGridView={true} />
+    <div className="max-h-[500px] overflow-y-auto floating-panel-scrollbar">
+      <div style={gridStyle} className="p-2">
+        <AnimatePresence mode="popLayout">
+          {labels.map((label, index) => (
+            <motion.div
+              key={label.id}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ 
+                duration: 0.3, 
+                delay: index * 0.02,
+                layout: { duration: 0.3 }
+              }}
+              className={`
+                group relative cursor-pointer transition-all duration-200
+                ${viewMode === 'grid' ? 'p-4' : 'p-3'}
+                border rounded-xl
+                ${currentLabelId === label.id 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' 
+                  : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md bg-white dark:bg-gray-800'
+                }
+                hover:scale-[1.02] active:scale-[0.98]
+              `}
+              onClick={() => onLabelSelect(label.id)}
+            >
+              {viewMode === 'grid' ? (
+                <div className="space-y-3">
+                  {/* Grid View - Enhanced */}
+                  <div className="flex justify-center">
+                    <SmartThumbnail label={label} scale={scale} isGridView={true} />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+                        {label.name}
+                      </h4>
                     </div>
                     
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 pr-2">
-                          {label.name}
-                        </h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${getStatusColor(label.status)}`}>
-                          {label.status}
-                        </span>
-                      </div>
-                      
-                      {label.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                          {label.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <ClockIcon className="w-3 h-3" />
-                          <span>{new Date(label.updatedAt).toLocaleDateString()}</span>
-                        </div>
+                    {label.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                        {label.description}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <ClockIcon className="w-3 h-3" />
+                        <span>{new Date(label.updatedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center space-x-3">
-                    {/* List View - Compact */}
-                    <SmartThumbnail label={label} scale={scale} isGridView={false} />
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {label.name}
-                        </h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(label.status)}`}>
-                          {label.status}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500">
-                          <ClockIcon className="w-3 h-3" />
-                          <span>{new Date(label.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Action menu */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 backdrop-blur-sm">
-                    <EllipsisVerticalIcon className="w-4 h-4" />
-                  </button>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  {/* List View - Compact */}
+                  <SmartThumbnail label={label} scale={scale} isGridView={false} />
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {label.name}
+                      </h4>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500">
+                        <ClockIcon className="w-3 h-3" />
+                        <span>{new Date(label.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action menu */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 backdrop-blur-sm">
+                  <EllipsisVerticalIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -286,17 +281,47 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('updated');
-  const [filterBy, setFilterBy] = useState<FilterBy>('all');
-  const [scale, setScale] = useState(0.8); // Zoom scale for thumbnails
+  const [scale, setScale] = useState(0.6); // Better default zoom scale for thumbnails
+  const [containerWidth, setContainerWidth] = useState(480); // Default width
+  
+  // Ref to measure container width
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Measure container width for responsive grid
+  useEffect(() => {
+    const measureWidth = () => {
+      if (containerRef.current) {
+        const { width } = containerRef.current.getBoundingClientRect();
+        setContainerWidth(width);
+      }
+    };
+
+    measureWidth();
+    
+    // Use ResizeObserver for better performance
+    if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
+      const resizeObserver = new ResizeObserver(() => {
+        measureWidth();
+      });
+      
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
+      
+      return () => resizeObserver.disconnect();
+    } else {
+      // Fallback for browsers without ResizeObserver
+      window.addEventListener('resize', measureWidth);
+      return () => window.removeEventListener('resize', measureWidth);
+    }
+  }, []);
 
   const filteredAndSortedLabels = useMemo(() => {
     const filtered = labels.filter(label => {
       const matchesSearch = label.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (label.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
       
-      const matchesFilter = filterBy === 'all' || label.status.toLowerCase() === filterBy;
-      
-      return matchesSearch && matchesFilter;
+      return matchesSearch;
     });
 
     filtered.sort((a, b) => {
@@ -315,15 +340,31 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
     });
 
     return filtered;
-  }, [labels, searchQuery, sortBy, filterBy]);
+  }, [labels, searchQuery, sortBy]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PUBLISHED': return 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800';
-      case 'DRAFT': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 dark:border-amber-800';
-      case 'ARCHIVED': return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200 dark:border-gray-800';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200 dark:border-gray-800';
+  // Calculate current columns for display
+  const getCurrentColumns = () => {
+    if (viewMode === 'list') return 1;
+    
+    const baseCardWidth = 300;
+    const scaledCardWidth = baseCardWidth * scale;
+    const minGap = 16;
+    const availableWidth = Math.max(300, containerWidth - 24);
+    const maxColumns = Math.floor((availableWidth + minGap) / (scaledCardWidth + minGap));
+    
+    // Apply same logic as getOptimalColumns
+    let maxColumnLimit = 5;
+    if (scale >= 1.4) {
+      maxColumnLimit = 1;
+    } else if (scale >= 1.0) {
+      maxColumnLimit = 2;
+    } else if (scale >= 0.7) {
+      maxColumnLimit = 3;
+    } else if (scale >= 0.5) {
+      maxColumnLimit = 4;
     }
+    
+    return Math.max(1, Math.min(maxColumnLimit, maxColumns));
   };
 
   if (!isVisible) return null;
@@ -335,11 +376,11 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
       defaultPosition={{ x: 820, y: 120 }}
       defaultSize={{ width: 480, height: 700 }}
       minSize={{ width: 400, height: 600 }}
-      maxSize={{ width: 800, height: 900 }}
+      maxSize={{ width: 1000, height: 900 }}
       onClose={onClose}
       className="backdrop-blur-lg bg-white/95 dark:bg-gray-800/95"
     >
-      <div className="space-y-4 h-full flex flex-col">
+      <div ref={containerRef} className="space-y-4 h-full flex flex-col">
         {/* Header Actions */}
         <div className="flex items-center justify-between shrink-0">
           <motion.button
@@ -356,8 +397,8 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
             {/* Zoom Controls */}
             <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               <button
-                onClick={() => setScale(Math.max(0.5, scale - 0.1))}
-                disabled={scale <= 0.5}
+                onClick={() => setScale(Math.max(0.3, scale - 0.1))}
+                disabled={scale <= 0.3}
                 className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
                 title="Zoom out"
               >
@@ -367,8 +408,8 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
                 {Math.round(scale * 100)}%
               </span>
               <button
-                onClick={() => setScale(Math.min(1.5, scale + 0.1))}
-                disabled={scale >= 1.5}
+                onClick={() => setScale(Math.min(2.0, scale + 0.1))}
+                disabled={scale >= 2.0}
                 className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
                 title="Zoom in"
               >
@@ -406,17 +447,6 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
         {/* Filters */}
         <div className="flex items-center space-x-2 text-xs shrink-0">
           <select
-            value={filterBy}
-            onChange={(e) => setFilterBy(e.target.value as FilterBy)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 text-xs"
-          >
-            <option value="all">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-          
-          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 text-xs"
@@ -432,7 +462,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
         <div className="text-xs text-gray-500 dark:text-gray-400 font-medium px-1 shrink-0 flex items-center justify-between">
           <span>{filteredAndSortedLabels.length} label{filteredAndSortedLabels.length !== 1 ? 's' : ''} found</span>
           <span className="text-blue-600 dark:text-blue-400">
-            {viewMode === 'grid' ? 'Grid' : 'List'} • {Math.round(scale * 100)}% zoom
+            {viewMode === 'grid' ? `${getCurrentColumns()} col${getCurrentColumns() > 1 ? 's' : ''}` : 'List'} • {Math.round(scale * 100)}%
           </span>
         </div>
 
@@ -451,13 +481,13 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
                 <p className="text-xs mt-1">Try adjusting your search or filters</p>
               </motion.div>
             ) : (
-              <VirtualizedGrid
+              <ResponsiveGrid
                 labels={filteredAndSortedLabels}
                 currentLabelId={currentLabel?.id}
                 onLabelSelect={onLabelSelect}
                 scale={scale}
                 viewMode={viewMode}
-                getStatusColor={getStatusColor}
+                containerWidth={containerWidth}
               />
             )}
           </AnimatePresence>

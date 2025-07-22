@@ -2,23 +2,20 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Label } from '../../project-management/types/project.types';
 
-interface Label {
-  id: string;
-  name: string;
-  description?: string;
-  thumbnail?: string;
-  width: number;
-  height: number;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  updatedAt: string;
-  createdAt: string;
+interface UseProjectLabelsProps {
+  projectId: string | null;
+}
+
+interface ProjectLabel extends Omit<Label, 'projectId'> {
   projectId: string;
 }
 
-export const useProjectLabels = (projectId: string | null) => {
-  const [labels, setLabels] = useState<Label[]>([]);
+export const useProjectLabels = ({ projectId }: UseProjectLabelsProps) => {
+  const [labels, setLabels] = useState<ProjectLabel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   
   // Debounce thumbnail updates to prevent too many simultaneous requests
@@ -31,6 +28,7 @@ export const useProjectLabels = (projectId: string | null) => {
     if (!projectId) return;
     
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`/api/projects/${projectId}/labels`, {
         headers: {
@@ -41,9 +39,12 @@ export const useProjectLabels = (projectId: string | null) => {
       if (response.ok) {
         const { data } = await response.json();
         setLabels(data || []);
+      } else {
+        throw new Error('Failed to load labels');
       }
     } catch (error) {
       console.error('Error loading labels:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load labels');
     } finally {
       setLoading(false);
     }
@@ -231,7 +232,7 @@ export const useProjectLabels = (projectId: string | null) => {
       setLabels(prev => prev.filter(label => label.id !== labelId));
       return true;
     } catch (err) {
-      // setError(err instanceof Error ? err.message : 'Unknown error'); // This line was removed
+      setError(err instanceof Error ? err.message : 'Failed to delete label');
       return false;
     }
   }, []);
@@ -269,10 +270,13 @@ export const useProjectLabels = (projectId: string | null) => {
   return {
     labels,
     loading,
+    error,
     loadLabels,
     refreshLabelThumbnail,
     refreshLabelThumbnailImmediate,
     createLabel,
     createLabelAndNavigate,
+    deleteLabel,
+    updateLabelInList,
   };
 };
