@@ -11,9 +11,10 @@ import {
   MagnifyingGlassPlusIcon,
   MagnifyingGlassMinusIcon,
   ArrowsPointingOutIcon,
-  CubeIcon,
   SwatchIcon,
-  BookmarkIcon
+  BookmarkIcon,
+  BoltIcon,
+  BoltSlashIcon
 } from '@heroicons/react/24/outline';
 
 interface MainToolbarProps {
@@ -38,6 +39,10 @@ interface MainToolbarProps {
   hasUnsavedChanges: boolean;
   isConnected: boolean;
   
+  // Autosave
+  autoSave: boolean;
+  onToggleAutoSave: () => void;
+  
   // Current label info
   currentLabel: {
     name: string;
@@ -59,6 +64,8 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
   isSaving,
   hasUnsavedChanges,
   isConnected,
+  autoSave,
+  onToggleAutoSave,
   currentLabel,
 }) => {
   const formatZoom = (zoomLevel: number) => {
@@ -98,13 +105,23 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
           {/* Current Label Info */}
           <div className="flex items-center space-x-2">
             <div className="text-sm">
-              <div className="font-medium text-gray-900 dark:text-gray-100">
-                {currentLabel?.name || 'Untitled Label'}
+              <div className="flex items-center space-x-2">
+                <div className="font-medium text-gray-900 dark:text-gray-100">
+                  {currentLabel?.name || 'Untitled Label'}
+                </div>
+                {/* Unsaved changes indicator - integrated into label info */}
+                {hasUnsavedChanges && (
+                  <div className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-md text-xs">
+                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                    <span>Unsaved</span>
+                    {!autoSave && <span>• Manual</span>}
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span>{isConnected ? 'Connected' : 'Offline'}</span>
-                {hasUnsavedChanges && <span>• Unsaved changes</span>}
+                {autoSave && <span>• Auto-save enabled</span>}
               </div>
             </div>
           </div>
@@ -127,6 +144,41 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <CloudArrowUpIcon className={`w-4 h-4 ${isSaving ? 'animate-pulse' : ''}`} />
             <span>{isSaving ? 'Saving...' : 'Save'}</span>
           </motion.button>
+
+          {/* Autosave Toggle */}
+          <Tooltip.Provider>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <motion.button
+                  onClick={onToggleAutoSave}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`
+                    flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${autoSave 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }
+                  `}
+                >
+                  {autoSave ? (
+                    <BoltIcon className="w-4 h-4" />
+                  ) : (
+                    <BoltSlashIcon className="w-4 h-4" />
+                  )}
+                  <span className="hidden md:inline">
+                    {autoSave ? 'Auto-save' : 'Manual'}
+                  </span>
+                </motion.button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="bg-gray-900 text-white px-2 py-1 rounded text-xs z-50" sideOffset={5}>
+                  {autoSave ? 'Auto-save enabled - changes saved automatically' : 'Auto-save disabled - save manually'}
+                  <Tooltip.Arrow className="fill-gray-900" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         </div>
 
         {/* Center section - Zoom controls */}

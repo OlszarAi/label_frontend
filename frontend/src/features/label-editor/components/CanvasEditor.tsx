@@ -757,9 +757,6 @@ export const CanvasEditor = ({
   const availableWidth = containerWidth - (containerPadding * 2);
   const availableHeight = containerHeight - (containerPadding * 2);
   
-  // Calculate center position accounting for rulers
-  const rulerOffset = showRulers ? rulerSize : 0;
-  
   // Auto-center the canvas in the available viewport space
   // We want the visual center of the canvas (not including rulers) to be centered
   const visualCenterOffsetX = showRulers ? rulerSize / 2 : 0;
@@ -985,16 +982,6 @@ export const CanvasEditor = ({
             }}
             className="block"
           />
-          
-          {/* Corner handles for visual reference - smaller for small canvases */}
-          {!isMinimalistMode && widthPx > 40 && heightPx > 40 && (
-            <>
-              <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full opacity-60"></div>
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full opacity-60"></div>
-              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-500 rounded-full opacity-60"></div>
-              <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 rounded-full opacity-60"></div>
-            </>
-          )}
           
           {/* Minimalist mode indicator for very small labels */}
           {isMinimalistMode && (

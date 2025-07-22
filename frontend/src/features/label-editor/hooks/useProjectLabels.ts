@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Label {
   id: string;
@@ -15,64 +16,171 @@ interface Label {
   projectId: string;
 }
 
-export const useProjectLabels = (projectId?: string | null) => {
+export const useProjectLabels = (projectId: string | null) => {
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  
+  // Debounce thumbnail updates to prevent too many simultaneous requests
+  const thumbnailUpdateQueue = useRef<Set<string>>(new Set());
+  const thumbnailUpdateTimer = useRef<NodeJS.Timeout | null>(null);
+  const lastThumbnailUpdate = useRef<Map<string, number>>(new Map());
 
-  const fetchLabels = useCallback(async () => {
-    if (!projectId) {
-      setLabels([]);
-      return;
-    }
+  // Load project labels
+  const loadLabels = useCallback(async () => {
+    if (!projectId) return;
     
     setLoading(true);
-    setError(null);
-
     try {
-      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/projects/${projectId}/labels`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch labels');
+      
+      if (response.ok) {
+        const { data } = await response.json();
+        setLabels(data || []);
       }
-
-      const { data } = await response.json();
-      setLabels(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+    } catch (error) {
+      console.error('Error loading labels:', error);
     } finally {
       setLoading(false);
     }
   }, [projectId]);
 
+  // Enhanced thumbnail refresh with time-based debouncing
+  const refreshLabelThumbnail = useCallback(async (labelId: string) => {
+    if (!labelId) return;
+    
+    // Check if we updated this thumbnail recently (within last 5 seconds)
+    const now = Date.now();
+    const lastUpdate = lastThumbnailUpdate.current.get(labelId) || 0;
+    const timeSinceLastUpdate = now - lastUpdate;
+    
+    // If updated recently, add to queue for later processing
+    if (timeSinceLastUpdate < 5000) {
+      thumbnailUpdateQueue.current.add(labelId);
+      
+      // Clear existing timer
+      if (thumbnailUpdateTimer.current) {
+        clearTimeout(thumbnailUpdateTimer.current);
+      }
+      
+      // Process queue after delay
+      thumbnailUpdateTimer.current = setTimeout(async () => {
+        const idsToUpdate = Array.from(thumbnailUpdateQueue.current);
+        thumbnailUpdateQueue.current.clear();
+        
+        if (idsToUpdate.length === 0) return;
+        
+        try {
+          // Update thumbnails in smaller batches
+          const batchSize = 3;
+          for (let i = 0; i < idsToUpdate.length; i += batchSize) {
+            const batch = idsToUpdate.slice(i, i + batchSize);
+            const promises = batch.map(async (id) => {
+              try {
+                const response = await fetch(`/api/projects/labels/${id}`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                  },
+                });
+                
+                if (response.ok) {
+                  const { data: updatedLabel } = await response.json();
+                  lastThumbnailUpdate.current.set(id, Date.now());
+                  return updatedLabel;
+                }
+              } catch (error) {
+                console.error(`Error refreshing thumbnail for label ${id}:`, error);
+                return null;
+              }
+            });
+            
+            const updatedLabels = await Promise.all(promises);
+            
+            // Update labels state with new data
+            setLabels(prev => prev.map(label => {
+              const updated = updatedLabels.find(ul => ul?.id === label.id);
+              return updated ? { ...label, ...updated } : label;
+            }));
+            
+            // Small delay between batches to avoid overwhelming the server
+            if (i + batchSize < idsToUpdate.length) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+          
+        } catch (error) {
+          console.error('Error in batch thumbnail refresh:', error);
+        }
+      }, 2000); // 2 second delay for batching
+      
+      return;
+    }
+    
+    // Update immediately if enough time has passed
+    try {
+      const response = await fetch(`/api/projects/labels/${labelId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const { data: updatedLabel } = await response.json();
+        lastThumbnailUpdate.current.set(labelId, now);
+        setLabels(prev => prev.map(label => 
+          label.id === labelId ? { ...label, ...updatedLabel } : label
+        ));
+      }
+    } catch (error) {
+      console.error('Error refreshing label thumbnail:', error);
+    }
+  }, []);
+
+  // Immediate thumbnail refresh for critical updates (manual saves)
+  const refreshLabelThumbnailImmediate = useCallback(async (labelId: string) => {
+    if (!labelId) return;
+    
+    try {
+      const response = await fetch(`/api/projects/labels/${labelId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const { data: updatedLabel } = await response.json();
+        setLabels(prev => prev.map(label => 
+          label.id === labelId ? { ...label, ...updatedLabel } : label
+        ));
+      }
+    } catch (error) {
+      console.error('Error refreshing label thumbnail:', error);
+    }
+  }, []);
+
   const createLabel = useCallback(async (labelData: {
     name: string;
     description?: string;
-    width?: number;
-    height?: number;
   }) => {
     if (!projectId) return null;
-
+    
     try {
-      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/projects/${projectId}/labels`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
           name: labelData.name,
-          description: labelData.description,
-          width: labelData.width || 100,
-          height: labelData.height || 50,
+          description: labelData.description || '',
+          width: 100,
+          height: 50,
           fabricData: {
-            version: '6.0.0',
             objects: [],
             background: '#ffffff',
           },
@@ -87,7 +195,7 @@ export const useProjectLabels = (projectId?: string | null) => {
       setLabels(prev => [data, ...prev]); // Add to beginning of list
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('Error creating label:', err);
       return null;
     }
   }, [projectId]);
@@ -100,11 +208,11 @@ export const useProjectLabels = (projectId?: string | null) => {
     
     if (newLabel) {
       // Navigate to the new label immediately
-      window.location.href = `/editor/${newLabel.id}`;
+      router.push(`/editor/${newLabel.id}`);
     }
     
     return newLabel;
-  }, [createLabel, labels.length]);
+  }, [createLabel, labels.length, router]);
 
   const deleteLabel = useCallback(async (labelId: string) => {
     try {
@@ -123,7 +231,7 @@ export const useProjectLabels = (projectId?: string | null) => {
       setLabels(prev => prev.filter(label => label.id !== labelId));
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      // setError(err instanceof Error ? err.message : 'Unknown error'); // This line was removed
       return false;
     }
   }, []);
@@ -136,52 +244,35 @@ export const useProjectLabels = (projectId?: string | null) => {
     ));
   }, []);
 
-  const refreshLabelThumbnail = useCallback(async (labelId: string) => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/projects/labels/${labelId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const { data } = await response.json();
-        updateLabelInList(labelId, {
-          thumbnail: data.thumbnail,
-          name: data.name,
-          description: data.description,
-          width: data.width,
-          height: data.height,
-          updatedAt: data.updatedAt
-        });
-      }
-    } catch (err) {
-      console.warn('Failed to refresh label thumbnail:', err);
-    }
-  }, [updateLabelInList]);
-
   useEffect(() => {
-    fetchLabels();
-  }, [projectId]); // Use projectId directly instead of fetchLabels
+    loadLabels();
+    
+    // Cleanup function to clear any pending timers and tracking data
+    return () => {
+      if (thumbnailUpdateTimer.current) {
+        clearTimeout(thumbnailUpdateTimer.current);
+        thumbnailUpdateTimer.current = null;
+      }
+      thumbnailUpdateQueue.current.clear();
+      lastThumbnailUpdate.current.clear();
+    };
+  }, [projectId, loadLabels]); // Use projectId directly instead of fetchLabels
 
   // Reset state when projectId changes
   useEffect(() => {
     if (!projectId) {
       setLabels([]);
-      setError(null);
+      lastThumbnailUpdate.current.clear();
     }
   }, [projectId]);
 
   return {
     labels,
     loading,
-    error,
-    refetch: fetchLabels,
+    loadLabels,
+    refreshLabelThumbnail,
+    refreshLabelThumbnailImmediate,
     createLabel,
     createLabelAndNavigate,
-    deleteLabel,
-    updateLabelInList,
-    refreshLabelThumbnail,
   };
 };

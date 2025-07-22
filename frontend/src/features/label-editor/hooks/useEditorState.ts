@@ -108,16 +108,73 @@ export const useEditorState = (labelId?: string, projectId?: string | null) => {
       // Double-check conditions before saving
       if (!isSwitchingLabelsRef.current && !isLoadingRef.current && hasUnsavedChanges && currentLabel) {
         try {
-          const result = await saveLabel();
-          if (result) {
+          // Abort any previous save request
+          if (saveAbortControllerRef.current) {
+            saveAbortControllerRef.current.abort();
+          }
+          
+          // Create new abort controller for this save
+          saveAbortControllerRef.current = new AbortController();
+          
+          const response = await fetch(`/api/projects/labels/${currentLabel.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            },
+            body: JSON.stringify({
+              name: currentLabel.name,
+              description: currentLabel.description,
+              fabricData: {
+                objects: state.objects,
+                dimensions: state.dimensions,
+                preferences: state.preferences,
+              },
+              width: state.dimensions.width,
+              height: state.dimensions.height,
+              version: currentLabel.version, // Include version for optimistic locking
+            }),
+            signal: saveAbortControllerRef.current.signal,
+          });
+
+          if (response.ok) {
+            const { data: updatedLabel } = await response.json();
+            setCurrentLabel(updatedLabel);
             setHasUnsavedChanges(false);
+            setLastSaved(new Date());
+            
+            // Optimized thumbnail update - only update occasionally to reduce server load
+            const shouldUpdateThumbnail = Math.random() < 0.2; // 20% chance
+            if (shouldUpdateThumbnail && canvasRef.current) {
+              // Use setTimeout to not block the save operation
+              setTimeout(() => {
+                try {
+                  const thumbnailDataUrl = generateThumbnailFromCanvas(canvasRef.current!);
+                  // Send thumbnail update in background without blocking
+                  fetch(`/api/projects/labels/${currentLabel.id}/thumbnail`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                    },
+                    body: JSON.stringify({ thumbnail: thumbnailDataUrl }),
+                  }).catch(() => {
+                    // Silently fail thumbnail updates to avoid disrupting user experience
+                  });
+                } catch (error) {
+                  // Ignore thumbnail generation errors during autosave
+                }
+              }, 500);
+            }
           }
         } catch (error) {
-          console.error('Auto-save failed:', error);
+          if (error.name !== 'AbortError') {
+            console.error('Auto-save failed:', error);
+          }
         }
       }
     }, 2000);
-  }, [hasUnsavedChanges, currentLabel]);
+  }, [hasUnsavedChanges, currentLabel, state.objects, state.dimensions, state.preferences]);
 
   // Auto-save effect with improved dependencies
   useEffect(() => {
