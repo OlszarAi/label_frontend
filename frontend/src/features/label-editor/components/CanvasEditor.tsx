@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, FabricObject, Text, IText, Rect, Circle, Line, FabricImage } from 'fabric';
 import QRCode from 'qrcode';
 import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
@@ -62,8 +62,8 @@ const createQRCodeDataURL = async (data: string, size: number, errorCorrectionLe
 };
 
 // Helper function to draw grid on canvas
-const drawGrid = (canvas: Canvas, dimensions: LabelDimensions, gridPreferences: GridPreferences, zoom: number) => {
-  if (!gridPreferences.enabled) {
+const drawGrid = (canvas: Canvas, dimensions: LabelDimensions, gridPreferences: GridPreferences) => {
+  if (!gridPreferences.showGrid) {
     // Remove existing grid lines
     const objects = canvas.getObjects();
     objects.forEach(obj => {
@@ -87,33 +87,38 @@ const drawGrid = (canvas: Canvas, dimensions: LabelDimensions, gridPreferences: 
   const heightPx = mmToPx(dimensions.height);
   const gridSizePx = mmToPx(gridPreferences.size);
 
+  const gridLines: Line[] = [];
+
   // Create vertical lines
   for (let x = 0; x <= widthPx; x += gridSizePx) {
     const line = new Line([x, 0, x, heightPx], {
       stroke: gridPreferences.color,
-      strokeWidth: 1 / zoom, // Adjust stroke width based on zoom
+      strokeWidth: 1,
       selectable: false,
       evented: false,
       opacity: gridPreferences.opacity,
     });
     (line as unknown as GridLine).isGridLine = true;
-    canvas.add(line);
-    canvas.sendObjectToBack(line);
+    gridLines.push(line);
   }
 
   // Create horizontal lines
   for (let y = 0; y <= heightPx; y += gridSizePx) {
     const line = new Line([0, y, widthPx, y], {
       stroke: gridPreferences.color,
-      strokeWidth: 1 / zoom, // Adjust stroke width based on zoom
+      strokeWidth: 1,
       selectable: false,
       evented: false,
       opacity: gridPreferences.opacity,
     });
     (line as unknown as GridLine).isGridLine = true;
-    canvas.add(line);
-    canvas.sendObjectToBack(line);
+    gridLines.push(line);
   }
+
+  // Add all grid lines at once - they will be automatically at the back since we add them first
+  gridLines.forEach(line => {
+    canvas.add(line);
+  });
 
   canvas.renderAll();
 };
@@ -133,6 +138,25 @@ export const CanvasEditor = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 1200, height: 800 });
+
+  // Update container size when it changes
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        });
+      }
+    });
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Initialize Fabric.js canvas
   useEffect(() => {
@@ -332,7 +356,7 @@ export const CanvasEditor = ({
         let top = obj.top || 0;
 
         // Apply snap to grid if enabled
-        if (preferences.grid.snapToGrid && preferences.grid.enabled) {
+        if (preferences.grid.snapToGrid) {
           const leftMm = pxToMm(left);
           const topMm = pxToMm(top);
           const snappedLeftMm = snapToGrid(leftMm, preferences.grid.size, true);
@@ -380,7 +404,7 @@ export const CanvasEditor = ({
     canvas.setZoom(zoom);
 
     // Draw grid after canvas size update
-    drawGrid(canvas, dimensions, preferences.grid, zoom);
+    drawGrid(canvas, dimensions, preferences.grid);
 
     // Then sync objects
     const currentObjects = canvas.getObjects() as CustomFabricObject[];
@@ -422,6 +446,13 @@ export const CanvasEditor = ({
             text: obj.text || 'Tekst',
             fontSize: obj.fontSize || 12,
             fontFamily: obj.fontFamily || 'Arial',
+            fontWeight: obj.fontWeight || 'normal',
+            fontStyle: obj.fontStyle || 'normal',
+            underline: obj.underline || false,
+            linethrough: obj.linethrough || false,
+            textAlign: obj.textAlign || 'left',
+            lineHeight: obj.lineHeight || 1.2,
+            charSpacing: obj.charSpacing || 0,
             fill: obj.fill || '#000000',
           });
         } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
@@ -452,6 +483,13 @@ export const CanvasEditor = ({
             text: obj.text || obj.sharedUUID || 'UUID',
             fontSize: obj.fontSize || 12,
             fontFamily: obj.fontFamily || 'Arial',
+            fontWeight: obj.fontWeight || 'normal',
+            fontStyle: obj.fontStyle || 'normal',
+            underline: obj.underline || false,
+            linethrough: obj.linethrough || false,
+            textAlign: obj.textAlign || 'left',
+            lineHeight: obj.lineHeight || 1.2,
+            charSpacing: obj.charSpacing || 0,
             fill: obj.fill || '#000000',
           });
         } else if (obj.type === 'qrcode' && existingFabricObj.type === 'image') {
@@ -532,6 +570,13 @@ export const CanvasEditor = ({
               top: mmToPx(obj.y),
               fontSize: obj.fontSize || 12,
               fontFamily: obj.fontFamily || 'Arial',
+              fontWeight: obj.fontWeight || 'normal',
+              fontStyle: obj.fontStyle || 'normal',
+              underline: obj.underline || false,
+              linethrough: obj.linethrough || false,
+              textAlign: obj.textAlign || 'left',
+              lineHeight: obj.lineHeight || 1.2,
+              charSpacing: obj.charSpacing || 0,
               fill: obj.fill || '#000000',
               selectable: true,
               hasControls: true,
@@ -582,6 +627,13 @@ export const CanvasEditor = ({
               top: mmToPx(obj.y),
               fontSize: obj.fontSize || 12,
               fontFamily: obj.fontFamily || 'Arial',
+              fontWeight: obj.fontWeight || 'normal',
+              fontStyle: obj.fontStyle || 'normal',
+              underline: obj.underline || false,
+              linethrough: obj.linethrough || false,
+              textAlign: obj.textAlign || 'left',
+              lineHeight: obj.lineHeight || 1.2,
+              charSpacing: obj.charSpacing || 0,
               fill: obj.fill || '#000000',
               selectable: true,
               hasControls: true,
@@ -652,22 +704,80 @@ export const CanvasEditor = ({
     });
 
     // Draw grid after all objects are synced
-    drawGrid(canvas, dimensions, preferences.grid, zoom);
+    drawGrid(canvas, dimensions, preferences.grid);
 
     canvas.renderAll();
   }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix]);
 
+  // Calculate ruler marks based on canvas size with better scaling for small labels
+  const widthPx = mmToPx(dimensions.width) * zoom;
+  const heightPx = mmToPx(dimensions.height) * zoom;
+  
+  // Simplified ruler step calculation - align with grid when possible
+  let rulerStep;
+  const gridSize = preferences.grid.size; // Grid size in mm
+  
+  // Try to align ruler with grid first
+  if (zoom >= 0.5) {
+    // At higher zoom levels, use grid size or its subdivisions
+    if (gridSize <= 2) {
+      rulerStep = gridSize; // Use grid size directly for small grids
+    } else if (gridSize <= 5) {
+      rulerStep = gridSize; // 5mm grid -> 5mm ruler steps
+    } else {
+      rulerStep = gridSize / 2; // For larger grids, use half steps
+    }
+  } else {
+    // At lower zoom levels, use larger steps
+    if (gridSize <= 5) {
+      rulerStep = gridSize * 2; // Double the grid size
+    } else {
+      rulerStep = gridSize; // Use grid size
+    }
+  }
+  
+  // Ensure reasonable step sizes
+  rulerStep = Math.max(0.5, Math.min(50, rulerStep));
+  
+  const rulerStepPx = mmToPx(rulerStep) * zoom;
+  
+  // Use preferences for ruler visibility instead of hardcoded logic
+  const showRulers = preferences.ruler.showRulers && widthPx > 30 && heightPx > 30;
+  const rulerSize = showRulers ? Math.max(16, Math.min(64, preferences.ruler.size)) : 0;
+  
+  // For very small labels, use minimalist mode
+  const isMinimalistMode = widthPx < 100 || heightPx < 100;
+
+  // Calculate automatic centering offset for the canvas
+  const containerWidth = containerSize.width;
+  const containerHeight = containerSize.height;
+  
+  // Account for container padding (2rem = 32px on each side)
+  const containerPadding = 32; // 2rem = 32px
+  const availableWidth = containerWidth - (containerPadding * 2);
+  const availableHeight = containerHeight - (containerPadding * 2);
+  
+  // Auto-center the canvas in the available viewport space
+  // We want the visual center of the canvas (not including rulers) to be centered
+  const visualCenterOffsetX = showRulers ? rulerSize / 2 : 0;
+  const visualCenterOffsetY = showRulers ? rulerSize / 2 : 0;
+  
+  const autoCenterX = Math.max(0, (availableWidth - widthPx) / 2 - visualCenterOffsetX);
+  const autoCenterY = Math.max(0, (availableHeight - heightPx) / 2 - visualCenterOffsetY);
+  
+  // Combine auto-centering with manual pan adjustments
+  const finalPanX = autoCenterX + panX;
+  const finalPanY = autoCenterY + panY;
+
   const canvasStyle = {
-    transform: `translate(${panX}px, ${panY}px)`,
+    transform: `translate(${finalPanX}px, ${finalPanY}px)`,
     transformOrigin: '0 0',
-    border: '2px solid #e5e7eb',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
   };
 
   return (
     <div 
       ref={containerRef}
-      className="flex-1 flex items-center justify-center p-8 canvas-container overflow-hidden relative"
+      className="flex-1 p-8 canvas-container overflow-hidden relative"
     >
       {/* Background decorative elements */}
       <div className="absolute inset-0 pointer-events-none">
@@ -676,33 +786,230 @@ export const CanvasEditor = ({
         <div className="absolute bottom-12 left-12 w-1.5 h-1.5 bg-green-500/20 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
       
-      {/* Main canvas area */}
-      <div className="relative bg-white/5 p-4 rounded-2xl backdrop-blur-sm border border-white/10 shadow-2xl">
-        <canvas
-          ref={canvasRef}
-          style={canvasStyle}
-          className="rounded-lg shadow-lg"
-        />
+      {/* Main canvas area with rulers */}
+      <div className="relative">
+        {/* Top ruler - only show if canvas is large enough */}
+        {showRulers && (
+          <div 
+            className="absolute top-0 flex items-end backdrop-blur-sm border border-gray-500/30 shadow-lg"
+            style={{ 
+              left: `${rulerSize}px`,
+              width: `${widthPx}px`,
+              height: `${rulerSize}px`,
+              transform: `translate(${finalPanX}px, ${finalPanY - rulerSize}px)`,
+              backgroundColor: preferences.ruler.backgroundColor,
+              opacity: preferences.ruler.opacity,
+              borderRadius: '0 0 0 2px',
+            }}
+          >
+            {Array.from({ length: Math.ceil(dimensions.width / rulerStep) + 1 }, (_, i) => {
+              const mmPosition = i * rulerStep;
+              if (mmPosition > dimensions.width) return null;
+              
+              const shouldShowMajorMark = i % Math.max(1, Math.round(10 / rulerStep)) === 0;
+              const shouldShowMinorMark = i % Math.max(1, Math.round(5 / rulerStep)) === 0;
+              const shouldShowLabel = shouldShowMajorMark && rulerStepPx > 20;
+              
+              // Calculate actual pixel position on the ruler - relative to ruler container
+              const pixelPosition = mmToPx(mmPosition) * zoom;
+              
+              return (
+                <div
+                  key={i}
+                  className="absolute flex flex-col items-center justify-end"
+                  style={{ 
+                    left: `${pixelPosition}px`,
+                    width: '1px',
+                    height: '100%'
+                  }}
+                >
+                  <div 
+                    className="bg-current"
+                    style={{ 
+                      width: '1px',
+                      height: shouldShowMajorMark ? `${rulerSize * 0.4}px` : shouldShowMinorMark ? `${rulerSize * 0.25}px` : `${rulerSize * 0.15}px`,
+                      color: preferences.ruler.color,
+                    }}
+                  />
+                  {shouldShowLabel && (
+                    <span 
+                      className="absolute bottom-1 text-xs font-mono font-medium select-none whitespace-nowrap"
+                      style={{ 
+                        color: preferences.ruler.color,
+                        fontSize: `${Math.max(9, Math.min(11, rulerSize * 0.4))}px`,
+                        transform: 'translateX(-50%)',
+                        left: '0px',
+                      }}
+                    >
+                      {mmPosition % 1 === 0 ? mmPosition.toString() : mmPosition.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            <div 
+              className="absolute right-1 bottom-1 text-xs font-mono font-medium select-none"
+              style={{ 
+                color: preferences.ruler.color,
+                fontSize: `${Math.max(8, Math.min(10, rulerSize * 0.35))}px`,
+                opacity: 0.7,
+              }}
+            >
+              mm
+            </div>
+          </div>
+        )}
+
+        {/* Left ruler - only show if canvas is large enough */}
+        {showRulers && (
+          <div 
+            className="absolute top-0 left-0 flex flex-col justify-start backdrop-blur-sm border border-gray-500/30 shadow-lg"
+            style={{ 
+              width: `${rulerSize}px`,
+              height: `${heightPx}px`,
+              transform: `translate(${finalPanX - rulerSize}px, ${finalPanY}px)`,
+              backgroundColor: preferences.ruler.backgroundColor,
+              opacity: preferences.ruler.opacity,
+              borderRadius: '0 0 2px 0',
+            }}
+          >
+            {Array.from({ length: Math.ceil(dimensions.height / rulerStep) + 1 }, (_, i) => {
+              const mmPosition = i * rulerStep;
+              if (mmPosition > dimensions.height) return null;
+              
+              const shouldShowMajorMark = i % Math.max(1, Math.round(10 / rulerStep)) === 0;
+              const shouldShowMinorMark = i % Math.max(1, Math.round(5 / rulerStep)) === 0;
+              const shouldShowLabel = shouldShowMajorMark && rulerStepPx > 20;
+              
+              // Calculate actual pixel position on the ruler
+              const pixelPosition = mmToPx(mmPosition) * zoom;
+              
+              return (
+                <div
+                  key={i}
+                  className="absolute flex items-center justify-end"
+                  style={{ 
+                    top: `${pixelPosition}px`,
+                    width: '100%',
+                    height: '1px'
+                  }}
+                >
+                  <div 
+                    className="bg-current"
+                    style={{ 
+                      height: '1px',
+                      width: shouldShowMajorMark ? `${rulerSize * 0.4}px` : shouldShowMinorMark ? `${rulerSize * 0.25}px` : `${rulerSize * 0.15}px`,
+                      color: preferences.ruler.color,
+                    }}
+                  />
+                  {shouldShowLabel && (
+                    <span 
+                      className="absolute right-1 text-xs font-mono font-medium select-none whitespace-nowrap"
+                      style={{ 
+                        color: preferences.ruler.color,
+                        fontSize: `${Math.max(9, Math.min(11, rulerSize * 0.4))}px`,
+                        transform: 'rotate(-90deg) translateX(50%)',
+                        transformOrigin: 'center center',
+                        top: '0px',
+                      }}
+                    >
+                      {mmPosition % 1 === 0 ? mmPosition.toString() : mmPosition.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            <div 
+              className="absolute bottom-1 right-1 text-xs font-mono font-medium select-none"
+              style={{ 
+                color: preferences.ruler.color,
+                fontSize: `${Math.max(8, Math.min(10, rulerSize * 0.35))}px`,
+                transform: 'rotate(-90deg)',
+                transformOrigin: 'center center',
+                opacity: 0.7,
+              }}
+            >
+              mm
+            </div>
+          </div>
+        )}
+
+        {/* Corner piece - only show if rulers are visible */}
+        {showRulers && (
+          <div 
+            className="absolute top-0 left-0 backdrop-blur-sm border border-gray-500/30 shadow-lg flex items-center justify-center"
+            style={{ 
+              width: `${rulerSize}px`,
+              height: `${rulerSize}px`,
+              transform: `translate(${finalPanX - rulerSize}px, ${finalPanY - rulerSize}px)`,
+              backgroundColor: preferences.ruler.backgroundColor,
+              opacity: preferences.ruler.opacity,
+              borderRadius: '2px 0 0 0',
+            }}
+          >
+            <div 
+              className="rounded-full"
+              style={{
+                width: `${Math.max(2, rulerSize * 0.15)}px`,
+                height: `${Math.max(2, rulerSize * 0.15)}px`,
+                backgroundColor: preferences.ruler.color,
+                opacity: 0.6,
+              }}
+            />
+          </div>
+        )}
         
-        {/* Enhanced coordinate system indicator */}
+        {/* Canvas with elegant frame */}
         <div 
-          className="absolute text-xs text-gray-300 pointer-events-none bg-gray-800/80 px-3 py-1.5 rounded-lg shadow-lg border border-blue-500/20 backdrop-blur-sm"
-          style={{ 
-            left: `${panX - 40}px`, 
-            top: `${panY - 40}px`,
-            fontFamily: 'Inter, sans-serif'
+          className={`relative bg-white shadow-2xl ${isMinimalistMode ? 'ring-2 ring-blue-500/30' : ''}`}
+          style={{
+            transform: `translate(${finalPanX}px, ${finalPanY}px)`,
+            width: `${widthPx}px`,
+            height: `${heightPx}px`,
+            border: isMinimalistMode ? '2px solid #3b82f6' : '1px solid #d1d5db',
+            borderRadius: Math.min(8, Math.max(2, zoom * 4)) + 'px',
+            minWidth: '40px',
+            minHeight: '40px'
           }}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-            <span className="font-mono">0,0</span>
-          </div>
+          <canvas
+            ref={canvasRef}
+            style={{
+              ...canvasStyle,
+              transform: 'none', // Reset transform since parent handles it
+              border: 'none',
+              borderRadius: Math.min(8, Math.max(2, zoom * 4)) + 'px'
+            }}
+            className="block"
+          />
+          
+          {/* Minimalist mode indicator for very small labels */}
+          {isMinimalistMode && (
+            <div 
+              className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500/90 text-white text-xs px-2 py-1 rounded-full font-mono whitespace-nowrap"
+              style={{
+                transform: `translate(${finalPanX + widthPx/2 - 50}px, ${finalPanY - 32}px)`
+              }}
+            >
+              {dimensions.width} × {dimensions.height} mm
+            </div>
+          )}
         </div>
         
-        {/* Canvas info overlay */}
-        <div className="absolute top-2 right-2 text-xs text-gray-400 bg-gray-900/70 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-          {dimensions.width} × {dimensions.height} mm
-        </div>
+        {/* Canvas info overlay - moved to bottom right, hidden in minimalist mode */}
+        {!isMinimalistMode && (
+          <div 
+            className="absolute bottom-0 right-0 text-xs text-gray-300 bg-gray-900/80 px-3 py-1.5 rounded-tl-lg border-l border-t border-gray-600/50 backdrop-blur-sm font-mono"
+            style={{ 
+              transform: `translate(${finalPanX + widthPx}px, ${finalPanY + heightPx}px)`
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span>{dimensions.width} × {dimensions.height} mm</span>
+              <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

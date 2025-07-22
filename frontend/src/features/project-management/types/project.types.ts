@@ -7,8 +7,8 @@ export interface Project {
   userId: string;
   createdAt: string;
   updatedAt: string;
-  labels: Label[];
-  _count: {
+  labels?: Label[];
+  _count?: {
     labels: number;
   };
 }
@@ -18,28 +18,20 @@ export interface Label {
   name: string;
   description?: string;
   projectId: string;
-  fabricData?: unknown; // Fabric.js canvas JSON data
-  thumbnail?: string;
-  width: number;
-  height: number;
-  status: LabelStatus;
+  fabricData?: any; // Fabric.js canvas JSON data
+  thumbnail?: string; // Base64 or URL to label thumbnail
+  width: number; // Label width in mm
+  height: number; // Label height in mm
   version: number;
   createdAt: string;
   updatedAt: string;
-  project?: {
-    id: string;
-    name: string;
-    color: string;
-  };
 }
-
-export type LabelStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
 export interface CreateProjectRequest {
   name: string;
   description?: string;
   icon?: string;
-  color: string;
+  color?: string;
 }
 
 export interface UpdateProjectRequest {
@@ -54,9 +46,8 @@ export interface CreateLabelRequest {
   description?: string;
   width?: number;
   height?: number;
-  fabricData?: unknown;
+  fabricData?: any;
   thumbnail?: string;
-  status?: LabelStatus;
 }
 
 export interface UpdateLabelRequest {
@@ -64,9 +55,9 @@ export interface UpdateLabelRequest {
   description?: string;
   width?: number;
   height?: number;
-  fabricData?: unknown;
+  fabricData?: any;
   thumbnail?: string;
-  status?: LabelStatus;
+  version?: number;
 }
 
 export interface ProjectsResponse {
