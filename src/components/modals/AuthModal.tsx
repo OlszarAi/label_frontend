@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthContext } from '@/providers/AuthProvider';
 import './AuthModal.css';
@@ -16,12 +16,12 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
   const [formData, setFormData] = useState({
     email: '',
     username: '',
-    password: '',
     firstName: '',
     lastName: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const { login, register } = useAuthContext();
 
@@ -38,18 +38,20 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
     setIsLoading(true);
     setError('');
 
+    const password = passwordRef.current?.value || '';
+
     try {
       if (mode === 'login') {
-        const result = await login(formData.email, formData.password);
+        const result = await login(formData.email, password);
         if (result.success) {
           onClose();
           setFormData({
             email: '',
             username: '',
-            password: '',
             firstName: '',
             lastName: ''
           });
+          if (passwordRef.current) passwordRef.current.value = '';
         } else {
           setError(result.error || 'Błąd logowania');
         }
@@ -57,14 +59,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         const result = await register({
           email: formData.email,
           username: formData.username,
-          password: formData.password,
+          password: password,
           firstName: formData.firstName || undefined,
           lastName: formData.lastName || undefined
         });
         if (result.success) {
           setMode('login');
           setError('');
-          setFormData(prev => ({ ...prev, password: '' }));
+          if (passwordRef.current) passwordRef.current.value = '';
         } else {
           setError(result.error || 'Błąd rejestracji');
         }
@@ -181,8 +183,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
                     type="password"
                     id="password"
                     name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
+                    ref={passwordRef}
                     required
                     disabled={isLoading}
                   />

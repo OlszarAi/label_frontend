@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ProfileTabProps } from '../types/profile.types';
 
 export const ProfileSecurity: React.FC<ProfileTabProps & {
@@ -7,14 +7,13 @@ export const ProfileSecurity: React.FC<ProfileTabProps & {
     newPassword: string;
   }) => Promise<{ success: boolean; error?: string }>;
 }> = ({ profileData, isLoading, onChangePassword }) => {
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  
+  const currentPasswordRef = useRef<HTMLInputElement>(null);
+  const newPasswordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   if (isLoading) {
     return (
@@ -38,12 +37,16 @@ export const ProfileSecurity: React.FC<ProfileTabProps & {
     setPasswordError('');
     setPasswordSuccess('');
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    const currentPassword = currentPasswordRef.current?.value || '';
+    const newPassword = newPasswordRef.current?.value || '';
+    const confirmPassword = confirmPasswordRef.current?.value || '';
+
+    if (newPassword !== confirmPassword) {
       setPasswordError('Nowe hasła nie są identyczne');
       return;
     }
 
-    if (passwordForm.newPassword.length < 8) {
+    if (newPassword.length < 8) {
       setPasswordError('Nowe hasło musi mieć co najmniej 8 znaków');
       return;
     }
@@ -51,17 +54,16 @@ export const ProfileSecurity: React.FC<ProfileTabProps & {
     setChangingPassword(true);
     try {
       const result = await onChangePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
+        currentPassword,
+        newPassword,
       });
 
       if (result.success) {
         setPasswordSuccess('Hasło zostało zmienione pomyślnie');
-        setPasswordForm({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
+        // Clear form
+        if (currentPasswordRef.current) currentPasswordRef.current.value = '';
+        if (newPasswordRef.current) newPasswordRef.current.value = '';
+        if (confirmPasswordRef.current) confirmPasswordRef.current.value = '';
       } else {
         setPasswordError(result.error || 'Błąd podczas zmiany hasła');
       }
@@ -90,8 +92,7 @@ export const ProfileSecurity: React.FC<ProfileTabProps & {
             <label className="profile-label">Aktualne hasło</label>
             <input
               type="password"
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+              ref={currentPasswordRef}
               className="form-input"
               required
             />
@@ -101,8 +102,7 @@ export const ProfileSecurity: React.FC<ProfileTabProps & {
             <label className="profile-label">Nowe hasło</label>
             <input
               type="password"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+              ref={newPasswordRef}
               className="form-input"
               required
               minLength={8}
@@ -114,8 +114,7 @@ export const ProfileSecurity: React.FC<ProfileTabProps & {
             <label className="profile-label">Potwierdź nowe hasło</label>
             <input
               type="password"
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              ref={confirmPasswordRef}
               className="form-input"
               required
             />

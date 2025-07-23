@@ -140,7 +140,8 @@ export const useAuth = () => {
     lastName?: string;
   }) => {
     try {
-      console.log('🔧 Register attempt with data:', userData);
+      // Log registration attempt without sensitive data
+      console.log('🔧 Register attempt for user:', userData.email);
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {

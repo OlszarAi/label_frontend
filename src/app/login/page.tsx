@@ -1,20 +1,21 @@
 'use client';
 
 import { useAuthContext } from '../../providers/AuthProvider';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 export default function LoginPage() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuthContext();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    const password = passwordRef.current?.value || '';
     const result = await login(email, password);
     
     if (!result.success) {
@@ -127,8 +128,7 @@ export default function LoginPage() {
               </label>
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                ref={passwordRef}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Twoje hasło"
