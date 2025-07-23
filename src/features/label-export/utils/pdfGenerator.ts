@@ -11,6 +11,39 @@ interface CustomFabricObject extends FabricObject {
   customData?: { id: string };
 }
 
+interface FabricObjectData {
+  type: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  text?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  underline?: boolean;
+  linethrough?: boolean;
+  textAlign?: string;
+  lineHeight?: number;
+  charSpacing?: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  sharedUUID?: string;
+  qrData?: string;
+  qrErrorCorrectionLevel?: string;
+  id?: string;
+  customData?: {
+    type?: string;
+    content?: string;
+    size?: number;
+    errorCorrectionLevel?: string;
+    foregroundColor?: string;
+    backgroundColor?: string;
+  };
+}
+
 // Helper function do tworzenia QR kodów
 const createQRCodeDataURL = async (
   text: string,
@@ -27,7 +60,7 @@ const createQRCodeDataURL = async (
         dark: foreground,
         light: background,
       },
-      errorCorrectionLevel: errorCorrectionLevel as any,
+      errorCorrectionLevel: errorCorrectionLevel as 'L' | 'M' | 'Q' | 'H',
     });
   } catch (error) {
     console.error('Error generating QR code:', error);
@@ -68,7 +101,7 @@ const renderLabelToImage = async (
     if (!fabricData.objects || !Array.isArray(fabricData.objects)) {
       console.warn('No objects found in fabricData for label:', labelData.name);
       return canvas.toDataURL({ 
-        format: 'png' as any, 
+        format: 'png',
         quality: 1.0, 
         multiplier: 1 
       });
@@ -78,25 +111,26 @@ const renderLabelToImage = async (
     for (const obj of fabricData.objects) {
       if (!obj || typeof obj !== 'object') continue;
       
+      const objData = obj as FabricObjectData;
       let fabricObj: CustomFabricObject | null = null;
 
       try {
-        switch ((obj as any).type) {
+        switch (objData.type) {
           case 'text':
           case 'i-text':
-            fabricObj = new IText((obj as any).text || 'Tekst', {
-              left: mmToPx((obj as any).x || 0, dpi),
-              top: mmToPx((obj as any).y || 0, dpi),
-              fontSize: ((obj as any).fontSize || 12) * (dpi / 96), // Skalowanie czcionki dla DPI
-              fontFamily: (obj as any).fontFamily || 'Arial',
-              fontWeight: (obj as any).fontWeight || 'normal',
-              fontStyle: (obj as any).fontStyle || 'normal',
-              underline: (obj as any).underline || false,
-              linethrough: (obj as any).linethrough || false,
-              textAlign: (obj as any).textAlign || 'left',
-              lineHeight: (obj as any).lineHeight || 1.2,
-              charSpacing: (obj as any).charSpacing || 0,
-              fill: (obj as any).fill || '#000000',
+            fabricObj = new IText(objData.text || 'Tekst', {
+              left: mmToPx(objData.x || 0, dpi),
+              top: mmToPx(objData.y || 0, dpi),
+              fontSize: (objData.fontSize || 12) * (dpi / 96), // Skalowanie czcionki dla DPI
+              fontFamily: objData.fontFamily || 'Arial',
+              fontWeight: objData.fontWeight || 'normal',
+              fontStyle: objData.fontStyle || 'normal',
+              underline: objData.underline || false,
+              linethrough: objData.linethrough || false,
+              textAlign: objData.textAlign || 'left',
+              lineHeight: objData.lineHeight || 1.2,
+              charSpacing: objData.charSpacing || 0,
+              fill: objData.fill || '#000000',
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -106,13 +140,13 @@ const renderLabelToImage = async (
           case 'rectangle':
           case 'rect':
             fabricObj = new Rect({
-              left: mmToPx((obj as any).x || 0, dpi),
-              top: mmToPx((obj as any).y || 0, dpi),
-              width: mmToPx((obj as any).width || 20, dpi),
-              height: mmToPx((obj as any).height || 10, dpi),
-              fill: (obj as any).fill || 'transparent',
-              stroke: (obj as any).stroke || '#000000',
-              strokeWidth: ((obj as any).strokeWidth || 1) * (dpi / 96),
+              left: mmToPx(objData.x || 0, dpi),
+              top: mmToPx(objData.y || 0, dpi),
+              width: mmToPx(objData.width || 20, dpi),
+              height: mmToPx(objData.height || 10, dpi),
+              fill: objData.fill || 'transparent',
+              stroke: objData.stroke || '#000000',
+              strokeWidth: (objData.strokeWidth || 1) * (dpi / 96),
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -121,12 +155,12 @@ const renderLabelToImage = async (
 
           case 'circle':
             fabricObj = new Circle({
-              left: mmToPx((obj as any).x || 0, dpi),
-              top: mmToPx((obj as any).y || 0, dpi),
-              radius: mmToPx(((obj as any).width || 20) / 2, dpi),
-              fill: (obj as any).fill || 'transparent',
-              stroke: (obj as any).stroke || '#000000',
-              strokeWidth: ((obj as any).strokeWidth || 1) * (dpi / 96),
+              left: mmToPx(objData.x || 0, dpi),
+              top: mmToPx(objData.y || 0, dpi),
+              radius: mmToPx((objData.width || 20) / 2, dpi),
+              fill: objData.fill || 'transparent',
+              stroke: objData.stroke || '#000000',
+              strokeWidth: (objData.strokeWidth || 1) * (dpi / 96),
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -135,13 +169,13 @@ const renderLabelToImage = async (
 
           case 'line':
             fabricObj = new Line([
-              mmToPx((obj as any).x || 0, dpi),
-              mmToPx((obj as any).y || 0, dpi),
-              mmToPx(((obj as any).x || 0) + ((obj as any).width || 20), dpi),
-              mmToPx((obj as any).y || 0, dpi)
+              mmToPx(objData.x || 0, dpi),
+              mmToPx(objData.y || 0, dpi),
+              mmToPx((objData.x || 0) + (objData.width || 20), dpi),
+              mmToPx(objData.y || 0, dpi)
             ], {
-              stroke: (obj as any).stroke || '#000000',
-              strokeWidth: ((obj as any).strokeWidth || 1) * (dpi / 96),
+              stroke: objData.stroke || '#000000',
+              strokeWidth: (objData.strokeWidth || 1) * (dpi / 96),
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -149,20 +183,20 @@ const renderLabelToImage = async (
             break;
 
           case 'uuid':
-            const uuidText = (obj as any).sharedUUID || (obj as any).text || 'UUID';
+            const uuidText = objData.sharedUUID || objData.text || 'UUID';
             fabricObj = new Text(uuidText, {
-              left: mmToPx((obj as any).x || 0, dpi),
-              top: mmToPx((obj as any).y || 0, dpi),
-              fontSize: ((obj as any).fontSize || 12) * (dpi / 96),
-              fontFamily: (obj as any).fontFamily || 'Arial',
-              fontWeight: (obj as any).fontWeight || 'normal',
-              fontStyle: (obj as any).fontStyle || 'normal',
-              underline: (obj as any).underline || false,
-              linethrough: (obj as any).linethrough || false,
-              textAlign: (obj as any).textAlign || 'left',
-              lineHeight: (obj as any).lineHeight || 1.2,
-              charSpacing: (obj as any).charSpacing || 0,
-              fill: (obj as any).fill || '#000000',
+              left: mmToPx(objData.x || 0, dpi),
+              top: mmToPx(objData.y || 0, dpi),
+              fontSize: (objData.fontSize || 12) * (dpi / 96),
+              fontFamily: objData.fontFamily || 'Arial',
+              fontWeight: objData.fontWeight || 'normal',
+              fontStyle: objData.fontStyle || 'normal',
+              underline: objData.underline || false,
+              linethrough: objData.linethrough || false,
+              textAlign: objData.textAlign || 'left',
+              lineHeight: objData.lineHeight || 1.2,
+              charSpacing: objData.charSpacing || 0,
+              fill: objData.fill || '#000000',
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -170,22 +204,22 @@ const renderLabelToImage = async (
             break;
 
           case 'qrcode':
-            const qrData = (obj as any).qrData || (obj as any).sharedUUID || 'QR';
-            const qrSize = mmToPx((obj as any).width || 20, dpi);
+            const qrData = objData.qrData || objData.sharedUUID || 'QR';
+            const qrSize = mmToPx(objData.width || 20, dpi);
             
             const qrDataURL = await createQRCodeDataURL(
               qrData,
               qrSize,
-              (obj as any).qrErrorCorrectionLevel || 'M',
-              (obj as any).fill || '#000000',
-              (obj as any).stroke || '#ffffff'
+              objData.qrErrorCorrectionLevel || 'M',
+              objData.fill || '#000000',
+              objData.stroke || '#ffffff'
             );
             
             if (qrDataURL) {
               const img = await FabricImage.fromURL(qrDataURL);
               img.set({
-                left: mmToPx((obj as any).x || 0, dpi),
-                top: mmToPx((obj as any).y || 0, dpi),
+                left: mmToPx(objData.x || 0, dpi),
+                top: mmToPx(objData.y || 0, dpi),
                 scaleX: 1,
                 scaleY: 1,
                 selectable: false,
@@ -197,12 +231,12 @@ const renderLabelToImage = async (
             break;
 
           default:
-            console.warn('Unknown object type:', (obj as any).type);
+            console.warn('Unknown object type:', objData.type);
             continue;
         }
 
         if (fabricObj) {
-          fabricObj.customData = { id: (obj as any).id || 'unknown' };
+          fabricObj.customData = { id: objData.id || 'unknown' };
           canvas.add(fabricObj);
         }
       } catch (objError) {
@@ -216,7 +250,7 @@ const renderLabelToImage = async (
     
     // Konwersja do obrazu
     const dataURL = canvas.toDataURL({ 
-      format: 'png' as any,
+      format: 'png',
       quality: 1.0,
       multiplier: 1 // Canvas już ma odpowiedni rozmiar
     });

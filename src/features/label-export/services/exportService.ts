@@ -1,6 +1,6 @@
 'use client';
 
-import { ExportRequest, ExportResponse, LabelExportData } from '../types/export.types';
+import { ExportRequest, LabelExportData } from '../types/export.types';
 import { Label } from '@/features/project-management/types/project.types';
 
 class ExportService {

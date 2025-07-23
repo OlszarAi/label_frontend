@@ -6,7 +6,7 @@ import { Button } from '../../../components/ui/button';
 import { XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExport } from '../hooks/useExport';
-import { ExportOptions, PDFExportOptions } from '../types/export.types';
+import { PDFExportOptions, ExportFormat, ExportOptions } from '../types/export.types';
 import { EXPORT_FORMATS, DEFAULT_EXPORT_OPTIONS } from '../constants/exportConstants';
 
 interface ExportModalProps {
@@ -25,7 +25,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   projectName = 'Projekt'
 }) => {
   const { isExporting, progress, error, exportLabels, exportProjectLabels, resetState } = useExport();
-  const [options, setOptions] = useState<PDFExportOptions>(DEFAULT_EXPORT_OPTIONS);
+  const [options, setOptions] = useState<ExportOptions>(DEFAULT_EXPORT_OPTIONS);
 
   const handleExport = async () => {
     if (labelIds && labelIds.length > 0) {
@@ -104,7 +104,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         disabled={!info.available}
                         onChange={(e) => setOptions(prev => ({ 
                           ...prev, 
-                          format: e.target.value as any 
+                          format: e.target.value as ExportFormat
                         }))}
                         className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                       />
@@ -157,7 +157,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       min="0"
                       max="10"
                       step="0.5"
-                      value={options.margin || 0}
+                      value={(options as PDFExportOptions).margin || 0}
                       onChange={(e) => setOptions(prev => ({ 
                         ...prev, 
                         margin: parseFloat(e.target.value) || 0 
