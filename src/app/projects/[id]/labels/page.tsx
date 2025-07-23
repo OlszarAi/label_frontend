@@ -8,6 +8,7 @@ import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { Label } from '@/features/project-management/types/project.types';
 import { LabelList } from '@/features/project-management/components/LabelList';
 import { LabelFilters } from '@/features/project-management/components/LabelFilters';
+import { ExportButton, ExportModal } from '@/features/label-export';
 import '@/features/project-management/styles/projects.css';
 
 export default function ProjectLabelsPage() {
@@ -32,6 +33,7 @@ export default function ProjectLabelsPage() {
   const [sortField, setSortField] = useState<'name' | 'createdAt' | 'updatedAt'>('updatedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -176,8 +178,17 @@ export default function ProjectLabelsPage() {
               <p>{currentProject?.description || 'Manage labels in this project'}</p>
             </div>
             <div className="projects-header-right">
-              <div className="projects-user-info">
-                Welcome back, {user?.firstName || user?.email}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <ExportButton
+                  projectId={projectId}
+                  variant="secondary"
+                  size="md"
+                  text="Eksportuj wszystkie"
+                  onClick={() => setShowExportModal(true)}
+                />
+                <div className="projects-user-info">
+                  Welcome back, {user?.firstName || user?.email}
+                </div>
               </div>
             </div>
           </div>
@@ -278,6 +289,14 @@ export default function ProjectLabelsPage() {
           </motion.div>
         </div>
       )}
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        projectId={projectId}
+        projectName={currentProject?.name}
+      />
     </div>
   );
 }
