@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -69,7 +69,7 @@ export default function BackendTestPage() {
     });
   };
 
-  const testConnection = async () => {
+  const testConnection = useCallback(async () => {
     setLoading(true);
     setStatus({ connected: false, message: 'Testowanie połączenia...' });
     const startTime = Date.now();
@@ -122,7 +122,7 @@ export default function BackendTestPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const testHealth = async () => {
     setLoading(true);
@@ -573,7 +573,7 @@ export default function BackendTestPage() {
       await testConnection();
     };
     initTest();
-  }, []);
+  }, [testConnection]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

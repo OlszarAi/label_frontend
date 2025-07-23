@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useEditorState } from '../hooks/useEditorState';
-import { useProjectLabels } from '../hooks/useProjectLabels';
+import { useLabelManagement } from '../hooks/useLabelManagement';
 import { useToolHandlers } from '../hooks/useToolHandlers';
 import { useZoomControls } from '../hooks/useZoomControls';
 import { useLabelActions } from '../hooks/useLabelActions';
@@ -13,6 +13,7 @@ import { ToolboxPanel } from './panels/ToolboxPanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { GalleryPanel } from './panels/GalleryPanel';
 import { KEYBOARD_SHORTCUTS, TOOL_TYPES } from '../constants';
+import type { Label } from '../services/labelManagementService';
 import '../styles/editor.css';
 
 interface LabelEditorProps {
@@ -33,12 +34,16 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   // Connection monitoring
   const [isConnected] = useState(true);
 
-  const {
-    labels,
-    createLabelAndNavigate,
-    refreshLabelThumbnail,
-    refreshLabelThumbnailImmediate,
-  } = useProjectLabels({ projectId: effectiveProjectId });
+  // Use centralized label management instead of scattered hooks
+  const labelManager = useLabelManagement({ 
+    projectId: effectiveProjectId || undefined, 
+    autoLoad: true,
+    onLabelCreated: (newLabel: Label) => {
+      // Refresh labels list to include the new label
+      console.log('New label created in editor:', newLabel);
+      // The labelManager will automatically update its labels list
+    }
+  });
 
   const {
     state,
@@ -56,7 +61,8 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     saveLabel,
     setCanvasRef,
     switchToLabel,
-  } = useEditorState(labelId, effectiveProjectId);
+    regenerateUUID,
+  } = useEditorState(labelId, effectiveProjectId || undefined);
 
   // Custom hooks for cleaner code
   const toolHandlers = useToolHandlers({
@@ -73,12 +79,16 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   const labelActions = useLabelActions({
     saveLabel,
     currentLabel,
-    refreshLabelThumbnail,
-    refreshLabelThumbnailImmediate,
+    refreshLabelThumbnail: labelManager.refreshLabel,
+    refreshLabelThumbnailImmediate: labelManager.refreshLabel,
     switchToLabel,
-    createLabelAndNavigate,
+    createLabelAndNavigate: labelManager.createLabelAndNavigate,
     hasUnsavedChanges,
-    autoSave
+    autoSave,
+    onLabelCreated: (newLabel: Label) => {
+      // New label created - it should already be in the list via labelManager callback
+      console.log('New label created in editor actions:', newLabel);
+    }
   });
 
   // Update effectiveProjectId when currentLabel becomes available
@@ -203,6 +213,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
         onObjectUpdate={updateObject}
         preferences={state.preferences}
         onPreferencesUpdate={updatePreferences}
+        onRegenerateUUID={regenerateUUID}
         autoSave={autoSave}
         onAutoSaveToggle={() => setAutoSave(!autoSave)}
         isVisible={panelVisibility.properties}
@@ -211,7 +222,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
 
       <GalleryPanel
         currentLabel={currentLabel}
-        labels={labels}
+        labels={labelManager.labels}
         onLabelSelect={labelActions.handleLabelSelect}
         onCreateLabel={labelActions.handleCreateLabel}
         isVisible={panelVisibility.gallery}

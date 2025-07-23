@@ -13,6 +13,7 @@ export { useProjectLabels } from './hooks/useProjectLabels';
 export { useToolHandlers } from './hooks/useToolHandlers';
 export { useZoomControls } from './hooks/useZoomControls';
 export { useLabelActions } from './hooks/useLabelActions';
+export { useLabelUUID } from './hooks/useLabelUUID';
 
 // Types
 export type { LabelDimensions, CanvasObject, EditorState, EditorPreferences } from './types/editor.types';

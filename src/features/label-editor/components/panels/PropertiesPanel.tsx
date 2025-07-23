@@ -8,9 +8,7 @@ import {
   ChevronRightIcon,
   Squares2X2Icon,
   SwatchIcon,
-  CogIcon,
-  BoltIcon,
-  BoltSlashIcon
+  CogIcon
 } from '@heroicons/react/24/outline';
 import { FloatingPanel } from '../common/FloatingPanel';
 import { LabelDimensions, CanvasObject, EditorPreferences } from '../../types/editor.types';
@@ -71,6 +69,7 @@ interface PropertiesPanelProps {
   onMoveDown?: () => void;
   preferences: EditorPreferences;
   onPreferencesUpdate: (preferences: EditorPreferences) => void;
+  onRegenerateUUID?: () => string;
   autoSave?: boolean;
   onAutoSaveToggle?: () => void;
   isVisible: boolean;
@@ -88,8 +87,7 @@ export const PropertiesPanel = ({
   onMoveDown,
   preferences,
   onPreferencesUpdate,
-  autoSave = true,
-  onAutoSaveToggle,
+  onRegenerateUUID,
   isVisible,
   onClose,
 }: PropertiesPanelProps) => {
@@ -655,59 +653,6 @@ export const PropertiesPanel = ({
                   className="overflow-hidden"
                 >
                   <div className="p-3 space-y-4">
-                    {/* Autosave Settings */}
-                    {onAutoSaveToggle && (
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">Editor Settings</label>
-                        
-                        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center space-x-3">
-                            {autoSave ? (
-                              <BoltIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
-                            ) : (
-                              <BoltSlashIcon className="w-4 h-4 text-gray-400" />
-                            )}
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Auto-save</div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400">
-                                {autoSave 
-                                  ? 'Changes saved automatically' 
-                                  : 'Save changes manually'
-                                }
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={onAutoSaveToggle}
-                            className={`
-                              relative inline-flex h-5 w-9 items-center rounded-full transition-colors
-                              ${autoSave ? 'bg-green-600' : 'bg-gray-400 dark:bg-gray-600'}
-                            `}
-                          >
-                            <span
-                              className={`
-                                inline-block h-3 w-3 transform rounded-full bg-white transition
-                                ${autoSave ? 'translate-x-5' : 'translate-x-1'}
-                              `}
-                            />
-                          </button>
-                        </div>
-                        
-                        <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 p-2 rounded border border-gray-200 dark:border-gray-700/50">
-                          <div className="font-medium mb-1">Performance Info:</div>
-                          Auto-save prevents data loss but may increase server requests. Disable for better performance if needed.
-                          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                            <div className="font-medium mb-1">Thumbnail Updates:</div>
-                            <div className="text-xs">
-                              • Manual save: Always updates thumbnail<br/>
-                              • Auto-save: Updates thumbnail every ~2 saves<br/>
-                              • Gallery refreshes automatically when thumbnails update
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* UUID Settings */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">UUID Configuration</label>
@@ -729,6 +674,23 @@ export const PropertiesPanel = ({
                           <span>32</span>
                         </div>
                       </div>
+                      
+                      {/* UUID Regeneration */}
+                      {onRegenerateUUID && (
+                        <div className="pt-3">
+                          <button
+                            onClick={() => {
+                              onRegenerateUUID();
+                            }}
+                            className="w-full px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200 font-medium"
+                          >
+                            🔄 Regenerate UUID
+                          </button>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Generate a new UUID for all QR codes and UUID objects on this label
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* QR Code Settings */}

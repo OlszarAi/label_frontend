@@ -3,7 +3,11 @@
 import { motion } from 'framer-motion';
 import { ArrowRightIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
 
-export function CTASection() {
+interface CTASectionProps {
+  onStartRegister?: () => void;
+}
+
+export function CTASection({ onStartRegister }: CTASectionProps) {
   return (
     <section className="cta-section">
       <div className="cta-container">
@@ -49,6 +53,7 @@ export function CTASection() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="cta-btn-primary"
+              onClick={onStartRegister}
             >
               <span>Rozpocznij darmowy okres próbny</span>
               <ArrowRightIcon className="cta-btn-icon" />

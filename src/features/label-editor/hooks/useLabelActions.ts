@@ -1,22 +1,18 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-
-interface Label {
-  id: string;
-  name: string;
-  projectId: string;
-}
+import type { Label } from '../services/labelManagementService';
 
 interface UseLabelActionsProps {
   saveLabel: () => Promise<boolean>;
-  currentLabel: Label | null;
+  currentLabel: { id: string; name: string; projectId: string } | null;
   refreshLabelThumbnail: (id: string) => Promise<void>;
   refreshLabelThumbnailImmediate?: (id: string) => Promise<void>;
   switchToLabel: (id: string) => Promise<void>;
   createLabelAndNavigate: () => Promise<Label | null>;
   hasUnsavedChanges: boolean;
   autoSave: boolean;
+  onLabelCreated?: (label: Label) => void;
 }
 
 export const useLabelActions = ({
@@ -31,6 +27,7 @@ export const useLabelActions = ({
 }: UseLabelActionsProps) => {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [isCreatingLabel, setIsCreatingLabel] = useState(false);
 
   // Enhanced save function for manual saves (shows toast)
   const handleSave = useCallback(async () => {
@@ -85,14 +82,24 @@ export const useLabelActions = ({
   }, [saveLabel, currentLabel, refreshLabelThumbnail, isSaving]);
 
   const handleBack = useCallback(() => {
+    const projectId = currentLabel?.projectId;
+    
     if (hasUnsavedChanges && !autoSave) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
-        router.back();
+        if (projectId) {
+          router.push(`/projects/${projectId}/labels`);
+        } else {
+          router.push('/projects');
+        }
       }
     } else {
-      router.back();
+      if (projectId) {
+        router.push(`/projects/${projectId}/labels`);
+      } else {
+        router.push('/projects');
+      }
     }
-  }, [router, hasUnsavedChanges, autoSave]);
+  }, [router, hasUnsavedChanges, autoSave, currentLabel?.projectId]);
 
   const handlePreview = useCallback(() => {
     toast.info('Preview functionality coming soon');
@@ -121,19 +128,25 @@ export const useLabelActions = ({
   }, [hasUnsavedChanges, autoSave, switchToLabel]);
 
   const handleCreateLabel = useCallback(async () => {
-    if (currentLabel?.projectId) {
+    if (currentLabel?.projectId && !isCreatingLabel) {
+      setIsCreatingLabel(true);
       try {
+        // Use createLabelAndNavigate to automatically navigate to the new label
         const newLabel = await createLabelAndNavigate();
         if (newLabel) {
-          // The createLabelAndNavigate function handles navigation
-          toast.success('New label created');
+          toast.success('New label created - navigating to editor');
+          // The onLabelCreated callback will handle updating the UI
+          // Navigation is handled by createLabelAndNavigate
         }
       } catch (error) {
         console.error('Failed to create label:', error);
         toast.error('Failed to create label');
+      } finally {
+        // Add small delay to prevent rapid clicking
+        setTimeout(() => setIsCreatingLabel(false), 1000);
       }
     }
-  }, [currentLabel?.projectId, createLabelAndNavigate]);
+  }, [currentLabel?.projectId, createLabelAndNavigate, isCreatingLabel]);
 
   return {
     handleSave,
@@ -143,6 +156,7 @@ export const useLabelActions = ({
     handleShare,
     handleLabelSelect,
     handleCreateLabel,
-    isSaving
+    isSaving,
+    isCreatingLabel
   };
 }; 

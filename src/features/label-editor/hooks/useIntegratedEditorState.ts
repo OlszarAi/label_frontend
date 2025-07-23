@@ -1,0 +1,371 @@
+/**
+ * New integrated editor state hook that works with centralized label management
+ */
+
+'use client';
+
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Canvas } from 'fabric';
+import { EditorState, LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
+import { generateUUID } from '../utils/uuid';
+import { generateThumbnailFromCanvas } from '../utils/thumbnailGenerator';
+import { useLabelManagement } from './useLabelManagement';
+import { useLabelUUID, extractLabelUUID, ensureLabelUUIDConsistency } from './useLabelUUID';
+
+interface LabelData {
+  id: string;
+  name: string;
+  description?: string;
+  fabricData?: unknown;
+  width: number;
+  height: number;
+  projectId: string;
+  version?: number;
+}
+
+const initialPreferences: EditorPreferences = {
+  uuid: {
+    uuidLength: 8,
+    qrPrefix: 'https://example.com/',
+  },
+  grid: {
+    size: 5,
+    snapToGrid: false,
+    showGrid: false,
+    color: '#e0e0e0',
+    opacity: 0.5,
+  },
+  ruler: {
+    showRulers: false,
+    color: '#ffffff',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    opacity: 0.9,
+    size: 24,
+  },
+};
+
+const initialState: EditorState = {
+  dimensions: { width: 100, height: 50 },
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  objects: [],
+  selectedObjectId: null,
+  preferences: initialPreferences,
+};
+
+export const useIntegratedEditorState = (labelId?: string, projectId?: string) => {
+  // State
+  const [state, setState] = useState<EditorState>(initialState);
+  const [currentLabel, setCurrentLabel] = useState<LabelData | null>(null);
+  const [autoSave, setAutoSave] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Refs for managing timers and state
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveAbortControllerRef = useRef<AbortController | null>(null);
+  const canvasRef = useRef<Canvas | null>(null);
+  const isSwitchingLabelsRef = useRef(false);
+
+  // Use centralized label management
+  const labelManager = useLabelManagement({ 
+    projectId: projectId || undefined,
+    autoLoad: false // We'll load manually based on labelId
+  });
+
+  // Use label UUID management system
+  const labelUUIDManager = useLabelUUID({
+    initialLength: state.preferences.uuid.uuidLength,
+    autoRegenerate: true,
+  });
+
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (saveAbortControllerRef.current) {
+      saveAbortControllerRef.current.abort();
+      saveAbortControllerRef.current = null;
+    }
+  }, []);
+
+  // Load or create label based on route parameters
+  useEffect(() => {
+    let isMounted = true;
+    
+    const initializeLabel = async () => {
+      if (labelId) {
+        // Load existing label
+        const label = await labelManager.loadLabel(labelId);
+        if (label && isMounted) {
+          loadLabelIntoEditor(label);
+        }
+      } else if (projectId) {
+        // Create new label
+        const newLabel = await labelManager.createLabelAndNavigate();
+        if (newLabel && isMounted) {
+          loadLabelIntoEditor(newLabel);
+        }
+      }
+    };
+
+    initializeLabel();
+    
+    return () => {
+      isMounted = false;
+      cleanup();
+    };
+  }, [labelId, projectId]); // Usunąłem labelManager z dependencies
+
+  // Load label data into editor state
+  const loadLabelIntoEditor = useCallback((label: LabelData) => {
+    try {
+      setCurrentLabel(label);
+      
+      // Parse fabric data if it exists
+      const fabricData = label.fabricData as unknown;
+      if (fabricData && typeof fabricData === 'object' && fabricData !== null) {
+        const data = fabricData as { objects?: CanvasObject[]; preferences?: EditorPreferences };
+        const objects = data.objects || [];
+        const preferences = data.preferences || initialPreferences;
+        
+        // Extract existing UUID from objects if available
+        const existingUUID = extractLabelUUID(objects);
+        let processedObjects = objects;
+        
+        if (existingUUID) {
+          // Use existing UUID and ensure consistency - set the UUID in manager first
+          labelUUIDManager.setUUID(existingUUID);
+          processedObjects = ensureLabelUUIDConsistency(objects, existingUUID);
+        } else if (objects.some((obj: CanvasObject) => obj.type === 'qrcode' || obj.type === 'uuid')) {
+          // If we have QR/UUID objects but no UUID, assign the current one
+          processedObjects = labelUUIDManager.updateObjectsWithUUID(objects, labelUUIDManager.labelUUID);
+        }
+        
+        setState(prev => ({
+          ...prev,
+          dimensions: { width: label.width, height: label.height },
+          objects: processedObjects,
+          selectedObjectId: null,
+          preferences: {
+            ...preferences,
+            uuid: {
+              ...preferences.uuid,
+              uuidLength: existingUUID?.length || preferences.uuid?.uuidLength || 8,
+            }
+          },
+        }));
+        
+        // Update UUID manager length to match preferences
+        if (preferences.uuid?.uuidLength) {
+          labelUUIDManager.updateUUIDLength(preferences.uuid.uuidLength);
+        }
+      } else {
+        setState(prev => ({
+          ...prev,
+          dimensions: { width: label.width, height: label.height },
+          objects: [],
+          selectedObjectId: null,
+        }));
+      }
+
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Error loading label into editor:', error);
+    }
+  }, [labelUUIDManager]);
+
+  // Save label function
+  const saveLabel = useCallback(async (): Promise<boolean> => {
+    if (!currentLabel || isSwitchingLabelsRef.current) return false;
+
+    try {
+      // Cancel any existing save request
+      if (saveAbortControllerRef.current) {
+        saveAbortControllerRef.current.abort();
+      }
+      
+      saveAbortControllerRef.current = new AbortController();
+
+      // Generate thumbnail if canvas is available
+      let thumbnail = '';
+      if (canvasRef.current) {
+        try {
+          thumbnail = await generateThumbnailFromCanvas(canvasRef.current, 200);
+        } catch (thumbnailError) {
+          console.warn('Failed to generate thumbnail:', thumbnailError);
+        }
+      }
+
+      // Prepare update data
+      const updateData = {
+        name: currentLabel.name,
+        description: currentLabel.description,
+        fabricData: {
+          version: '6.0.0',
+          objects: state.objects,
+          preferences: state.preferences,
+        },
+        width: state.dimensions.width,
+        height: state.dimensions.height,
+        thumbnail: thumbnail || undefined,
+        version: currentLabel.version,
+      };
+
+      // Use label manager to update
+      const updatedLabel = await labelManager.updateLabel(currentLabel.id, updateData);
+      
+      if (updatedLabel) {
+        setCurrentLabel(prev => prev ? { ...prev, version: updatedLabel.version } : null);
+        setHasUnsavedChanges(false);
+        setLastSaved(new Date());
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Save error:', error);
+      return false;
+    }
+  }, [currentLabel, state]); // Usunąłem labelManager z dependencies
+
+  // Switch to different label
+  const switchToLabel = useCallback(async (newLabelId: string) => {
+    if (isSwitchingLabelsRef.current) return;
+
+    try {
+      isSwitchingLabelsRef.current = true;
+      cleanup();
+
+      const label = await labelManager.loadLabel(newLabelId);
+      if (label) {
+        loadLabelIntoEditor(label);
+        // Update URL
+        window.history.replaceState(null, '', `/editor/${label.id}`);
+      }
+    } catch (error) {
+      console.error('Error switching label:', error);
+    } finally {
+      setTimeout(() => {
+        isSwitchingLabelsRef.current = false;
+      }, 100);
+    }
+  }, [cleanup, loadLabelIntoEditor]); // Usunąłem labelManager z dependencies
+
+  // State update functions
+  const updateDimensions = useCallback((dimensions: LabelDimensions) => {
+    setState(prev => ({ ...prev, dimensions }));
+    setHasUnsavedChanges(true);
+  }, []);
+
+  const updateZoom = useCallback((zoom: number) => {
+    setState(prev => ({ ...prev, zoom }));
+  }, []);
+
+  const addObject = useCallback((object: Omit<CanvasObject, 'id'>) => {
+    const newObject = { ...object, id: generateUUID() };
+    
+    // If it's a QR code or UUID object, ensure it uses the label's UUID
+    if (newObject.type === 'qrcode' || newObject.type === 'uuid') {
+      newObject.sharedUUID = labelUUIDManager.labelUUID;
+      if (newObject.type === 'uuid') {
+        newObject.text = labelUUIDManager.labelUUID;
+      }
+    }
+    
+    setState(prev => ({ ...prev, objects: [...prev.objects, newObject] }));
+    setHasUnsavedChanges(true);
+  }, [labelUUIDManager]);
+
+  const updateObject = useCallback((id: string, updates: Partial<CanvasObject>) => {
+    setState(prev => ({
+      ...prev,
+      objects: prev.objects.map(obj => obj.id === id ? { ...obj, ...updates } : obj)
+    }));
+    setHasUnsavedChanges(true);
+  }, []);
+
+  const deleteObject = useCallback((id: string) => {
+    setState(prev => ({
+      ...prev,
+      objects: prev.objects.filter(obj => obj.id !== id),
+      selectedObjectId: prev.selectedObjectId === id ? null : prev.selectedObjectId
+    }));
+    setHasUnsavedChanges(true);
+  }, []);
+
+  const selectObject = useCallback((id: string | null) => {
+    setState(prev => ({ ...prev, selectedObjectId: id }));
+  }, []);
+
+  const updatePreferences = useCallback((preferences: EditorPreferences) => {
+    // Check if UUID length changed
+    const oldLength = state.preferences.uuid.uuidLength;
+    const newLength = preferences.uuid.uuidLength;
+    
+    setState(prev => ({ ...prev, preferences }));
+    setHasUnsavedChanges(true);
+    
+    // If UUID length changed, update UUID manager and all objects
+    if (oldLength !== newLength) {
+      const newUUID = labelUUIDManager.updateUUIDLength(newLength);
+      const updatedObjects = labelUUIDManager.updateObjectsWithUUID(state.objects, newUUID);
+      
+      setState(prev => ({ ...prev, objects: updatedObjects }));
+    }
+  }, [state.preferences.uuid.uuidLength, state.objects, labelUUIDManager]);
+
+  const setCanvasRef = useCallback((canvas: Canvas | null) => {
+    canvasRef.current = canvas;
+  }, []);
+
+  // Auto-save effect
+  useEffect(() => {
+    if (autoSave && hasUnsavedChanges && currentLabel) {
+      const autoSaveTimer = setTimeout(() => {
+        saveLabel();
+      }, 2000);
+
+      return () => clearTimeout(autoSaveTimer);
+    }
+  }, [autoSave, hasUnsavedChanges, currentLabel?.id, currentLabel?.version]); // Tylko ID i version zamiast całego currentLabel i usunąłem saveLabel
+
+  return {
+    // State
+    state,
+    currentLabel,
+    autoSave,
+    setAutoSave,
+    hasUnsavedChanges,
+    lastSaved,
+    
+    // Actions
+    updateDimensions,
+    updateZoom,
+    addObject,
+    updateObject,
+    deleteObject,
+    selectObject,
+    updatePreferences,
+    saveLabel,
+    switchToLabel,
+    setCanvasRef,
+    
+    // Label management integration
+    labelManager,
+    
+    // UUID management
+    labelUUIDManager,
+    regenerateUUID: () => {
+      const newUUID = labelUUIDManager.regenerateUUID();
+      const updatedObjects = labelUUIDManager.updateObjectsWithUUID(state.objects, newUUID);
+      setState(prev => ({ ...prev, objects: updatedObjects }));
+      setHasUnsavedChanges(true);
+      return newUUID;
+    },
+  };
+};

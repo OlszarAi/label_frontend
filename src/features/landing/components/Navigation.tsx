@@ -1,26 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useAuthContext } from '@/providers/AuthProvider';
-import { AuthModal } from '@/components/modals/AuthModal';
 import { UserMenu } from '@/components/navigation/UserMenu';
 
-export function Navigation() {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+interface NavigationProps {
+  onOpenLogin?: () => void;
+  onOpenRegister?: () => void;
+}
+
+export function Navigation({ onOpenLogin, onOpenRegister }: NavigationProps) {
   const { isAuthenticated, isLoading } = useAuthContext();
-
-  const openLoginModal = () => {
-    setAuthModalMode('login');
-    setIsAuthModalOpen(true);
-  };
-
-  const openRegisterModal = () => {
-    setAuthModalMode('register');
-    setIsAuthModalOpen(true);
-  };
 
   return (
     <>
@@ -45,10 +36,10 @@ export function Navigation() {
                   <UserMenu />
                 ) : (
                   <>
-                    <button onClick={openLoginModal} className="nav-link">
+                    <button onClick={onOpenLogin} className="nav-link">
                       Logowanie
                     </button>
-                    <button onClick={openRegisterModal} className="nav-btn-primary">
+                    <button onClick={onOpenRegister} className="nav-btn-primary">
                       Rozpocznij teraz
                     </button>
                   </>
@@ -58,12 +49,6 @@ export function Navigation() {
           </div>
         </div>
       </motion.nav>
-
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authModalMode}
-      />
     </>
   );
 }

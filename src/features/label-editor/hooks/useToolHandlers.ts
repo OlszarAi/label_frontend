@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { EditorState, CanvasObject } from '../types/editor.types';
-import { generateUUID } from '../utils/uuid';
 import { snapCoordinatesToGrid } from '../utils/grid';
 import { DEFAULT_OBJECT_PROPS, DEFAULT_POSITION, TOOL_TYPES } from '../constants';
 
@@ -76,17 +75,16 @@ export const useToolHandlers = ({
       state.preferences.grid.size, 
       state.preferences.grid.snapToGrid
     );
-    const newUUID = generateUUID(state.preferences.uuid.uuidLength);
     addObject({
       type: 'qrcode',
       x: coords.x,
       y: coords.y,
       ...DEFAULT_OBJECT_PROPS.QRCODE,
-      sharedUUID: newUUID,
+      // sharedUUID will be set automatically in addObject
     });
     setSelectedTool(TOOL_TYPES.SELECT);
     toast.success('QR Code added');
-  }, [addObject, state.preferences.uuid.uuidLength, state.preferences.grid, setSelectedTool]);
+  }, [addObject, state.preferences.grid, setSelectedTool]);
 
   const handleAddUUID = useCallback(() => {
     const coords = snapCoordinatesToGrid(
@@ -95,18 +93,16 @@ export const useToolHandlers = ({
       state.preferences.grid.size, 
       state.preferences.grid.snapToGrid
     );
-    const newUUID = generateUUID(state.preferences.uuid.uuidLength);
     addObject({
       type: 'uuid',
       x: coords.x,
       y: coords.y,
-      text: newUUID,
       ...DEFAULT_OBJECT_PROPS.TEXT,
-      sharedUUID: newUUID,
+      // text and sharedUUID will be set automatically in addObject
     });
     setSelectedTool(TOOL_TYPES.SELECT);
     toast.success('UUID added');
-  }, [addObject, state.preferences.uuid.uuidLength, state.preferences.grid, setSelectedTool]);
+  }, [addObject, state.preferences.grid, setSelectedTool]);
 
   return {
     handleAddText,

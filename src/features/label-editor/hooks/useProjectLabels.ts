@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Label } from '../../project-management/types/project.types';
+import { generateUniqueLabel, type LabelForNaming } from '../utils/labelNaming';
 
 interface UseProjectLabelsProps {
   projectId: string | null;
@@ -202,18 +203,22 @@ export const useProjectLabels = ({ projectId }: UseProjectLabelsProps) => {
   }, [projectId]);
 
   const createLabelAndNavigate = useCallback(async () => {
+    // Generate unique name based on existing labels
+    const uniqueName = generateUniqueLabel(labels as LabelForNaming[]);
+    
     const newLabel = await createLabel({
-      name: `New Label ${labels.length + 1}`,
+      name: uniqueName,
       description: '',
     });
     
     if (newLabel) {
-      // Navigate to the new label immediately
-      router.push(`/editor/${newLabel.id}`);
+      // Navigate to the new label immediately with projectId context
+      const url = projectId ? `/editor/${newLabel.id}?projectId=${projectId}` : `/editor/${newLabel.id}`;
+      router.push(url);
     }
     
     return newLabel;
-  }, [createLabel, labels.length, router]);
+  }, [createLabel, labels, router, projectId]);
 
   const deleteLabel = useCallback(async (labelId: string) => {
     try {
@@ -248,19 +253,22 @@ export const useProjectLabels = ({ projectId }: UseProjectLabelsProps) => {
   useEffect(() => {
     loadLabels();
     
+    // Capture current refs at effect creation time
+    const timer = thumbnailUpdateTimer;
+    const queue = thumbnailUpdateQueue;
+    const lastUpdate = lastThumbnailUpdate;
+    
     // Cleanup function to clear any pending timers and tracking data
     return () => {
-      if (thumbnailUpdateTimer.current) {
-        clearTimeout(thumbnailUpdateTimer.current);
-        thumbnailUpdateTimer.current = null;
+      if (timer.current) {
+        clearTimeout(timer.current);
+        timer.current = null;
       }
-      // Copy current values to avoid stale closure warnings
-      const currentQueue = thumbnailUpdateQueue.current;
-      const currentLastUpdate = lastThumbnailUpdate.current;
-      currentQueue.clear();
-      currentLastUpdate.clear();
+      // Clear the tracking data using captured refs
+      queue.current.clear();
+      lastUpdate.current.clear();
     };
-  }, [projectId, loadLabels]); // Use projectId directly instead of fetchLabels
+  }, [projectId]); // Usunąłem loadLabels z dependencies
 
   // Reset state when projectId changes
   useEffect(() => {

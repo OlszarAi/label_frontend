@@ -518,11 +518,12 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
-  z-index: 50;
+  z-index: 2100;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .project-modal {
@@ -799,11 +800,14 @@
   width: 100%;
   backdrop-filter: blur(20px);
   box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.2);
+  box-sizing: border-box;
 }
 
 .delete-modal-content {
   padding: 2rem;
   text-align: center;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .delete-modal-icon {
@@ -831,6 +835,8 @@
   font-size: 0.875rem;
   line-height: 1.6;
   margin-bottom: 2rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .delete-modal-actions {
@@ -862,6 +868,29 @@
 .delete-modal-btn-delete:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Responsive design for delete modal */
+@media (max-width: 480px) {
+  .delete-modal {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .delete-modal-content {
+    padding: 1.5rem;
+  }
+  
+  .delete-modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .delete-modal-btn-cancel,
+  .delete-modal-btn-delete {
+    width: 100%;
+    padding: 1rem 1.5rem;
+  }
 }
 
 /* Label-specific status colors */

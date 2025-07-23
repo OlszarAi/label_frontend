@@ -7,7 +7,7 @@ import {
   CloudArrowUpIcon, 
   DevicePhoneMobileIcon,
   PaintBrushIcon,
-  CogIcon 
+  CogIcon
 } from '@heroicons/react/24/outline';
 
 const features = [
@@ -49,7 +49,11 @@ const features = [
   }
 ];
 
-export function FeaturesSection() {
+interface FeaturesSectionProps {
+  onStartRegister?: () => void;
+}
+
+export function FeaturesSection({ onStartRegister }: FeaturesSectionProps) {
   return (
     <section className="features-section">
       <div className="features-container">
@@ -101,7 +105,7 @@ export function FeaturesSection() {
             <p className="showcase-description">
               Intuicyjny interfejs, zaawansowane funkcje i nieograniczone możliwości twórcze
             </p>
-            <button className="showcase-btn">
+            <button className="showcase-btn" onClick={onStartRegister}>
               <span>Rozpocznij darmowy okres próbny</span>
             </button>
           </div>

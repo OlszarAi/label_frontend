@@ -6,10 +6,12 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { Label } from '@/features/project-management/types/project.types';
-import { LabelList } from '@/features/project-management/components/LabelList';
-import { LabelFilters } from '@/features/project-management/components/LabelFilters';
+import ImprovedLabelGallery from '@/features/project-management/components/ImprovedLabelGallery';
 import { ExportButton, ExportModal } from '@/features/label-export';
 import '@/features/project-management/styles/projects.css';
+import '@/features/project-management/styles/improved-gallery.css';
+import '@/features/project-management/styles/quick-templates.css';
+import '@/features/project-management/styles/size-comparator.css';
 
 export default function ProjectLabelsPage() {
   const router = useRouter();
@@ -28,12 +30,16 @@ export default function ProjectLabelsPage() {
   } = useProjects();
 
   // UI State
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<'name' | 'createdAt' | 'updatedAt'>('updatedAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+
+  // Callback for when new label is created
+  const handleLabelCreated = () => {
+    // Refresh the labels list
+    if (projectId) {
+      fetchProjectLabels(projectId);
+    }
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -50,54 +56,50 @@ export default function ProjectLabelsPage() {
     }
   }, [isAuthenticated, token, projectId, fetchProject, fetchProjectLabels]);
 
-  // Filter and sort labels
-  const filteredAndSortedLabels = React.useMemo(() => {
-    const filtered = labels.filter((label: Label) =>
-      label.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      label.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (label.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    // Sort labels
-    const sorted = [...filtered].sort((a: Label, b: Label) => {
-      let aValue: string | Date;
-      let bValue: string | Date;
-
-      switch (sortField) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'createdAt':
-        case 'updatedAt':
-          aValue = new Date(a[sortField]);
-          bValue = new Date(b[sortField]);
-          break;
-        default:
-          return 0;
+  // Refresh data when returning to the page (e.g., from editor)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isAuthenticated && token && projectId) {
+        fetchProjectLabels(projectId);
       }
+    };
 
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
+    window.addEventListener('focus', handleFocus);
+    
+    // Also listen for visibility change (when tab becomes visible)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated && token && projectId) {
+        fetchProjectLabels(projectId);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, token, projectId, fetchProjectLabels]);
+
+  const handleCreateFromTemplate = (template: { width: number; height: number; name: string }) => {
+    // Navigate to label editor with template data
+    const params = new URLSearchParams({
+      projectId,
+      width: template.width.toString(),
+      height: template.height.toString(),
+      templateName: template.name
     });
-
-    return sorted;
-  }, [labels, searchTerm, sortField, sortOrder]);
-
-  const handleCreateLabel = () => {
-    // Navigate to label editor with project context
-    router.push(`/editor/new?projectId=${projectId}`);
+    router.push(`/editor/new?${params.toString()}`);
   };
 
   const handleEditLabel = (label: Label) => {
-    // Navigate to label editor with label data
-    router.push(`/editor/${label.id}`);
+    // Navigate to label editor with label data and project context
+    router.push(`/editor/${label.id}?projectId=${projectId}`);
   };
 
   const handleLabelClick = (label: Label) => {
-    // Navigate to label editor 
-    router.push(`/editor/${label.id}`);
+    // Navigate to label editor with project context
+    router.push(`/editor/${label.id}?projectId=${projectId}`);
   };
 
   const handleDeleteLabel = async (labelId: string) => {
@@ -116,6 +118,30 @@ export default function ProjectLabelsPage() {
 
   const handleBackToProjects = () => {
     router.push('/projects');
+  };
+
+  const handleBulkAction = async (action: string, labelIds: string[]) => {
+    switch (action) {
+      case 'delete':
+        // Handle bulk delete
+        for (const labelId of labelIds) {
+          await deleteLabel(labelId);
+        }
+        if (projectId) {
+          fetchProjectLabels(projectId);
+        }
+        break;
+      case 'duplicate':
+        // TODO: Implement bulk duplicate functionality
+        console.log('Bulk duplicate:', labelIds);
+        break;
+      case 'export':
+        // TODO: Implement bulk export functionality
+        console.log('Bulk export:', labelIds);
+        break;
+      default:
+        console.log('Unknown bulk action:', action);
+    }
   };
 
   if (authLoading || !isAuthenticated) {
@@ -152,6 +178,46 @@ export default function ProjectLabelsPage() {
         >
           <div className="projects-header-container">
             <div className="projects-header-left">
+              {/* Breadcrumb Navigation */}
+              <div style={{ 
+                marginBottom: '1rem', 
+                paddingBottom: '0.5rem',
+                borderBottom: '1px solid rgba(55, 65, 81, 0.2)'
+              }}>
+                <nav style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  color: '#9ca3af', 
+                  fontSize: '0.875rem' 
+                }}>
+                  <button
+                    onClick={handleBackToProjects}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      color: '#9ca3af', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      transition: 'color 0.3s ease'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
+                    onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
+                  >
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Projects
+                  </button>
+                  <span>/</span>
+                  <span style={{ color: '#e2e8f0' }}>{currentProject?.name || 'Project'}</span>
+                </nav>
+              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
                 {currentProject?.icon ? (
                   <span style={{ fontSize: '2rem' }}>{currentProject.icon}</span>
@@ -201,24 +267,6 @@ export default function ProjectLabelsPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="projects-main"
         >
-          {/* Filters */}
-          <LabelFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            sortField={sortField}
-            sortOrder={sortOrder}
-            onSortChange={(field, order) => {
-              setSortField(field);
-              setSortOrder(order);
-            }}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            onCreateLabel={handleCreateLabel}
-            onBackToProjects={handleBackToProjects}
-            projectName={currentProject?.name}
-            totalCount={filteredAndSortedLabels.length}
-          />
-
           {/* Error Message */}
           {error && (
             <div className="projects-error">
@@ -238,15 +286,17 @@ export default function ProjectLabelsPage() {
             </div>
           )}
 
-          {/* Labels List */}
+          {/* Enhanced Label Gallery */}
           {currentProject && (
-            <LabelList
-              labels={filteredAndSortedLabels}
-              viewMode={viewMode}
+            <ImprovedLabelGallery
+              labels={labels}
+              projectId={projectId}
               onLabelClick={handleLabelClick}
               onEditLabel={handleEditLabel}
-              onDeleteLabel={(labelId) => setDeleteConfirm(labelId)}
-              onAddNewLabel={handleCreateLabel}
+              onDeleteLabel={(labelId: string) => setDeleteConfirm(labelId)}
+              onCreateFromTemplate={handleCreateFromTemplate}
+              onBulkAction={handleBulkAction}
+              onLabelCreated={handleLabelCreated}
               loading={isLoading}
             />
           )}

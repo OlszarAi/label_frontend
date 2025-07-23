@@ -3,7 +3,11 @@
 import { motion } from 'framer-motion';
 import { ArrowRightIcon, PlayIcon } from '@heroicons/react/24/outline';
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onStartRegister?: () => void;
+}
+
+export function HeroSection({ onStartRegister }: HeroSectionProps) {
   return (
     <section className="hero-section">
       <div className="hero-container">
@@ -49,7 +53,7 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 1 }}
             className="hero-actions"
           >
-            <button className="hero-btn-primary">
+            <button className="hero-btn-primary" onClick={onStartRegister}>
               <span>Rozpocznij za darmo</span>
               <ArrowRightIcon className="hero-btn-icon" />
             </button>

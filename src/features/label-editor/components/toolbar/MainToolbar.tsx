@@ -121,7 +121,6 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span>{isConnected ? 'Connected' : 'Offline'}</span>
-                {autoSave && <span>• Auto-save enabled</span>}
               </div>
             </div>
           </div>
