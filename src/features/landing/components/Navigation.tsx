@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { UserMenu } from '@/components/navigation/UserMenu';
+import './landing.styles.css';
 
 interface NavigationProps {
   onOpenLogin?: () => void;

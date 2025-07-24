@@ -135,6 +135,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAuthenticated: true,
         });
 
+        // Redirect to dashboard after successful login
+        if (typeof window !== 'undefined') {
+          // Używamy setTimeout żeby dać czas na aktualizację stanu
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 100);
+        }
+
         return { success: true, data };
       } else {
         return { success: false, error: data.message || 'Login failed' };

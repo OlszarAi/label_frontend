@@ -1,21 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/providers/AuthProvider';
 import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { Project, CreateProjectRequest, UpdateProjectRequest } from '@/features/project-management/types/project.types';
 import { ProjectList } from '@/features/project-management/components/ProjectList';
 import { ProjectFilters } from '@/features/project-management/components/ProjectFilters';
 import { ProjectForm } from '@/features/project-management/components/ProjectForm';
 import { TopNavigation } from '@/components/navigation/TopNavigation';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import '@/features/project-management/styles/projects.css';
 import '@/components/navigation/TopNavigation.css';
 
 export default function ProjectsPage() {
-  const router = useRouter();
-  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { token, isAuthenticated } = useAuthContext();
   const {
     projects,
     isLoading,
@@ -34,13 +33,6 @@ export default function ProjectsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/');
-    }
-  }, [authLoading, isAuthenticated, router]);
 
   // Fetch projects on component mount
   useEffect(() => {
@@ -121,26 +113,10 @@ export default function ProjectsPage() {
 
   const handleProjectClick = (project: Project) => {
     // Navigate to project labels page
-    router.push(`/projects/${project.id}/labels`);
+    window.location.href = `/projects/${project.id}/labels`;
   };
 
-  if (authLoading || !isAuthenticated) {
-    return (
-      <div className="projects-page">
-        <div className="projects-background">
-          <div className="projects-background-grid"></div>
-          <div className="projects-background-glow"></div>
-        </div>
-        <div className="projects-content">
-          <div className="projects-loading">
-            <div className="projects-spinner"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+  const mainContent = (
     <div className="projects-page">
       {/* Background Elements */}
       <div className="projects-background">
@@ -262,5 +238,11 @@ export default function ProjectsPage() {
         </div>
       )}
     </div>
+  );
+
+  return (
+    <ProtectedRoute>
+      {mainContent}
+    </ProtectedRoute>
   );
 }

@@ -114,6 +114,24 @@ html {
   overflow-x: hidden;
 }
 
+.dashboard-container {
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  min-height: 100vh;
+  background: #0a0b14;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+.dashboard-page-wrapper {
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  min-height: 100vh;
+  background: #0a0b14;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
 .landing-background {
   position: fixed;
   top: 0;
@@ -157,6 +175,11 @@ html {
 }
 
 .landing-content {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-content {
   position: relative;
   z-index: 1;
 }

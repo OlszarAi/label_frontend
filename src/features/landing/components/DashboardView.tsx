@@ -18,6 +18,7 @@ import {
   TrendingUp,
   FolderOpen
 } from 'lucide-react';
+import './landing.styles.css';
 
 interface DashboardStats {
   totalProjects: number;
@@ -115,7 +116,7 @@ export function DashboardView() {
   };
 
   return (
-    <div className="landing-page">
+    <div className="dashboard-container">
       {/* Background */}
       <div className="landing-background">
         <div className="background-grid"></div>
@@ -126,7 +127,7 @@ export function DashboardView() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="landing-content"
+        className="dashboard-content"
         style={{ paddingTop: '120px', maxWidth: '1400px', margin: '0 auto' }}
       >
         {/* Header Welcome - Ciemny styl zgodny z resztą */}
