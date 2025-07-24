@@ -107,7 +107,9 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
 
       return () => clearTimeout(autoSaveTimer);
     }
-  }, [autoSave, hasUnsavedChanges, currentLabel, labelActions, state.objects, state.dimensions, state.preferences]);
+  // Intentionally excluding state.objects, state.dimensions, state.preferences to prevent infinite loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSave, hasUnsavedChanges, currentLabel]);
 
   const selectedObject = state.selectedObjectId 
     ? state.objects.find(obj => obj.id === state.selectedObjectId) || null

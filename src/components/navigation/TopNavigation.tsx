@@ -2,9 +2,9 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { UserMenu } from './UserMenu';
-import { ChevronLeft, Home, Folder, Tag } from 'lucide-react';
+import { ChevronLeft, Home, Folder } from 'lucide-react';
 
 interface TopNavigationProps {
   title?: string;
@@ -25,7 +25,6 @@ export function TopNavigation({
   breadcrumbs 
 }: TopNavigationProps) {
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleBack = () => {
     if (backHref) {

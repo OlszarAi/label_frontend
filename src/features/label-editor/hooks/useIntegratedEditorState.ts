@@ -150,7 +150,9 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
     } catch (error) {
       console.error('Error loading label into editor:', error);
     }
-  }, [labelUUIDManager]);
+  // labelUUIDManager is intentionally omitted to prevent re-creation loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load or create label based on route parameters
   useEffect(() => {
@@ -210,6 +212,7 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
       loadingLabelRef.current = null;
       cleanup();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelId, projectId]);
 
   // Save label function
@@ -264,7 +267,9 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
       console.error('Save error:', error);
       return false;
     }
-  }, [currentLabel, state, labelManager]);
+  // labelManager is intentionally omitted from deps to prevent re-creation loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLabel, state]);
 
   // Switch to different label
   const switchToLabel = useCallback(async (newLabelId: string) => {
@@ -287,7 +292,9 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
         isSwitchingLabelsRef.current = false;
       }, 100);
     }
-  }, [cleanup, loadLabelIntoEditor, labelManager]);
+  // labelManager and loadLabelIntoEditor are intentionally omitted to prevent re-creation loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleanup]);
 
   // State update functions
   const updateDimensions = useCallback((dimensions: LabelDimensions) => {
@@ -312,7 +319,9 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
     
     setState(prev => ({ ...prev, objects: [...prev.objects, newObject] }));
     setHasUnsavedChanges(true);
-  }, [labelUUIDManager]);
+  // labelUUIDManager is used but intentionally omitted to prevent re-creation loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateObject = useCallback((id: string, updates: Partial<CanvasObject>) => {
     setState(prev => ({
@@ -336,21 +345,26 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
   }, []);
 
   const updatePreferences = useCallback((preferences: EditorPreferences) => {
-    // Check if UUID length changed
-    const oldLength = state.preferences.uuid.uuidLength;
-    const newLength = preferences.uuid.uuidLength;
-    
-    setState(prev => ({ ...prev, preferences }));
-    setHasUnsavedChanges(true);
-    
-    // If UUID length changed, update UUID manager and all objects
-    if (oldLength !== newLength) {
-      const newUUID = labelUUIDManager.updateUUIDLength(newLength);
-      const updatedObjects = labelUUIDManager.updateObjectsWithUUID(state.objects, newUUID);
+    // Use current state value instead of dependency
+    setState(prev => {
+      const oldLength = prev.preferences.uuid.uuidLength;
+      const newLength = preferences.uuid.uuidLength;
       
-      setState(prev => ({ ...prev, objects: updatedObjects }));
-    }
-  }, [state.preferences.uuid.uuidLength, state.objects, labelUUIDManager]);
+      const updatedState = { ...prev, preferences };
+      
+      // If UUID length changed, update UUID manager and all objects
+      if (oldLength !== newLength) {
+        const newUUID = labelUUIDManager.updateUUIDLength(newLength);
+        const updatedObjects = labelUUIDManager.updateObjectsWithUUID(prev.objects, newUUID);
+        return { ...updatedState, objects: updatedObjects };
+      }
+      
+      return updatedState;
+    });
+    setHasUnsavedChanges(true);
+  // Removed dependencies to prevent re-creation loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setCanvasRef = useCallback((canvas: Canvas | null) => {
     canvasRef.current = canvas;
@@ -365,7 +379,9 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
 
       return () => clearTimeout(autoSaveTimer);
     }
-  }, [autoSave, hasUnsavedChanges, currentLabel, saveLabel]);
+  // saveLabel is intentionally omitted to prevent re-creation loops  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSave, hasUnsavedChanges, currentLabel]);
 
   return {
     // State

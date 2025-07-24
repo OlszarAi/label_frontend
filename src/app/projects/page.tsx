@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { Project, CreateProjectRequest, UpdateProjectRequest } from '@/features/project-management/types/project.types';
@@ -16,7 +15,7 @@ import '@/components/navigation/TopNavigation.css';
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     projects,
     isLoading,

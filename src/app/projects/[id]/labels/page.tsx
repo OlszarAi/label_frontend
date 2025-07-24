@@ -20,7 +20,7 @@ export default function ProjectLabelsPage() {
   const params = useParams();
   const projectId = params.id as string;
   
-  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     currentProject,
     labels,
@@ -239,6 +239,45 @@ export default function ProjectLabelsPage() {
               />
             </div>
           </div>
+
+          {/* Beta Version Notice */}
+          <div style={{
+            background: 'rgba(251, 191, 36, 0.1)',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              background: 'rgba(251, 191, 36, 0.2)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FCD34D',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }}>
+              β
+            </div>
+            <div>
+              <p style={{ 
+                margin: 0, 
+                color: '#FCD34D', 
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                <strong>Wersja testowa</strong> - Ta funkcjonalność będzie ulepszona w następnej aktualizacji
+              </p>
+            </div>
+          </div>
+
           {/* Error Message */}
           {error && (
             <div className="projects-error">
