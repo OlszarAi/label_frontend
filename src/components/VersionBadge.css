@@ -1,14 +1,14 @@
 .version-badge {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 20px !important;
   background: rgba(255, 193, 7, 0.9);
   color: #000;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: bold;
-  z-index: 1000;
+  z-index: 10000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
@@ -16,11 +16,19 @@
   gap: 2px;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 193, 7, 0.3);
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: auto !important;
+  max-width: 120px !important;
+  min-width: auto !important;
+  right: auto !important;
+  top: auto !important;
 }
 
 .version-badge:hover {
-  opacity: 0.7;
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .version-text {
@@ -35,12 +43,68 @@
   text-transform: uppercase;
 }
 
+.version-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+  background: rgba(17, 24, 39, 0.95);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  width: 200px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  backdrop-filter: blur(8px);
+  z-index: 1001;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.version-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(17, 24, 39, 0.95);
+}
+
+.tooltip-header {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #fbbf24;
+  font-size: 12px;
+}
+
+.tooltip-content {
+  font-weight: normal;
+  opacity: 0.9;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .version-badge {
-    bottom: 10px;
-    left: 10px;
+    bottom: 10px !important;
+    left: 10px !important;
     padding: 6px 10px;
     font-size: 11px;
+    max-width: 100px !important;
+    width: auto !important;
   }
   
   .version-text {
@@ -49,5 +113,10 @@
   
   .access-text {
     font-size: 9px;
+  }
+
+  .version-tooltip {
+    width: 180px;
+    font-size: 10px;
   }
 }

@@ -36,6 +36,7 @@ export default function RootLayout({
         </AuthProvider>
         <Analytics />
         <VersionBadge />
+        
         <Toaster 
           theme="dark" 
           position="top-right"
