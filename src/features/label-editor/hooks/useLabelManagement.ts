@@ -3,7 +3,7 @@
  * Replaces multiple scattered label management hooks
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { 
@@ -53,6 +53,10 @@ export const useLabelManagement = ({
   const [currentLabel, setCurrentLabel] = useState<Label | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track loading state to prevent duplicate requests
+  const loadingLabelsRef = useRef<Set<string>>(new Set());
+  const lastLoadTimeRef = useRef<Map<string, number>>(new Map());
 
   // Auto-load labels when projectId changes
   useEffect(() => {
@@ -82,7 +86,24 @@ export const useLabelManagement = ({
 
   // Load a single label
   const loadLabel = useCallback(async (labelId: string): Promise<Label | null> => {
+    // Prevent loading the same label multiple times
+    if (loadingLabelsRef.current.has(labelId)) {
+      return null;
+    }
+    
+    // Check if we loaded this label recently (within 5 seconds)
+    const now = Date.now();
+    const lastLoadTime = lastLoadTimeRef.current.get(labelId) || 0;
+    if (now - lastLoadTime < 5000) {
+      // Return current label if it's the same ID
+      if (currentLabel?.id === labelId) {
+        return currentLabel;
+      }
+    }
+    
     setError(null);
+    loadingLabelsRef.current.add(labelId);
+    lastLoadTimeRef.current.set(labelId, now);
     
     try {
       const label = await labelManagementService.getLabel(labelId);
@@ -98,8 +119,10 @@ export const useLabelManagement = ({
       const errorMessage = err instanceof Error ? err.message : 'Failed to load label';
       setError(errorMessage);
       return null;
+    } finally {
+      loadingLabelsRef.current.delete(labelId);
     }
-  }, []);
+  }, [currentLabel]);
 
   // Create a new label
   const createLabel = useCallback(async (

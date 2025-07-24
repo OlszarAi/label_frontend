@@ -27,8 +27,21 @@ export function Navigation({ onOpenLogin, onOpenRegister }: NavigationProps) {
           </Link>
           
           <div className="nav-links">
-            <a href="#features" className="nav-link">Funkcje</a>
-            <a href="#pricing" className="nav-link">Cennik</a>
+            {/* Funkcje i Cennik tylko dla niezalogowanych */}
+            {!isAuthenticated && (
+              <>
+                <a href="#features" className="nav-link">Funkcje</a>
+                <a href="#pricing" className="nav-link">Cennik</a>
+              </>
+            )}
+            
+            {/* Dla zalogowanych - szybkie linki do głównych sekcji */}
+            {isAuthenticated && (
+              <>
+                <Link href="/projects" className="nav-link">Projekty</Link>
+                <Link href="/editor" className="nav-link">Edytor</Link>
+              </>
+            )}
             
             {!isLoading && (
               <>

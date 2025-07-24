@@ -40,12 +40,20 @@ export interface DuplicateLabelRequest {
 class LabelManagementService {
   private baseUrl = '/api';
   
+  // Simple cache to prevent duplicate requests
+  private labelCache = new Map<string, { label: Label; timestamp: number }>();
+  private readonly CACHE_DURATION = 30000; // 30 seconds
+  
   private getAuthHeaders() {
     const token = localStorage.getItem('auth_token');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     };
+  }
+
+  private isValidCacheEntry(timestamp: number): boolean {
+    return Date.now() - timestamp < this.CACHE_DURATION;
   }
 
   /**
@@ -70,6 +78,12 @@ class LabelManagementService {
    * Get a single label by ID
    */
   async getLabel(labelId: string): Promise<Label> {
+    // Check cache first
+    const cached = this.labelCache.get(labelId);
+    if (cached && this.isValidCacheEntry(cached.timestamp)) {
+      return cached.label;
+    }
+
     const response = await fetch(`${this.baseUrl}/projects/labels/${labelId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -81,6 +95,13 @@ class LabelManagementService {
     }
 
     const { data } = await response.json();
+    
+    // Cache the result
+    this.labelCache.set(labelId, {
+      label: data,
+      timestamp: Date.now()
+    });
+    
     return data;
   }
 
@@ -176,6 +197,13 @@ class LabelManagementService {
     }
 
     const { data } = await response.json();
+    
+    // Update cache with new data
+    this.labelCache.set(labelId, {
+      label: data,
+      timestamp: Date.now()
+    });
+    
     return data;
   }
 
@@ -191,6 +219,9 @@ class LabelManagementService {
     if (!response.ok) {
       throw new Error('Failed to delete label');
     }
+    
+    // Remove from cache
+    this.labelCache.delete(labelId);
   }
 
   /**

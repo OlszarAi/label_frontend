@@ -268,7 +268,7 @@ export const useProjectLabels = ({ projectId }: UseProjectLabelsProps) => {
       queue.current.clear();
       lastUpdate.current.clear();
     };
-  }, [projectId]); // Usunąłem loadLabels z dependencies
+  }, [projectId, loadLabels]);
 
   // Reset state when projectId changes
   useEffect(() => {

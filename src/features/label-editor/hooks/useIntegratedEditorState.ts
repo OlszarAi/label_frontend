@@ -67,6 +67,7 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
   const saveAbortControllerRef = useRef<AbortController | null>(null);
   const canvasRef = useRef<Canvas | null>(null);
   const isSwitchingLabelsRef = useRef(false);
+  const loadingLabelRef = useRef<string | null>(null); // Track which label is being loaded
 
   // Use centralized label management
   const labelManager = useLabelManagement({ 
@@ -91,34 +92,6 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
       saveAbortControllerRef.current = null;
     }
   }, []);
-
-  // Load or create label based on route parameters
-  useEffect(() => {
-    let isMounted = true;
-    
-    const initializeLabel = async () => {
-      if (labelId) {
-        // Load existing label
-        const label = await labelManager.loadLabel(labelId);
-        if (label && isMounted) {
-          loadLabelIntoEditor(label);
-        }
-      } else if (projectId) {
-        // Create new label
-        const newLabel = await labelManager.createLabelAndNavigate();
-        if (newLabel && isMounted) {
-          loadLabelIntoEditor(newLabel);
-        }
-      }
-    };
-
-    initializeLabel();
-    
-    return () => {
-      isMounted = false;
-      cleanup();
-    };
-  }, [labelId, projectId]); // Usunąłem labelManager z dependencies
 
   // Load label data into editor state
   const loadLabelIntoEditor = useCallback((label: LabelData) => {
@@ -179,6 +152,66 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
     }
   }, [labelUUIDManager]);
 
+  // Load or create label based on route parameters
+  useEffect(() => {
+    let isMounted = true;
+    let debounceTimer: NodeJS.Timeout | null = null;
+    
+    const initializeLabel = async () => {
+      // Prevent loading the same label multiple times
+      if (loadingLabelRef.current === labelId) {
+        return;
+      }
+      
+      // Clear any existing debounce timer
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      
+      // Debounce the API call to prevent rapid requests
+      debounceTimer = setTimeout(async () => {
+        if (!isMounted) return;
+        
+        try {
+          if (labelId) {
+            // Prevent duplicate loading
+            if (loadingLabelRef.current === labelId) {
+              return;
+            }
+            loadingLabelRef.current = labelId;
+            
+            // Load existing label
+            const label = await labelManager.loadLabel(labelId);
+            if (label && isMounted) {
+              loadLabelIntoEditor(label);
+            }
+          } else if (projectId) {
+            // Create new label
+            const newLabel = await labelManager.createLabelAndNavigate();
+            if (newLabel && isMounted) {
+              loadLabelIntoEditor(newLabel);
+            }
+          }
+        } catch (error) {
+          console.error('Error initializing label:', error);
+        } finally {
+          loadingLabelRef.current = null;
+        }
+      }, 100); // 100ms debounce
+    };
+
+    initializeLabel();
+    
+    return () => {
+      isMounted = false;
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      loadingLabelRef.current = null;
+      cleanup();
+    };
+  }, [labelId, projectId]);
+
   // Save label function
   const saveLabel = useCallback(async (): Promise<boolean> => {
     if (!currentLabel || isSwitchingLabelsRef.current) return false;
@@ -231,7 +264,7 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
       console.error('Save error:', error);
       return false;
     }
-  }, [currentLabel, state]); // Usunąłem labelManager z dependencies
+  }, [currentLabel, state, labelManager]);
 
   // Switch to different label
   const switchToLabel = useCallback(async (newLabelId: string) => {
@@ -254,7 +287,7 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
         isSwitchingLabelsRef.current = false;
       }, 100);
     }
-  }, [cleanup, loadLabelIntoEditor]); // Usunąłem labelManager z dependencies
+  }, [cleanup, loadLabelIntoEditor, labelManager]);
 
   // State update functions
   const updateDimensions = useCallback((dimensions: LabelDimensions) => {
@@ -332,7 +365,7 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
 
       return () => clearTimeout(autoSaveTimer);
     }
-  }, [autoSave, hasUnsavedChanges, currentLabel?.id, currentLabel?.version]); // Tylko ID i version zamiast całego currentLabel i usunąłem saveLabel
+  }, [autoSave, hasUnsavedChanges, currentLabel, saveLabel]);
 
   return {
     // State

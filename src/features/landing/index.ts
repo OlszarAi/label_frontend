@@ -1,4 +1,5 @@
 export { LandingPage } from './components/LandingPage';
+export { DashboardView } from './components/DashboardView';
 export { Navigation } from './components/Navigation';
 export { HeroSection } from './components/HeroSection';
 export { FeaturesSection } from './components/FeaturesSection';

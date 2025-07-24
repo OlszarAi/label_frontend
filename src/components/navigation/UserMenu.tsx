@@ -125,6 +125,18 @@ export function UserMenu() {
             <div className="user-menu-divider" />
 
             <div className="user-menu-items">
+              <Link href="/" className="user-menu-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M2.5 6.5L8 1L13.5 6.5V13C13.5 13.2761 13.2761 13.5 13 13.5H10C9.72386 13.5 9.5 13.2761 9.5 13V10.5C9.5 10.2239 9.27614 10 9 10H7C6.72386 10 6.5 10.2239 6.5 10.5V13C6.5 13.2761 6.27614 13.5 6 13.5H3C2.72386 13.5 2.5 13.2761 2.5 13V6.5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill="none"
+                  />
+                </svg>
+                Strona główna
+              </Link>
+
               <Link href="/profile" className="user-menu-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path

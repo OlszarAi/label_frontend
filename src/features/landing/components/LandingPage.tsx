@@ -8,13 +8,16 @@ import { FeaturesSection } from './FeaturesSection';
 import { PricingSection } from './PricingSection';
 import { CTASection } from './CTASection';
 import { Footer } from './Footer';
+import { DashboardView } from './DashboardView';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { EarlyAccessBanner } from '@/components/EarlyAccessBanner';
+import { useAuthContext } from '@/providers/AuthProvider';
 import './landing.styles.css';
 
 export function LandingPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const { isAuthenticated, isLoading } = useAuthContext();
 
   const openRegisterModal = () => {
     setAuthModalMode('register');
@@ -25,6 +28,27 @@ export function LandingPage() {
     setAuthModalMode('login');
     setIsAuthModalOpen(true);
   };
+
+  // Jeśli użytkownik jest zalogowany, pokaż dashboard
+  if (isAuthenticated && !isLoading) {
+    return (
+      <>
+        <Navigation 
+          onOpenLogin={openLoginModal}
+          onOpenRegister={openRegisterModal}
+        />
+        <DashboardView />
+        
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          initialMode={authModalMode}
+        />
+      </>
+    );
+  }
+
+  // Dla niezalogowanych użytkowników - pokazuj marketing landing page
   return (
     <div className="landing-page">
       <Navigation 
