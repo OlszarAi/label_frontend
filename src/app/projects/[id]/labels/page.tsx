@@ -44,7 +44,7 @@ export default function ProjectLabelsPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 

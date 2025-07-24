@@ -175,7 +175,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Logout function
+    // Logout function
   const logout = useCallback(async () => {
     try {
       if (authState.token) {
@@ -199,6 +199,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading: false,
         isAuthenticated: false,
       });
+      
+      // Redirect to home page after logout
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     }
   }, [authState.token]);
 
