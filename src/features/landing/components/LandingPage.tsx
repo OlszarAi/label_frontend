@@ -9,7 +9,7 @@ import { PricingSection } from './PricingSection';
 import { CTASection } from './CTASection';
 import { Footer } from './Footer';
 import { AuthModal } from '@/components/modals/AuthModal';
-import { EarlyAccessBanner } from '@/components/EarlyAccessBanner';
+import { PreAlphaModal } from '@/components/PreAlphaModal';
 import './landing.styles.css';
 
 export function LandingPage() {
@@ -62,10 +62,10 @@ export function LandingPage() {
         initialMode={authModalMode}
       />
 
-      {/* Fixed Early Access Banner Overlay - tylko na landing page */}
+      {/* Fixed Pre-Alpha Modal Overlay - tylko na landing page */}
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
         <div className="pointer-events-auto">
-          <EarlyAccessBanner />
+          <PreAlphaModal />
         </div>
       </div>
     </div>

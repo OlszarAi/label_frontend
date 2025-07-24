@@ -2,3 +2,4 @@
 export { default as VersionBadge } from '../VersionBadge';
 export { EarlyAccessBanner } from '../EarlyAccessBanner';
 export { EarlyAccessNotice } from '../EarlyAccessNotice';
+export { PreAlphaModal } from '../PreAlphaModal';
