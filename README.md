@@ -210,5 +210,3 @@ Gdy projekt rośnie, możesz dodawać nowe katalogi:
 - `src/i18n/` - internacjonalizacja
 - `src/middleware/` - middleware dla API
 - `src/schemas/` - schematy walidacji (Zod, Yup)
-
-Pamiętaj o aktualizacji tego README przy dodawaniu nowych konwencji!
