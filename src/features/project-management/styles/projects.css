@@ -53,114 +53,18 @@
   100% { opacity: 0.6; transform: scale(1.1); }
 }
 
-/* Navigation Header Styles */
-.projects-navigation {
-  position: relative;
-  z-index: 10;
-  padding: 1rem;
-  background: rgba(10, 11, 20, 0.9);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(55, 65, 81, 0.2);
-}
-
-.projects-nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.projects-nav-left {
-  display: flex;
-  align-items: center;
-}
-
-.projects-home-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.projects-home-button:hover {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.5);
-  transform: translateY(-1px);
-}
-
-.projects-home-button svg {
-  width: 16px;
-  height: 16px;
-}
-
-.projects-nav-right {
-  display: flex;
-  align-items: center;
-}
-
 .projects-content {
   position: relative;
   z-index: 1;
-}
-
-/* Header Styles */
-.projects-header {
-  padding: 2rem 1rem;
-  background: rgba(10, 11, 20, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(55, 65, 81, 0.2);
-}
-
-.projects-header-container {
-  max-width: 1200px;
+  padding: 1.5rem;
+  max-width: 1400px;
   margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.projects-header-left h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  line-height: 1.1;
-  margin: 0 0 0.5rem 0;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.projects-header-left p {
-  color: #9ca3af;
-  font-size: 1.125rem;
-  margin: 0;
-}
-
-.projects-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.projects-user-info {
-  color: #9ca3af;
-  font-size: 0.875rem;
 }
 
 /* Main Content */
 .projects-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  margin: 0;
+  padding: 0;
 }
 
 /* Filter Section */

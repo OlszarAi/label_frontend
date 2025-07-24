@@ -8,10 +8,12 @@ import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { Label } from '@/features/project-management/types/project.types';
 import ImprovedLabelGallery from '@/features/project-management/components/ImprovedLabelGallery';
 import { ExportButton, ExportModal } from '@/features/label-export';
+import { TopNavigation } from '@/components/navigation/TopNavigation';
 import '@/features/project-management/styles/projects.css';
 import '@/features/project-management/styles/improved-gallery.css';
 import '@/features/project-management/styles/quick-templates.css';
 import '@/features/project-management/styles/size-comparator.css';
+import '@/components/navigation/TopNavigation.css';
 
 export default function ProjectLabelsPage() {
   const router = useRouter();
@@ -116,10 +118,6 @@ export default function ProjectLabelsPage() {
     }
   };
 
-  const handleBackToProjects = () => {
-    router.push('/projects');
-  };
-
   const handleBulkAction = async (action: string, labelIds: string[]) => {
     switch (action) {
       case 'delete':
@@ -168,98 +166,20 @@ export default function ProjectLabelsPage() {
         <div className="projects-background-glow"></div>
       </div>
 
+      {/* Top Navigation */}
+      <TopNavigation
+        title={`${currentProject?.name || 'Projekt'} - Etykiety`}
+        subtitle={currentProject?.description || 'Zarządzaj etykietami w tym projekcie'}
+        showBackButton={true}
+        backHref="/projects"
+        breadcrumbs={[
+          { label: 'Strona główna', href: '/' },
+          { label: 'Projekty', href: '/projects' },
+          { label: currentProject?.name || 'Projekt' }
+        ]}
+      />
+
       <div className="projects-content">
-        {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="projects-header"
-        >
-          <div className="projects-header-container">
-            <div className="projects-header-left">
-              {/* Breadcrumb Navigation */}
-              <div style={{ 
-                marginBottom: '1rem', 
-                paddingBottom: '0.5rem',
-                borderBottom: '1px solid rgba(55, 65, 81, 0.2)'
-              }}>
-                <nav style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  color: '#9ca3af', 
-                  fontSize: '0.875rem' 
-                }}>
-                  <button
-                    onClick={handleBackToProjects}
-                    style={{ 
-                      background: 'none', 
-                      border: 'none', 
-                      color: '#9ca3af', 
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      transition: 'color 0.3s ease'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
-                    onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
-                  >
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Projects
-                  </button>
-                  <span>/</span>
-                  <span style={{ color: '#e2e8f0' }}>{currentProject?.name || 'Project'}</span>
-                </nav>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                {currentProject?.icon ? (
-                  <span style={{ fontSize: '2rem' }}>{currentProject.icon}</span>
-                ) : (
-                  <div 
-                    style={{ 
-                      width: '48px', 
-                      height: '48px', 
-                      borderRadius: '12px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      color: 'white', 
-                      fontWeight: '700',
-                      fontSize: '1.5rem',
-                      backgroundColor: currentProject?.color || '#3B82F6' 
-                    }}
-                  >
-                    {currentProject?.name?.charAt(0).toUpperCase() || 'P'}
-                  </div>
-                )}
-                <h1>{currentProject?.name || 'Project'} Labels</h1>
-              </div>
-              <p>{currentProject?.description || 'Manage labels in this project'}</p>
-            </div>
-            <div className="projects-header-right">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <ExportButton
-                  projectId={projectId}
-                  variant="secondary"
-                  size="md"
-                  text="Eksportuj wszystkie"
-                  onClick={() => setShowExportModal(true)}
-                />
-                <div className="projects-user-info">
-                  Welcome back, {user?.firstName || user?.email}
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Main Content */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -267,6 +187,58 @@ export default function ProjectLabelsPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="projects-main"
         >
+          {/* Project Info Card */}
+          <div className="project-info-card" style={{
+            background: 'rgba(17, 24, 39, 0.7)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {currentProject?.icon ? (
+                <span style={{ fontSize: '2rem' }}>{currentProject.icon}</span>
+              ) : (
+                <div 
+                  style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    color: 'white', 
+                    fontWeight: '700',
+                    fontSize: '1.5rem',
+                    backgroundColor: currentProject?.color || '#3B82F6' 
+                  }}
+                >
+                  {currentProject?.name?.charAt(0).toUpperCase() || 'P'}
+                </div>
+              )}
+              <div>
+                <h2 style={{ margin: 0, color: '#F3F4F6', fontSize: '1.25rem', fontWeight: '600' }}>
+                  {currentProject?.name || 'Projekt'}
+                </h2>
+                <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.875rem' }}>
+                  {labels.length} {labels.length === 1 ? 'etykieta' : 'etykiet'}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <ExportButton
+                projectId={projectId}
+                variant="secondary"
+                size="md"
+                text="Eksportuj wszystkie"
+                onClick={() => setShowExportModal(true)}
+              />
+            </div>
+          </div>
           {/* Error Message */}
           {error && (
             <div className="projects-error">

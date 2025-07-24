@@ -10,8 +10,9 @@ import { Project, CreateProjectRequest, UpdateProjectRequest } from '@/features/
 import { ProjectList } from '@/features/project-management/components/ProjectList';
 import { ProjectFilters } from '@/features/project-management/components/ProjectFilters';
 import { ProjectForm } from '@/features/project-management/components/ProjectForm';
-import { UserMenu } from '@/components/navigation/UserMenu';
+import { TopNavigation } from '@/components/navigation/TopNavigation';
 import '@/features/project-management/styles/projects.css';
+import '@/components/navigation/TopNavigation.css';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -148,49 +149,17 @@ export default function ProjectsPage() {
         <div className="projects-background-glow"></div>
       </div>
 
-      {/* Navigation Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="projects-navigation"
-      >
-        <div className="projects-nav-container">
-          <div className="projects-nav-left">
-            <Link href="/" className="projects-home-button">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Strona główna
-            </Link>
-          </div>
-          <div className="projects-nav-right">
-            <UserMenu />
-          </div>
-        </div>
-      </motion.div>
+      {/* Top Navigation */}
+      <TopNavigation
+        title="Projekty"
+        subtitle="Zarządzaj projektami etykiet i organizuj swoją pracę"
+        breadcrumbs={[
+          { label: 'Strona główna', href: '/' },
+          { label: 'Projekty' }
+        ]}
+      />
 
       <div className="projects-content">
-        {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="projects-header"
-        >
-          <div className="projects-header-container">
-            <div className="projects-header-left">
-              <h1>Projects</h1>
-              <p>Manage your label projects and organize your work</p>
-            </div>
-            <div className="projects-header-right">
-              <div className="projects-user-info">
-                Welcome back, {user?.firstName || user?.email}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Main Content */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
