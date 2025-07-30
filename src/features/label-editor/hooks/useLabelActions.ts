@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { Label } from '../services/labelManagementService';
 
 interface UseLabelActionsProps {
-  saveLabel: () => Promise<boolean>;
+  saveLabel: (isManualSave?: boolean) => Promise<boolean>;
   currentLabel: { id: string; name: string; projectId: string } | null;
   refreshLabelThumbnail: (id: string) => Promise<void>;
   refreshLabelThumbnailImmediate?: (id: string) => Promise<void>;
@@ -35,7 +35,8 @@ export const useLabelActions = ({
     
     setIsSaving(true);
     try {
-      const result = await saveLabel();
+      // Pass true to indicate this is a manual save
+      const result = await saveLabel(true);
       if (result && currentLabel) {
         // Use immediate refresh for manual saves
         if (refreshLabelThumbnailImmediate) {
@@ -62,7 +63,8 @@ export const useLabelActions = ({
     if (isSaving) return false; // Prevent conflicts with manual saves
     
     try {
-      const result = await saveLabel();
+      // Pass false to indicate this is an auto-save
+      const result = await saveLabel(false);
       if (result && currentLabel) {
         // Update thumbnail more frequently for autosaves, but still optimized
         // Update every 3rd autosave or every 10 seconds (whichever comes first)

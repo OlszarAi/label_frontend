@@ -9,6 +9,7 @@ import { Canvas } from 'fabric';
 import { EditorState, LabelDimensions, CanvasObject, EditorPreferences } from '../types/editor.types';
 import { generateUUID } from '../utils/uuid';
 import { generateThumbnailFromCanvas } from '../utils/thumbnailGenerator';
+import { SaveManager } from '../../../utils/SaveManager';
 import { useLabelManagement } from './useLabelManagement';
 import { useLabelUUID, extractLabelUUID, ensureLabelUUIDConsistency } from './useLabelUUID';
 
@@ -215,57 +216,71 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelId, projectId]);
 
-  // Save label function
-  const saveLabel = useCallback(async (): Promise<boolean> => {
+  // Save label function with SaveManager to prevent race conditions
+  const saveLabel = useCallback(async (isManualSave: boolean = false): Promise<boolean> => {
     if (!currentLabel || isSwitchingLabelsRef.current) return false;
 
-    try {
-      // Cancel any existing save request
-      if (saveAbortControllerRef.current) {
-        saveAbortControllerRef.current.abort();
-      }
-      
-      saveAbortControllerRef.current = new AbortController();
+    const saveKey = `label-${currentLabel.id}`;
+    const saveManager = SaveManager.getInstance();
 
-      // Generate thumbnail if canvas is available
-      let thumbnail = '';
-      if (canvasRef.current) {
-        try {
-          thumbnail = await generateThumbnailFromCanvas(canvasRef.current, 200);
-        } catch (thumbnailError) {
-          console.warn('Failed to generate thumbnail:', thumbnailError);
+    const performSave = async (): Promise<boolean> => {
+      try {
+        // Cancel any existing save request
+        if (saveAbortControllerRef.current) {
+          saveAbortControllerRef.current.abort();
         }
+        
+        saveAbortControllerRef.current = new AbortController();
+
+        // Generate thumbnail if canvas is available
+        let thumbnail = '';
+        if (canvasRef.current) {
+          try {
+            thumbnail = await generateThumbnailFromCanvas(canvasRef.current, 200);
+          } catch (thumbnailError) {
+            console.warn('Failed to generate thumbnail:', thumbnailError);
+          }
+        }
+
+        // Prepare update data
+        const updateData = {
+          name: currentLabel.name,
+          description: currentLabel.description,
+          fabricData: {
+            version: '6.0.0',
+            objects: state.objects,
+            preferences: state.preferences,
+          },
+          width: state.dimensions.width,
+          height: state.dimensions.height,
+          thumbnail: thumbnail || undefined,
+          version: currentLabel.version,
+        };
+
+        // Use label manager to update
+        const updatedLabel = await labelManager.updateLabel(currentLabel.id, updateData);
+        
+        if (updatedLabel) {
+          setCurrentLabel(prev => prev ? { ...prev, version: updatedLabel.version } : null);
+          setHasUnsavedChanges(false);
+          setLastSaved(new Date());
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error('Save error:', error);
+        return false;
       }
+    };
 
-      // Prepare update data
-      const updateData = {
-        name: currentLabel.name,
-        description: currentLabel.description,
-        fabricData: {
-          version: '6.0.0',
-          objects: state.objects,
-          preferences: state.preferences,
-        },
-        width: state.dimensions.width,
-        height: state.dimensions.height,
-        thumbnail: thumbnail || undefined,
-        version: currentLabel.version,
-      };
-
-      // Use label manager to update
-      const updatedLabel = await labelManager.updateLabel(currentLabel.id, updateData);
-      
-      if (updatedLabel) {
-        setCurrentLabel(prev => prev ? { ...prev, version: updatedLabel.version } : null);
-        setHasUnsavedChanges(false);
-        setLastSaved(new Date());
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Save error:', error);
-      return false;
+    // Use SaveManager to handle save based on type
+    if (isManualSave) {
+      return await saveManager.immediateSave(saveKey, performSave);
+    } else {
+      // Auto-save with debouncing
+      const result = await saveManager.debouncedSave(saveKey, performSave, 2000);
+      return result !== null ? result : false;
     }
   // labelManager is intentionally omitted from deps to prevent re-creation loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -374,7 +389,7 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
   useEffect(() => {
     if (autoSave && hasUnsavedChanges && currentLabel) {
       const autoSaveTimer = setTimeout(() => {
-        saveLabel();
+        saveLabel(false); // false = auto-save
       }, 2000);
 
       return () => clearTimeout(autoSaveTimer);
