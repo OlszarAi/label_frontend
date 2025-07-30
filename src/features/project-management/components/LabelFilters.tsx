@@ -63,7 +63,7 @@ export function LabelFilters({
         <div className="projects-search-group">
           <input
             type="text"
-            placeholder="Search labels by name or UUID..."
+            placeholder="Szukaj etykiet po nazwie lub UUID..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="projects-search-input"

@@ -187,7 +187,7 @@ export const CanvasProperties = ({
       <div className="space-y-4">
         <div>
           <label className="block text-xs text-gray-400 mb-2">
-            Width
+            Szerokość
           </label>
           <div className="flex items-center space-x-2">
             <input
@@ -207,7 +207,7 @@ export const CanvasProperties = ({
 
         <div>
           <label className="block text-xs text-gray-400 mb-2">
-            Height
+            Wysokość
           </label>
           <div className="flex items-center space-x-2">
             <input
@@ -228,11 +228,11 @@ export const CanvasProperties = ({
         <div className="pt-3 border-t border-gray-700">
           <div className="text-xs text-gray-400 space-y-1">
             <div className="flex justify-between">
-              <span>Size:</span>
+              <span>Rozmiar:</span>
               <span className="text-white">{formatMm(dimensions.width)} × {formatMm(dimensions.height)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Ratio:</span>
+              <span>Proporcje:</span>
               <span className="text-white">{(dimensions.width / dimensions.height).toFixed(2)}:1</span>
             </div>
           </div>
@@ -247,7 +247,7 @@ export const CanvasProperties = ({
         >
           <div className="flex items-center gap-2">
             <Squares2X2Icon className="w-4 h-4" />
-            <span className="font-medium">Grid Options</span>
+            <span className="font-medium">Opcje siatki</span>
           </div>
           {showGridOptions ? (
             <ChevronDownIcon className="w-4 h-4" />
@@ -269,7 +269,7 @@ export const CanvasProperties = ({
                 {/* Grid Enable/Disable */}
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-gray-400">
-                    Show Grid
+                    Pokaż siatkę
                   </label>
                   <button
                     type="button"
@@ -289,7 +289,7 @@ export const CanvasProperties = ({
                 {/* Snap to Grid */}
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-gray-400">
-                    Snap to Grid
+                    Przyciągaj do siatki
                   </label>
                   <button
                     type="button"
@@ -309,7 +309,7 @@ export const CanvasProperties = ({
                 {/* Grid Size */}
                 <div>
                   <label className="block text-xs text-gray-400 mb-2">
-                    Grid Size
+                    Rozmiar siatki
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
@@ -330,7 +330,7 @@ export const CanvasProperties = ({
                 {/* Grid Color */}
                 <div>
                   <label className="block text-xs text-gray-400 mb-2">
-                    Grid Color
+                    Kolor siatki
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
@@ -353,7 +353,7 @@ export const CanvasProperties = ({
                 {/* Grid Opacity */}
                 <div>
                   <label className="block text-xs text-gray-400 mb-2">
-                    Grid Opacity
+                    Przezroczystość siatki
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
@@ -384,7 +384,7 @@ export const CanvasProperties = ({
         >
           <div className="flex items-center gap-2">
             <PencilSquareIcon className="w-4 h-4" />
-            <span className="font-medium">Ruler Options</span>
+            <span className="font-medium">Opcje linijki</span>
           </div>
           {showRulerOptions ? (
             <ChevronDownIcon className="w-4 h-4" />
@@ -406,7 +406,7 @@ export const CanvasProperties = ({
                 {/* Ruler Enable/Disable */}
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-gray-400">
-                    Show Rulers
+                    Pokaż linijki
                   </label>
                   <button
                     type="button"
@@ -426,7 +426,7 @@ export const CanvasProperties = ({
                 {/* Ruler Size */}
                 <div>
                   <label className="block text-xs text-gray-400 mb-2">
-                    Ruler Size
+                    Rozmiar linijki
                   </label>
                   <div className="flex items-center space-x-2">
                     <input

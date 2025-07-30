@@ -267,7 +267,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
             <button
               onClick={handleToggleCollapse}
               className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              title={isCollapsed ? 'Expand' : 'Collapse'}
+              title={isCollapsed ? 'Rozwiń' : 'Zwiń'}
             >
               <MinusIcon className="w-4 h-4" />
             </button>
@@ -276,7 +276,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
           <button
             onClick={handleToggleMaximize}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            title={isMaximized ? 'Restore' : 'Maximize'}
+            title={isMaximized ? 'Przywróć' : 'Maksymalizuj'}
           >
             {isMaximized ? (
               <ArrowsPointingInIcon className="w-4 h-4" />
@@ -289,7 +289,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
             <button
               onClick={onClose}
               className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-              title="Close"
+              title="Zamknij"
             >
               <XMarkIcon className="w-4 h-4" />
             </button>

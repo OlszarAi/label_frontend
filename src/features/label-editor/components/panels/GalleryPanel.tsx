@@ -114,7 +114,7 @@ const SmartThumbnail: React.FC<{
         <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
           <TagIcon className={`${isGridView ? 'w-12 h-12' : 'w-6 h-6'} mb-1`} />
           {isGridView && (
-            <span className="text-xs">No preview</span>
+            <span className="text-xs">Brak podglądu</span>
           )}
         </div>
       )}
@@ -385,7 +385,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
   return (
     <FloatingPanel
       id="project-gallery-panel"
-      title="Project Gallery"
+      title="Galeria projektów"
       defaultPosition={{ x: 820, y: 120 }}
       defaultSize={{ width: 480, height: 700 }}
       minSize={{ width: 400, height: 600 }}
@@ -403,7 +403,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
             className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-sm font-medium shadow-lg"
           >
             <PlusIcon className="w-4 h-4" />
-            <span>New Label</span>
+            <span>Nowa etykieta</span>
           </motion.button>
           
           <div className="flex items-center space-x-2">
@@ -450,7 +450,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search labels..."
+            placeholder="Szukaj etykiet..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -464,18 +464,18 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
             onChange={(e) => setSortBy(e.target.value as SortBy)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 text-xs"
           >
-            <option value="updated">Last Updated</option>
-            <option value="created">Date Created</option>
-            <option value="name">Name</option>
-            <option value="size">Size</option>
+            <option value="updated">Ostatnio aktualizowane</option>
+            <option value="created">Data utworzenia</option>
+            <option value="name">Nazwa</option>
+            <option value="size">Rozmiar</option>
           </select>
         </div>
 
         {/* Stats */}
         <div className="text-xs text-gray-500 dark:text-gray-400 font-medium px-1 shrink-0 flex items-center justify-between">
-          <span>{filteredAndSortedLabels.length} label{filteredAndSortedLabels.length !== 1 ? 's' : ''} found</span>
+          <span>{filteredAndSortedLabels.length} etykiet{filteredAndSortedLabels.length !== 1 ? 'a' : 'a'} znaleziono</span>
           <span className="text-blue-600 dark:text-blue-400">
-            {viewMode === 'grid' ? `${getCurrentColumns()} col${getCurrentColumns() > 1 ? 's' : ''}` : 'List'} • {Math.round(scale * 100)}%
+            {viewMode === 'grid' ? `${getCurrentColumns()} kol${getCurrentColumns() > 1 ? '.' : '.'}` : 'Lista'} • {Math.round(scale * 100)}%
           </span>
         </div>
 
@@ -490,8 +490,8 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
                 className="text-center py-12 text-gray-500 dark:text-gray-400"
               >
                 <FolderIcon className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm font-medium">No labels found</p>
-                <p className="text-xs mt-1">Try adjusting your search or filters</p>
+                <p className="text-sm font-medium">Nie znaleziono etykiet</p>
+                <p className="text-xs mt-1">Spróbuj dostosować wyszukiwanie lub filtry</p>
               </motion.div>
             ) : (
               <ResponsiveGrid

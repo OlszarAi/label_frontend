@@ -29,7 +29,7 @@ export function ProjectFilters({
         <div className="projects-search-group">
           <input
             type="text"
-            placeholder="Search projects..."
+            placeholder="Szukaj projektów..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="projects-search-input"

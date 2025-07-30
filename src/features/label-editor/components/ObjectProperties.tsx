@@ -158,7 +158,7 @@ export const ObjectProperties = ({
             <h4 className="text-xs font-medium text-gray-300">Size</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Width (mm)</label>
+                <label className="block text-xs text-gray-400 mb-1">Szerokość (mm)</label>
                 <input
                   type="number"
                   value={localValues.width}
@@ -172,7 +172,7 @@ export const ObjectProperties = ({
               </div>
               {selectedObject.type === 'rectangle' && (
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Height (mm)</label>
+                  <label className="block text-xs text-gray-400 mb-1">Wysokość (mm)</label>
                   <input
                     type="number"
                     value={localValues.height}
@@ -249,11 +249,11 @@ export const ObjectProperties = ({
             <h4 className="text-xs font-medium text-gray-300">QR Code</h4>
             <div className="space-y-2">
               <div className="text-xs text-gray-400">
-                QR Code settings are managed in Preferences
+                Ustawienia kodu QR są zarządzane w Preferencjach
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-2">Size (mm)</label>
+                  <label className="block text-xs text-gray-400 mb-2">Rozmiar (mm)</label>
                   <input
                     type="number"
                     value={localValues.width}
@@ -266,7 +266,7 @@ export const ObjectProperties = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-2">Error Correction</label>
+                  <label className="block text-xs text-gray-400 mb-2">Korekcja błędów</label>
                   <select
                     value={localValues.qrErrorCorrectionLevel}
                     onChange={(e) => updateValue('qrErrorCorrectionLevel', e.target.value)}
@@ -274,10 +274,10 @@ export const ObjectProperties = ({
                              text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
                              focus:border-blue-500 transition-colors"
                   >
-                    <option value="L">Low (7%)</option>
-                    <option value="M">Medium (15%)</option>
-                    <option value="Q">Quartile (25%)</option>
-                    <option value="H">High (30%)</option>
+                    <option value="L">Niska (7%)</option>
+                    <option value="M">Średnia (15%)</option>
+                    <option value="Q">Kwartyl (25%)</option>
+                    <option value="H">Wysoka (30%)</option>
                   </select>
                 </div>
               </div>
@@ -297,7 +297,7 @@ export const ObjectProperties = ({
                 type="text"
                 value={localValues.text}
                 readOnly
-                placeholder="Generated UUID will appear here"
+                placeholder="Wygenerowany UUID pojawi się tutaj"
                 className="w-full px-3 py-2 text-xs bg-gray-700 border border-gray-600 
                          text-gray-400 rounded-md cursor-not-allowed"
               />
@@ -410,9 +410,9 @@ export const ObjectProperties = ({
         {/* Stroke width for shapes */}
         {(selectedObject.type !== 'text' && selectedObject.type !== 'qrcode' && selectedObject.type !== 'uuid') && (
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-gray-300">Stroke</h4>
+            <h4 className="text-xs font-medium text-gray-300">Obramowanie</h4>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Width</label>
+              <label className="block text-xs text-gray-400 mb-1">Grubość</label>
               <input
                 type="number"
                 value={localValues.strokeWidth}

@@ -232,7 +232,7 @@ export function QuickTemplates({ onCreateFromTemplate, onClose, isOpen }: QuickT
                           type="text"
                           value={customTemplate.name}
                           onChange={(e) => setCustomTemplate(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="My Custom Label"
+                          placeholder="Moja niestandardowa etykieta"
                         />
                       </div>
                       <div className="form-field">
@@ -263,7 +263,7 @@ export function QuickTemplates({ onCreateFromTemplate, onClose, isOpen }: QuickT
                           type="text"
                           value={customTemplate.description}
                           onChange={(e) => setCustomTemplate(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Brief description of this template"
+                          placeholder="Krótki opis tego szablonu"
                         />
                       </div>
                     </div>

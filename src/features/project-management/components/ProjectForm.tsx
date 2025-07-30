@@ -68,11 +68,11 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
     const newErrors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Project name is required';
+      newErrors.name = 'Nazwa projektu jest wymagana';
     }
     
     if (!formData.color) {
-      newErrors.color = 'Please select a color';
+      newErrors.color = 'Proszę wybrać kolor';
     }
 
     setErrors(newErrors);
@@ -111,7 +111,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
       >
         <div className="project-modal-header">
           <h3 className="project-modal-title">
-            {isEditMode ? 'Edit Project' : 'Create New Project'}
+            {isEditMode ? 'Edytuj projekt' : 'Utwórz nowy projekt'}
           </h3>
         </div>
 
@@ -120,7 +120,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
             {/* Project Name */}
             <div className="project-form-group">
               <label htmlFor="name" className="project-form-label">
-                Project Name *
+                Nazwa projektu *
               </label>
               <input
                 id="name"
@@ -128,7 +128,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className={`project-form-input ${errors.name ? 'error' : ''}`}
-                placeholder="Enter project name"
+                placeholder="Wprowadź nazwę projektu"
               />
               {errors.name && (
                 <p className="project-form-error">{errors.name}</p>
@@ -138,21 +138,21 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
             {/* Description */}
             <div className="project-form-group">
               <label htmlFor="description" className="project-form-label">
-                Description
+                Opis
               </label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="project-form-textarea"
-                placeholder="Optional project description"
+                placeholder="Opcjonalny opis projektu"
               />
             </div>
 
             {/* Icon Selection */}
             <div className="project-form-group">
               <label className="project-form-label">
-                Icon (Optional)
+                Ikona (opcjonalnie)
               </label>
               <div className="project-icon-grid">
                 <button
@@ -164,7 +164,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
                   }}
                   className={`project-icon-btn none ${!formData.icon ? 'active' : ''}`}
                 >
-                  None
+                  Brak
                 </button>
                 {PRESET_ICONS.map((icon, index) => (
                   <button
@@ -187,7 +187,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
             {/* Color Selection */}
             <div className="project-form-group">
               <label className="project-form-label">
-                Color *
+                Kolor *
               </label>
               <div className="project-color-grid">
                 {PRESET_COLORS.map((color) => (
@@ -230,7 +230,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
                   )}
                   <div className="project-preview-details">
                     <p className="project-preview-title">
-                      {formData.name || 'Project Name'}
+                      {formData.name || 'Nazwa projektu'}
                     </p>
                     {formData.description && (
                       <p className="project-preview-description">{formData.description}</p>
@@ -248,7 +248,7 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
               className="project-modal-btn project-modal-btn-cancel"
               disabled={loading}
             >
-              Cancel
+              Anuluj
             </button>
             <button
               type="submit"
@@ -258,10 +258,10 @@ export function ProjectForm({ project, onSubmit, onCancel, loading = false }: Pr
               {loading ? (
                 <>
                   <div className="projects-spinner" style={{ width: '16px', height: '16px' }}></div>
-                  Saving...
+                  Zapisywanie...
                 </>
               ) : (
-                isEditMode ? 'Update Project' : 'Create Project'
+                isEditMode ? 'Zaktualizuj projekt' : 'Utwórz projekt'
               )}
             </button>
           </div>

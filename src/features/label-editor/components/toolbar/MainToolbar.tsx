@@ -87,12 +87,12 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   className="flex items-center space-x-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Back</span>
+                  <span className="text-sm font-medium">Powrót</span>
                 </motion.button>
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Content className="bg-gray-900 text-white px-2 py-1 rounded text-xs z-50" sideOffset={5}>
-                  Return to project
+                  Powrót do projektu
                   <Tooltip.Arrow className="fill-gray-900" />
                 </Tooltip.Content>
               </Tooltip.Portal>
@@ -107,20 +107,20 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <div className="text-sm">
               <div className="flex items-center space-x-2">
                 <div className="font-medium text-gray-900 dark:text-gray-100">
-                  {currentLabel?.name || 'Untitled Label'}
+                  {currentLabel?.name || 'Etykieta bez nazwy'}
                 </div>
                 {/* Unsaved changes indicator - integrated into label info */}
                 {hasUnsavedChanges && (
                   <div className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-md text-xs">
                     <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                    <span>Unsaved</span>
-                    {!autoSave && <span>• Manual</span>}
+                    <span>Niezapisane</span>
+                    {!autoSave && <span>• Ręcznie</span>}
                   </div>
                 )}
               </div>
               <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                <span>{isConnected ? 'Connected' : 'Offline'}</span>
+                <span>{isConnected ? 'Połączono' : 'Offline'}</span>
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             `}
           >
             <CloudArrowUpIcon className={`w-4 h-4 ${isSaving ? 'animate-pulse' : ''}`} />
-            <span>{isSaving ? 'Saving...' : 'Save'}</span>
+            <span>{isSaving ? 'Zapisywanie...' : 'Zapisz'}</span>
           </motion.button>
 
           {/* Autosave Toggle */}
@@ -273,7 +273,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
                   <Tooltip.Content className="bg-gray-900 text-white px-2 py-1 rounded text-xs z-50" sideOffset={5}>
-                    Toggle Properties
+                    Przełącz właściwości
                     <Tooltip.Arrow className="fill-gray-900" />
                   </Tooltip.Content>
                 </Tooltip.Portal>
@@ -294,7 +294,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
                   <Tooltip.Content className="bg-gray-900 text-white px-2 py-1 rounded text-xs z-50" sideOffset={5}>
-                    Toggle Gallery
+                    Przełącz galerię
                     <Tooltip.Arrow className="fill-gray-900" />
                   </Tooltip.Content>
                 </Tooltip.Portal>

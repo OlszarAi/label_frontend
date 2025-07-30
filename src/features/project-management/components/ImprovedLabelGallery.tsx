@@ -180,7 +180,7 @@ export function ImprovedLabelGallery({
               </svg>
               <input
                 type="text"
-                placeholder="Search labels by name or description..."
+                placeholder="Szukaj etykiet po nazwie lub opisie..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 className="search-input"
@@ -197,7 +197,7 @@ export function ImprovedLabelGallery({
               )}
             </div>
             <div className="search-results">
-              {filteredLabels.length} of {labels.length} labels
+              {filteredLabels.length} z {labels.length} etykiet
             </div>
           </div>
 
@@ -215,12 +215,12 @@ export function ImprovedLabelGallery({
               }}
               className="sort-select"
             >
-              <option value="date-desc">Latest Updated</option>
-              <option value="date-asc">Oldest Updated</option>
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="size-desc">Largest First</option>
-              <option value="size-asc">Smallest First</option>
+              <option value="date-desc">Ostatnio zaktualizowane</option>
+              <option value="date-asc">Najstarsze zaktualizowane</option>
+              <option value="name-asc">Nazwa A-Z</option>
+              <option value="name-desc">Nazwa Z-A</option>
+              <option value="size-desc">Największe najpierw</option>
+              <option value="size-asc">Najmniejsze najpierw</option>
             </select>
           </div>
         </div>
@@ -228,14 +228,14 @@ export function ImprovedLabelGallery({
         {/* View Options */}
         <div className="view-options">
           <div className="density-controls">
-            <span className="density-label">Density:</span>
+            <span className="density-label">Gęstość:</span>
             {(['compact', 'comfortable', 'spacious'] as const).map(density => (
               <button
                 key={density}
                 onClick={() => setFilters(prev => ({ ...prev, viewDensity: density }))}
                 className={`density-btn ${filters.viewDensity === density ? 'active' : ''}`}
               >
-                {density}
+                {density === 'compact' ? 'Kompaktowy' : density === 'comfortable' ? 'Wygodny' : 'Przestronny'}
               </button>
             ))}
           </div>
@@ -251,7 +251,7 @@ export function ImprovedLabelGallery({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M12 5v14M5 12h14"/>
               </svg>
-              New Label
+              Nowa etykieta
             </CreateLabelButton>
 
             {onCreateFromTemplate && (
@@ -263,7 +263,7 @@ export function ImprovedLabelGallery({
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                   <path d="M9 3v18M3 9h18"/>
                 </svg>
-                Templates
+                Szablony
               </button>
             )}
           </div>
@@ -280,9 +280,9 @@ export function ImprovedLabelGallery({
             className="bulk-actions-bar"
           >
             <div className="bulk-info">
-              <span>{selectedLabels.size} label{selectedLabels.size !== 1 ? 's' : ''} selected</span>
+              <span>{selectedLabels.size} etykiet{selectedLabels.size !== 1 ? 'a' : 'ę'} zaznaczono</span>
               <button onClick={clearSelection} className="clear-selection">
-                Clear
+                Wyczyść
               </button>
             </div>
             <div className="bulk-actions">
@@ -291,7 +291,7 @@ export function ImprovedLabelGallery({
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
-                Duplicate
+                Duplikuj
               </button>
               <button onClick={() => handleBulkAction('export')} className="bulk-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -299,7 +299,7 @@ export function ImprovedLabelGallery({
                   <polyline points="7,10 12,15 17,10"/>
                   <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Export
+                Eksportuj
               </button>
               <button 
                 onClick={() => handleBulkAction('delete')} 
@@ -309,7 +309,7 @@ export function ImprovedLabelGallery({
                   <polyline points="3,6 5,6 21,6"/>
                   <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
                 </svg>
-                Delete
+                Usuń
               </button>
             </div>
           </motion.div>
@@ -324,8 +324,8 @@ export function ImprovedLabelGallery({
               <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
             </svg>
           </div>
-          <h3>No labels found</h3>
-          <p>Try adjusting your search or filter criteria</p>
+          <h3>Nie znaleziono etykiet</h3>
+          <p>Spróbuj dostosować kryteria wyszukiwania lub filtrowania</p>
           <CreateLabelButton
             projectId={projectId}
             variant="primary"
@@ -333,7 +333,7 @@ export function ImprovedLabelGallery({
             onLabelCreated={onLabelCreated}
             className="create-first-btn"
           >
-            Create your first label
+            Utwórz swoją pierwszą etykietę
           </CreateLabelButton>
         </div>
       ) : (
@@ -406,22 +406,22 @@ export function ImprovedLabelGallery({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="bulk-delete-title">Confirm Delete</h3>
+              <h3 className="bulk-delete-title">Potwierdź usunięcie</h3>
               <p className="bulk-delete-message">
-                Are you sure you want to delete {selectedLabels.size} label{selectedLabels.size !== 1 ? 's' : ''}? This action cannot be undone.
+                Czy na pewno chcesz usunąć {selectedLabels.size} etykiet{selectedLabels.size !== 1 ? 'y' : 'ę'}? Ta akcja nie może zostać cofnięta.
               </p>
               <div className="bulk-delete-actions">
                 <button 
                   onClick={cancelBulkDelete}
                   className="bulk-delete-btn-cancel"
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button 
                   onClick={confirmBulkDelete}
                   className="bulk-delete-btn-delete"
                 >
-                  Delete
+                  Usuń
                 </button>
               </div>
             </motion.div>

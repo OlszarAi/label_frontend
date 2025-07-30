@@ -56,11 +56,11 @@ export const Preferences = ({
       className="space-y-4"
     >
       <div className="space-y-4">
-        <h4 className="text-xs font-medium text-gray-300">UUID Settings</h4>
+        <h4 className="text-xs font-medium text-gray-300">Ustawienia UUID</h4>
         
         <div>
           <label className="block text-xs text-gray-400 mb-2">
-            UUID Length
+            Długość UUID
           </label>
           <input
             type="number"
@@ -73,34 +73,34 @@ export const Preferences = ({
                      focus:border-blue-500 input-dark"
           />
           <div className="text-xs text-gray-500 mt-1">
-            Number of characters in UUID (1-32)
+            Liczba znaków w UUID (1-32)
           </div>
         </div>
 
         <div>
           <label className="block text-xs text-gray-400 mb-2">
-            QR Code Prefix
+            Prefiks kodu QR
           </label>
           <input
             type="text"
             value={localValues.qrPrefix}
             onChange={(e) => updateValue('qrPrefix', e.target.value)}
-            placeholder="e.g., https://example.com/"
+            placeholder="np. https://przyklad.com/"
             className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-600 
                      text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
                      focus:border-blue-500 input-dark"
           />
           <div className="text-xs text-gray-500 mt-1">
-            Prefix added to UUID in QR codes (e.g., URL)
+            Prefiks dodawany do UUID w kodach QR (np. URL)
           </div>
         </div>
 
         <div className="pt-3 border-t border-gray-700">
           <div className="text-xs text-gray-400 space-y-2">
-            <div className="text-gray-300 font-medium">Preview:</div>
+            <div className="text-gray-300 font-medium">Podgląd:</div>
             <div>
               <div className="flex justify-between items-center">
-                <span>UUID Display:</span>
+                <span>Wyświetlanie UUID:</span>
                 <span className="text-white font-mono text-xs bg-gray-700 px-2 py-1 rounded">
                   {'x'.repeat(preferences.uuid.uuidLength)}
                 </span>
@@ -108,7 +108,7 @@ export const Preferences = ({
             </div>
             <div>
               <div className="flex justify-between items-start">
-                <span>QR Code Content:</span>
+                <span>Zawartość kodu QR:</span>
                 <span className="text-white font-mono text-xs bg-gray-700 px-2 py-1 rounded max-w-32 break-all">
                   {preferences.uuid.qrPrefix}{'x'.repeat(preferences.uuid.uuidLength)}
                 </span>

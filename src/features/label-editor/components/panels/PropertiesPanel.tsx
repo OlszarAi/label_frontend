@@ -14,6 +14,18 @@ import { FloatingPanel } from '../common/FloatingPanel';
 import { LabelDimensions, CanvasObject, EditorPreferences } from '../../types/editor.types';
 import { CanvasProperties } from '../CanvasProperties';
 
+// Helper function to translate object type names
+const getObjectTypeName = (type: string): string => {
+  const typeNames: Record<string, string> = {
+    text: 'Tekst',
+    rectangle: 'Prostokąt',
+    circle: 'Koło',
+    qrcode: 'Kod QR',
+    uuid: 'UUID'
+  };
+  return typeNames[type] || type.charAt(0).toUpperCase() + type.slice(1);
+};
+
 // Custom hook to manage input values during editing
 const useEditableValue = (externalValue: number, onCommit: (value: number) => void) => {
   const [inputValue, setInputValue] = useState(Number(externalValue).toFixed(2));
@@ -155,7 +167,7 @@ export const PropertiesPanel = ({
           <Collapsible.Trigger className="flex items-center justify-between w-full p-3 text-left bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <div className="flex items-center space-x-2">
               <Squares2X2Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Canvas</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Płótno</span>
             </div>
             {openSections.canvas ? (
               <ChevronDownIcon className="w-4 h-4 text-gray-500" />
@@ -194,7 +206,7 @@ export const PropertiesPanel = ({
             <div className="flex items-center space-x-2">
               <SwatchIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {selectedObject ? `${selectedObject.type.charAt(0).toUpperCase() + selectedObject.type.slice(1)}` : 'Selection'}
+                {selectedObject ? `${getObjectTypeName(selectedObject.type)}` : 'Zaznaczenie'}
               </span>
             </div>
             {openSections.selection ? (
@@ -220,7 +232,7 @@ export const PropertiesPanel = ({
                         {/* Position and Size */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Position & Size (mm)
+                            Pozycja i rozmiar (mm)
                           </label>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
@@ -244,7 +256,7 @@ export const PropertiesPanel = ({
                             {(selectedObject.type === 'rectangle' || selectedObject.type === 'circle' || selectedObject.type === 'qrcode') && (
                               <>
                                 <div>
-                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Width</label>
+                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Szerokość</label>
                                   <input
                                     type="number"
                                     {...objectWidthInput}
@@ -253,7 +265,7 @@ export const PropertiesPanel = ({
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Height</label>
+                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wysokość</label>
                                   <input
                                     type="number"
                                     {...objectHeightInput}
@@ -271,7 +283,7 @@ export const PropertiesPanel = ({
                           <div className="space-y-3">
                             {selectedObject.type === 'text' && (
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Text</label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tekst</label>
                                 <textarea
                                   value={selectedObject.text || ''}
                                   onChange={(e) => handleObjectUpdate({ text: e.target.value })}
@@ -290,7 +302,7 @@ export const PropertiesPanel = ({
                                   </code>
                                 </div>
                                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                  UUID text is automatically generated and cannot be edited manually.
+                                  Tekst UUID jest generowany automatycznie i nie może być edytowany ręcznie.
                                 </p>
                               </div>
                             )}
@@ -298,7 +310,7 @@ export const PropertiesPanel = ({
                             {/* Text Formatting */}
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Font Size</label>
+                                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Rozmiar czcionki</label>
                                 <input
                                   type="number"
                                   {...fontSizeInput}
@@ -308,7 +320,7 @@ export const PropertiesPanel = ({
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Font Family</label>
+                                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Rodzina czcionki</label>
                                 <select
                                   value={selectedObject.fontFamily || 'Arial'}
                                   onChange={(e) => handleObjectUpdate({ fontFamily: e.target.value })}
@@ -385,7 +397,7 @@ export const PropertiesPanel = ({
 
                             {/* Text Alignment */}
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Text Alignment</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Wyrównanie tekstu</label>
                               <div className="grid grid-cols-3 gap-2">
                                 {(['left', 'center', 'right'] as const).map((align) => (
                                   <button
@@ -396,7 +408,7 @@ export const PropertiesPanel = ({
                                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                                     }`}
-                                    title={`Align ${align}`}
+                                    title={align === 'left' ? 'Wyrównaj do lewej' : align === 'center' ? 'Wyśrodkuj' : 'Wyrównaj do prawej'}
                                   >
                                     {align === 'left' && '⫷'}
                                     {align === 'center' && '≡'}
@@ -448,13 +460,13 @@ export const PropertiesPanel = ({
 
                         {/* Colors - Compact Version */}
                         <div>
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Colors</label>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Kolory</label>
                         
                           {/* Fill Color */}
                           <div className="space-y-3">
                             <div>
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs text-gray-600 dark:text-gray-400">Fill</span>
+                                <span className="text-xs text-gray-600 dark:text-gray-400">Wypełnienie</span>
                                 <div className="flex items-center space-x-2">
                                   <div 
                                     className="w-6 h-6 rounded-md border-2 border-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 cursor-pointer transition-transform hover:scale-110"
@@ -505,7 +517,7 @@ export const PropertiesPanel = ({
                             {(selectedObject.type === 'rectangle' || selectedObject.type === 'circle') && (
                               <div>
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs text-gray-600 dark:text-gray-400">Stroke</span>
+                                  <span className="text-xs text-gray-600 dark:text-gray-400">Obramowanie</span>
                                   <div className="flex items-center space-x-2">
                                     <div 
                                       className="w-6 h-6 rounded-md border-2 border-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 cursor-pointer transition-transform hover:scale-110"
@@ -534,7 +546,7 @@ export const PropertiesPanel = ({
                                 {/* Stroke Width Slider */}
                                 <div className="mt-2">
                                   <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs text-gray-600 dark:text-gray-400">Width</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">Grubość</span>
                                     <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
                                       {selectedObject.strokeWidth || 1}px
                                     </span>
@@ -557,18 +569,18 @@ export const PropertiesPanel = ({
                         {/* QR Code specific settings */}
                         {selectedObject.type === 'qrcode' && (
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">QR Code Settings</label>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Ustawienia kodu QR</label>
                             <div>
-                              <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Error Correction</label>
+                              <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Korekcja błędów</label>
                               <select
                                 value={selectedObject.qrErrorCorrectionLevel || 'M'}
                                 onChange={(e) => handleObjectUpdate({ qrErrorCorrectionLevel: e.target.value as 'L' | 'M' | 'Q' | 'H' })}
                                 className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               >
-                                <option value="L">Low (7%)</option>
-                                <option value="M">Medium (15%)</option>
-                                <option value="Q">Quartile (25%)</option>
-                                <option value="H">High (30%)</option>
+                                <option value="L">Niska (7%)</option>
+                                <option value="M">Średnia (15%)</option>
+                                <option value="Q">Kwartyl (25%)</option>
+                                <option value="H">Wysoka (30%)</option>
                               </select>
                             </div>
                           </div>
@@ -577,14 +589,14 @@ export const PropertiesPanel = ({
                         {/* Layer Controls */}
                         {(onBringToFront || onSendToBack || onMoveUp || onMoveDown) && (
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Layer Order</label>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Kolejność warstw</label>
                             <div className="grid grid-cols-2 gap-2">
                               {onBringToFront && (
                                 <button
                                   onClick={onBringToFront}
                                   className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded border border-gray-300 dark:border-gray-600 transition-colors"
                                 >
-                                  Bring to Front
+                                  Na przód
                                 </button>
                               )}
                               {onSendToBack && (
@@ -592,7 +604,7 @@ export const PropertiesPanel = ({
                                   onClick={onSendToBack}
                                   className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded border border-gray-300 dark:border-gray-600 transition-colors"
                                 >
-                                  Send to Back
+                                  Na tył
                                 </button>
                               )}
                               {onMoveUp && (
@@ -600,7 +612,7 @@ export const PropertiesPanel = ({
                                   onClick={onMoveUp}
                                   className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded border border-gray-300 dark:border-gray-600 transition-colors"
                                 >
-                                  Move Up
+                                  W górę
                                 </button>
                               )}
                               {onMoveDown && (
@@ -608,7 +620,7 @@ export const PropertiesPanel = ({
                                   onClick={onMoveDown}
                                   className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded border border-gray-300 dark:border-gray-600 transition-colors"
                                 >
-                                  Move Down
+                                  W dół
                                 </button>
                               )}
                             </div>
@@ -618,7 +630,7 @@ export const PropertiesPanel = ({
                     ) : (
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         <SwatchIcon className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                        <p className="text-sm">Select an object to edit its properties</p>
+                        <p className="text-sm">Wybierz obiekt, aby edytować jego właściwości</p>
                       </div>
                     )}
                   </div>
@@ -633,7 +645,7 @@ export const PropertiesPanel = ({
           <Collapsible.Trigger className="flex items-center justify-between w-full p-3 text-left bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <div className="flex items-center space-x-2">
               <CogIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Settings</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Ustawienia</span>
             </div>
             {openSections.settings ? (
               <ChevronDownIcon className="w-4 h-4 text-gray-500" />
@@ -655,11 +667,11 @@ export const PropertiesPanel = ({
                   <div className="p-3 space-y-4">
                     {/* UUID Settings */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">UUID Configuration</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">Konfiguracja UUID</label>
                       
                       <div>
                         <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                          UUID Length: {preferences.uuid.uuidLength} characters
+                          Długość UUID: {preferences.uuid.uuidLength} znaków
                         </label>
                         <input
                           type="range"
@@ -684,10 +696,10 @@ export const PropertiesPanel = ({
                             }}
                             className="w-full px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200 font-medium"
                           >
-                            🔄 Regenerate UUID
+                            🔄 Regeneruj UUID
                           </button>
                           <div className="text-xs text-gray-500 mt-1">
-                            Generate a new UUID for all QR codes and UUID objects on this label
+                            Wygeneruj nowy UUID dla wszystkich kodów QR i obiektów UUID na tej etykiecie
                           </div>
                         </div>
                       )}
@@ -695,22 +707,22 @@ export const PropertiesPanel = ({
 
                     {/* QR Code Settings */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">QR Code Configuration</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">Konfiguracja kodu QR</label>
                       
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">QR Code Prefix URL</label>
+                          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Prefiks URL kodu QR</label>
                           <input
                             type="text"
                             value={preferences.uuid.qrPrefix}
                             onChange={(e) => updateUUIDPreferences({ qrPrefix: e.target.value })}
                             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            placeholder="https://example.com/"
+                            placeholder="https://przyklad.com/"
                           />
                         </div>
                         
                         <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Podgląd</label>
                           <div className="text-xs font-mono text-gray-600 dark:text-gray-400 break-all">
                             {generateQRPreview()}
                           </div>

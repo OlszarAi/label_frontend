@@ -184,7 +184,7 @@ export function AdvancedSearch({
           
           <input
             type="text"
-            placeholder="Search by name, dimensions (e.g., 100×50), or format..."
+            placeholder="Szukaj po nazwie, wymiarach (np. 100×50) lub formacie..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             onFocus={() => setShowSuggestions(true)}
