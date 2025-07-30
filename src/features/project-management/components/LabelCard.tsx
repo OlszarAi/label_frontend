@@ -1,5 +1,5 @@
 import React from 'react';
-import Image from 'next/image';
+import { SmartImage } from '../../../components/ui/SmartImage';
 import { Label } from '../types/project.types';
 
 interface LabelCardProps {
@@ -23,7 +23,7 @@ export function LabelCard({ label, onClick, onEdit, onDelete }: LabelCardProps) 
       {/* Thumbnail/Preview */}
       <div className="projects-card-image">
         {label.thumbnail ? (
-          <Image 
+          <SmartImage 
             src={label.thumbnail} 
             alt={label.name}
             width={200}

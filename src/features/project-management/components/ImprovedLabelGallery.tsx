@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
+import { SmartImage } from '../../../components/ui/SmartImage';
 import { Label } from '../types/project.types';
 import { QuickTemplates } from './QuickTemplates';
 import { CreateLabelButton } from '@/features/label-management';
@@ -530,12 +530,11 @@ function LabelCard({
         onSelect();
       }}>
         {label.thumbnail ? (
-          <Image
+          <SmartImage
             src={label.thumbnail}
             alt={label.name}
             fill
             className="label-thumbnail"
-            style={{ objectFit: 'contain' }}
           />
         ) : (
           <div className="label-placeholder">
@@ -617,13 +616,12 @@ function QuickPreviewModal({ label, onClose, onEdit }: QuickPreviewModalProps) {
         <div className="preview-content">
           <div className="preview-image-container">
             {label.thumbnail ? (
-              <Image
+              <SmartImage
                 src={label.thumbnail}
                 alt={label.name}
                 width={600}
                 height={400}
                 className="preview-image"
-                style={{ objectFit: 'contain' }}
               />
             ) : (
               <div className="preview-placeholder">
