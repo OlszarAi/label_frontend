@@ -18,6 +18,7 @@ interface CanvasEditorProps {
   onObjectUpdate: (id: string, updates: Partial<CanvasObject>) => void;
   onObjectSelect: (id: string | null) => void;
   onCanvasReady?: (canvas: Canvas) => void;
+  onWheelZoom?: (event: WheelEvent) => void;
 }
 
 // Extend FabricObject to include our custom data
@@ -133,7 +134,8 @@ export const CanvasEditor = ({
   preferences,
   onObjectUpdate,
   onObjectSelect,
-  onCanvasReady
+  onCanvasReady,
+  onWheelZoom
 }: CanvasEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
@@ -380,11 +382,30 @@ export const CanvasEditor = ({
       }
     });
 
+    // Add wheel event listener for zoom functionality
+    const handleWheel = (event: WheelEvent) => {
+      console.log('Canvas wheel event detected:', event);
+      // Handle wheel events for zooming (without requiring Ctrl key)
+      if (onWheelZoom) {
+        onWheelZoom(event);
+      }
+    };
+
+    // Add the wheel event listener to the container element for better coverage
+    const containerElement = containerRef.current;
+    if (containerElement) {
+      containerElement.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
     return () => {
+      // Clean up wheel event listener
+      if (containerElement) {
+        containerElement.removeEventListener('wheel', handleWheel);
+      }
       canvas.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onObjectUpdate, onObjectSelect, dimensions.width, dimensions.height, preferences.grid]);
+  }, [onObjectUpdate, onObjectSelect, onWheelZoom, dimensions.width, dimensions.height, preferences.grid]);
 
   // Update canvas size and sync objects
   useEffect(() => {
@@ -779,13 +800,6 @@ export const CanvasEditor = ({
       ref={containerRef}
       className="flex-1 p-8 canvas-container overflow-hidden relative"
     >
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-4 left-4 w-2 h-2 bg-blue-500/20 rounded-full animate-pulse"></div>
-        <div className="absolute top-8 right-8 w-1 h-1 bg-purple-500/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-12 left-12 w-1.5 h-1.5 bg-green-500/20 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
-      </div>
-      
       {/* Main canvas area with rulers */}
       <div className="relative">
         {/* Top ruler - only show if canvas is large enough */}

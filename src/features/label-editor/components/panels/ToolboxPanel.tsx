@@ -2,12 +2,11 @@
 
 import React from 'react';
 import { 
-  Bars3BottomLeftIcon,
-  RectangleStackIcon,
-  CircleStackIcon,
+  DocumentTextIcon,
+  RectangleGroupIcon,
+  StopIcon,
   QrCodeIcon,
-  HashtagIcon,
-  CursorArrowRaysIcon,
+  IdentificationIcon,
 } from '@heroicons/react/24/outline';
 
 interface ToolboxPanelProps {
@@ -34,17 +33,9 @@ export const ToolboxPanel = ({
 }: ToolboxPanelProps) => {
   const tools = [
     {
-      id: 'select',
-      name: 'Wybierz',
-      icon: CursorArrowRaysIcon,
-      shortcut: 'V',
-      description: 'Wybierz i przesuń obiekty',
-      action: () => onToolSelect('select'),
-    },
-    {
       id: 'text',
       name: 'Tekst',
-      icon: Bars3BottomLeftIcon,
+      icon: DocumentTextIcon,
       shortcut: 'T',
       description: 'Dodaj element tekstowy',
       action: onAddText,
@@ -52,7 +43,7 @@ export const ToolboxPanel = ({
     {
       id: 'rectangle',
       name: 'Prostokąt',
-      icon: RectangleStackIcon,
+      icon: RectangleGroupIcon,
       shortcut: 'R',
       description: 'Dodaj kształt prostokąta',
       action: onAddRectangle,
@@ -60,7 +51,7 @@ export const ToolboxPanel = ({
     {
       id: 'circle',
       name: 'Koło',
-      icon: CircleStackIcon,
+      icon: StopIcon,
       shortcut: 'C',
       description: 'Dodaj kształt koła',
       action: onAddCircle,
@@ -76,7 +67,7 @@ export const ToolboxPanel = ({
     {
       id: 'uuid',
       name: 'UUID',
-      icon: HashtagIcon,
+      icon: IdentificationIcon,
       shortcut: 'U',
       description: 'Dodaj unikalny identyfikator',
       action: onAddUUID,
@@ -113,27 +104,31 @@ export const ToolboxPanel = ({
                     : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600/70 hover:shadow-md'
                   }
                 `}
-                title={`${tool.name} (${tool.shortcut})`}
+                title={tool.shortcut ? `${tool.name} (${tool.shortcut})` : tool.name}
               >
                 <Icon className="w-6 h-6 transition-all duration-200" />
                 
-                {/* Shortcut badge */}
-                <div className={`
-                  absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs font-bold
-                  flex items-center justify-center transition-all duration-200
-                  ${isSelected 
-                    ? 'bg-white text-blue-600 shadow-md' 
-                    : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
-                  }
-                `}>
-                  {tool.shortcut}
-                </div>
+                {/* Shortcut badge - only show if shortcut exists */}
+                {tool.shortcut && (
+                  <div className={`
+                    absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs font-bold
+                    flex items-center justify-center transition-all duration-200
+                    ${isSelected 
+                      ? 'bg-white text-blue-600 shadow-md' 
+                      : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                    }
+                  `}>
+                    {tool.shortcut}
+                  </div>
+                )}
 
                 {/* Tooltip */}
                 <div className="absolute bottom-full mb-3 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-10">
                   <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
                     <div className="font-medium">{tool.description}</div>
-                    <div className="text-gray-300 text-[10px] mt-1">Press {tool.shortcut}</div>
+                    {tool.shortcut && (
+                      <div className="text-gray-300 text-[10px] mt-1">Press {tool.shortcut}</div>
+                    )}
                     <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
                   </div>
                 </div>

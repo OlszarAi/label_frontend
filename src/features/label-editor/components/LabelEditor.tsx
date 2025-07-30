@@ -190,6 +190,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
             onObjectUpdate={updateObject}
             onObjectSelect={selectObject}
             onCanvasReady={setCanvasRef}
+            onWheelZoom={zoomControls.handleWheelZoom}
           />
         </div>
       </div>
