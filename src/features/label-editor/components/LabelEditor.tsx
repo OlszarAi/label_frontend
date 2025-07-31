@@ -12,6 +12,8 @@ import { MainToolbar } from './toolbar/MainToolbar';
 import { ToolboxPanel } from './panels/ToolboxPanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { GalleryPanel } from './panels/GalleryPanel';
+import { UserAssetsPanel } from './assets/UserAssetsPanel';
+import { AssetUploadModal } from './assets/AssetUploadModal';
 import { KEYBOARD_SHORTCUTS, TOOL_TYPES } from '../constants';
 import type { Label } from '../services/labelManagementService';
 import '../styles/editor.css';
@@ -25,10 +27,14 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   const [selectedTool, setSelectedTool] = useState<string>(TOOL_TYPES.SELECT);
   const [effectiveProjectId, setEffectiveProjectId] = useState<string | null>(projectId || null);
   
+  // Upload modal state  
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
   // Panel visibility states
   const [panelVisibility, setPanelVisibility] = useState({
     properties: true,
     gallery: true,
+    assets: false,
   });
 
   // Connection monitoring
@@ -202,6 +208,8 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
         onAddCircle={toolHandlers.handleAddCircle}
         onAddQRCode={toolHandlers.handleAddQRCode}
         onAddUUID={toolHandlers.handleAddUUID}
+        onAddImage={toolHandlers.handleAddImage}
+        onToggleAssets={() => togglePanel('assets')}
         selectedTool={selectedTool}
         onToolSelect={setSelectedTool}
         isVisible={true}
@@ -230,6 +238,20 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
         onCreateLabel={labelActions.handleCreateLabel}
         isVisible={panelVisibility.gallery}
         onClose={() => togglePanel('gallery')}
+      />
+
+      <UserAssetsPanel
+        isVisible={panelVisibility.assets}
+        onClose={() => togglePanel('assets')}
+        onAssetSelect={toolHandlers.handleAddImage}
+        onImportClick={() => setShowUploadModal(true)}
+      />
+
+      {/* Upload Modal */}
+      <AssetUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onAssetUploaded={() => setShowUploadModal(false)}
       />
     </div>
   );

@@ -66,6 +66,10 @@ export class LabelManagementService {
   }
 
   /**
+   * Pomocnicza metoda dla prostego tworzenia etykiety z domyślnymi parametrami
+   */
+
+  /**
    * Duplikuje istniejącą etykietę z automatycznym nazewnictwem
    */
   static async duplicateLabel(labelId: string): Promise<Label> {

@@ -1,13 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   DocumentTextIcon,
   RectangleGroupIcon,
   StopIcon,
   QrCodeIcon,
   IdentificationIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
+import { AssetUploadModal } from '../assets/AssetUploadModal';
+import { UserAsset } from '../../../../services/userAsset.service';
 
 interface ToolboxPanelProps {
   onAddText: () => void;
@@ -15,6 +18,8 @@ interface ToolboxPanelProps {
   onAddCircle: () => void;
   onAddQRCode: () => void;
   onAddUUID: () => void;
+  onAddImage?: (asset: UserAsset) => void;
+  onToggleAssets?: () => void;
   selectedTool: string;
   onToolSelect: (tool: string) => void;
   isVisible: boolean;
@@ -27,10 +32,17 @@ export const ToolboxPanel = ({
   onAddCircle,
   onAddQRCode,
   onAddUUID,
+  onToggleAssets,
   selectedTool,
   onToolSelect,
   isVisible
 }: ToolboxPanelProps) => {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
+  const handleUploadComplete = () => {
+    setShowUploadModal(false);
+    // Assets panel will automatically refresh
+  };
   const tools = [
     {
       id: 'text',
@@ -71,6 +83,14 @@ export const ToolboxPanel = ({
       shortcut: 'U',
       description: 'Dodaj unikalny identyfikator',
       action: onAddUUID,
+    },
+    {
+      id: 'assets',
+      name: 'Grafiki',
+      icon: PhotoIcon,
+      shortcut: 'G',
+      description: 'Twoje grafiki i logo',
+      action: () => onToggleAssets?.(),
     },
   ];
 
@@ -142,6 +162,13 @@ export const ToolboxPanel = ({
           })}
         </div>
       </div>
+
+      {/* Upload Modal */}
+      <AssetUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onAssetUploaded={handleUploadComplete}
+      />
     </div>
   );
 }; 

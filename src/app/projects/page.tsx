@@ -81,7 +81,7 @@ export default function ProjectsPage() {
       const result = await updateProject(editingProject.id, projectData as UpdateProjectRequest);
       if (result.success) {
         setEditingProject(null);
-        fetchProjects();
+        // No need to fetchProjects() - updateProject hook already updates the list
       } else {
         console.error('Failed to update project:', result.error);
         alert('Failed to update project. Please try again.');
@@ -91,7 +91,7 @@ export default function ProjectsPage() {
       const result = await createProject(projectData as CreateProjectRequest);
       if (result.success) {
         setShowCreateForm(false);
-        fetchProjects();
+        // No need to fetchProjects() - createProject hook already adds to the list
       } else {
         console.error('Failed to create project:', result.error);
         alert('Failed to create project. Please try again.');
@@ -103,8 +103,7 @@ export default function ProjectsPage() {
     const result = await deleteProject(projectId);
     if (result.success) {
       setDeleteConfirm(null);
-      // Refresh projects list
-      fetchProjects();
+      // No need to fetchProjects() - deleteProject hook already removes from the list
     } else {
       console.error('Failed to delete project:', result.error);
       alert('Failed to delete project. Please try again.');

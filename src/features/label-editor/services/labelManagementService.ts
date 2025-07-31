@@ -3,8 +3,6 @@
  * Single source of truth for all label operations
  */
 
-import { generateUniqueLabel, generateCopyName, type LabelForNaming } from '../utils/labelNaming';
-
 export interface CreateLabelRequest {
   projectId: string;
   name?: string;
@@ -106,42 +104,23 @@ class LabelManagementService {
   }
 
   /**
-   * Create a new label with smart naming
+   * Create a new label with smart naming using new backend system
    */
   async createLabel(request: CreateLabelRequest): Promise<Label> {
-    // First, get existing labels to generate unique name
-    const existingLabels = await this.getProjectLabels(request.projectId);
-    
-    // Generate unique name
-    let labelName: string;
-    if (request.name) {
-      // If specific name provided, use it (for templates)
-      labelName = request.name;
-    } else if (request.templateData) {
-      // For templates, use template name as base
-      labelName = generateUniqueLabel(
-        existingLabels as LabelForNaming[], 
-        request.templateData.templateName
-      );
-    } else {
-      // Default case - generate "New Label X"
-      labelName = generateUniqueLabel(existingLabels as LabelForNaming[]);
-    }
-
-    // Prepare create data
+    // Use the new backend endpoint for automatic naming
     const createData = {
-      name: labelName,
+      name: request.name,
       description: request.description || '',
       width: request.templateData?.width || request.width || 100,
       height: request.templateData?.height || request.height || 50,
-      fabricData: {
+      fabricData: request.templateData?.objects ? {
         version: '6.0.0',
-        objects: request.templateData?.objects || [],
+        objects: request.templateData.objects,
         background: '#ffffff',
-      },
+      } : undefined,
     };
 
-    const response = await fetch(`${this.baseUrl}/projects/${request.projectId}/labels`, {
+    const response = await fetch(`${this.baseUrl}/label-management/projects/${request.projectId}/create`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(createData),
@@ -152,34 +131,36 @@ class LabelManagementService {
       throw new Error(errorData.message || 'Failed to create label');
     }
 
-    const { data } = await response.json();
-    return data;
+    const result = await response.json();
+    
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Failed to create label');
+    }
+
+    return result.data;
   }
 
   /**
-   * Duplicate an existing label with smart naming
+   * Duplicate an existing label with smart naming using new backend system
    */
   async duplicateLabel(request: DuplicateLabelRequest): Promise<Label> {
-    // Get the original label
-    const originalLabel = await this.getLabel(request.labelId);
-    
-    // Get existing labels for smart naming
-    const existingLabels = await this.getProjectLabels(originalLabel.projectId);
-    
-    // Generate unique copy name (but unused for now)
-    generateCopyName(originalLabel.name, existingLabels as LabelForNaming[]);
-
-    const response = await fetch(`${this.baseUrl}/projects/labels/${request.labelId}/duplicate`, {
+    const response = await fetch(`${this.baseUrl}/label-management/labels/${request.labelId}/duplicate`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to duplicate label');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to duplicate label');
     }
 
-    const { data } = await response.json();
-    return data;
+    const result = await response.json();
+    
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Failed to duplicate label');
+    }
+
+    return result.data;
   }
 
   /**

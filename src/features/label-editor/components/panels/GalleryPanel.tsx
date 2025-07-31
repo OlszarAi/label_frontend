@@ -385,7 +385,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
   return (
     <FloatingPanel
       id="project-gallery-panel"
-      title="Galeria projektów"
+      title="Etykiety"
       defaultPosition={{ x: 820, y: 120 }}
       defaultSize={{ width: 480, height: 700 }}
       minSize={{ width: 400, height: 600 }}
@@ -464,8 +464,8 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
             onChange={(e) => setSortBy(e.target.value as SortBy)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 text-xs"
           >
-            <option value="updated">Ostatnio aktualizowane</option>
             <option value="created">Data utworzenia</option>
+            <option value="updated">Ostatnio aktualizowane</option>           
             <option value="name">Nazwa</option>
             <option value="size">Rozmiar</option>
           </select>
