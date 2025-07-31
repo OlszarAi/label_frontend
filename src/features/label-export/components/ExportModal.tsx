@@ -48,13 +48,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-white dark:text-white">
             Eksport etykiet
           </h3>
           {!isExporting && (
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-200 transition-colors"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -63,12 +63,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         <div className="space-y-4">
           {/* Informacje o eksporcie */}
-          <div className="bg-blue-50 p-3 rounded-lg">
+          <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" />
-              <span className="font-medium text-blue-900">Projekt: {projectName}</span>
+              <div className="w-2 h-2 bg-blue-400 rounded-full" />
+              <span className="font-medium text-blue-300">Projekt: {projectName}</span>
             </div>
-            <div className="text-sm text-blue-700">
+            <div className="text-sm text-blue-200">
               Etykiety do eksportu: <span className="font-medium">{labelCount}</span>
             </div>
           </div>
@@ -77,7 +77,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {!isExporting && !progress && (
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Format eksportu
                 </label>
                 <div className="grid grid-cols-1 gap-2">
@@ -87,11 +87,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       className={`
                         flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors
                         ${info.available 
-                          ? 'hover:bg-gray-50 border-gray-200' 
-                          : 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-100'
+                          ? 'hover:bg-gray-800 border-gray-600 text-white' 
+                          : 'opacity-50 cursor-not-allowed bg-gray-800 border-gray-700 text-gray-500'
                         }
                         ${options.format === format && info.available
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-blue-500 bg-blue-900/20'
                           : ''
                         }
                       `}
@@ -110,16 +110,16 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-white">
                             {info.name}
                           </span>
                           {!info.available && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-yellow-900/50 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-700">
                               Coming Soon
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-400">
                           {info.description}
                         </div>
                       </div>
@@ -130,8 +130,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
               {/* Opcje PDF */}
               {options.format === 'pdf' && (
-                <div className="bg-gray-50 p-3 rounded-lg space-y-3">
-                  <h4 className="font-medium text-gray-900">Opcje PDF</h4>
+                <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg space-y-3">
+                  <h4 className="font-medium text-white">Opcje PDF</h4>
                   
                   <div>
                     <label className="flex items-center gap-2">
@@ -142,14 +142,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                           ...prev, 
                           includeBackground: e.target.checked 
                         }))}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-gray-600 bg-gray-700 rounded focus:ring-blue-500 focus:ring-offset-gray-800"
                       />
-                      <span className="text-sm text-gray-700">Dołącz tło etykiet</span>
+                      <span className="text-sm text-gray-300">Dołącz tło etykiet</span>
                     </label>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Margines (mm)
                     </label>
                     <input
@@ -162,7 +162,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         ...prev, 
                         margin: parseFloat(e.target.value) || 0 
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
                   </div>
                 </div>
@@ -182,14 +182,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 {/* Progress bar */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
+                    <span className="text-gray-300">
                       {progress?.labelName || 'Przygotowywanie...'}
                     </span>
-                    <span className="text-gray-500">
+                    <span className="text-gray-400">
                       {progress?.currentLabel || 0} / {progress?.totalLabels || 0}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-700 rounded-full h-2">
                     <motion.div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{
@@ -205,14 +205,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
                 {/* Status */}
                 {progress?.status === 'complete' && (
-                  <div className="flex items-center gap-2 text-green-700 bg-green-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-300 bg-green-900/20 border border-green-500/30 p-3 rounded-lg">
                     <CheckCircleIcon className="h-5 w-5" />
                     <span className="font-medium">Eksport zakończony pomyślnie!</span>
                   </div>
                 )}
 
                 {progress?.status === 'error' && (
-                  <div className="flex items-center gap-2 text-red-700 bg-red-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-red-300 bg-red-900/20 border border-red-500/30 p-3 rounded-lg">
                     <ExclamationTriangleIcon className="h-5 w-5" />
                     <span className="font-medium">Wystąpił błąd podczas eksportu</span>
                   </div>
@@ -223,17 +223,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
           {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-red-700">
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-red-300">
                 <ExclamationTriangleIcon className="h-5 w-5" />
                 <span className="font-medium">Błąd eksportu</span>
               </div>
-              <p className="text-sm text-red-600 mt-1">{error}</p>
+              <p className="text-sm text-red-200 mt-1">{error}</p>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t">
+          <div className="flex gap-3 pt-4 border-t border-gray-700">
             <Button
               variant="outline"
               onClick={handleClose}

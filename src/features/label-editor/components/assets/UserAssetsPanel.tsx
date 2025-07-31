@@ -140,7 +140,7 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
             placeholder="Szukaj grafik..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-9 pr-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -155,8 +155,8 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
 
         {error && (
           <div className="mb-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="bg-red-900/30 border border-red-700 rounded-lg p-3">
+              <p className="text-red-300 text-sm">{error}</p>
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => {
@@ -164,13 +164,13 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
                     setHasAttemptedLoad(false);
                     loadAssets();
                   }}
-                  className="text-red-600 hover:text-red-800 text-sm underline"
+                  className="text-red-400 hover:text-red-300 text-sm underline"
                 >
                   Spróbuj ponownie
                 </button>
                 <button
                   onClick={clearError}
-                  className="text-red-600 hover:text-red-800 text-sm underline"
+                  className="text-red-400 hover:text-red-300 text-sm underline"
                 >
                   Zamknij
                 </button>
@@ -181,11 +181,11 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
 
         {!loading && !error && filteredAssets.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 text-center">
-            <CloudArrowUpIcon className="w-12 h-12 text-gray-300 mb-3" />
-            <h4 className="text-gray-900 font-medium mb-1">
+            <CloudArrowUpIcon className="w-12 h-12 text-gray-500 mb-3" />
+            <h4 className="text-white font-medium mb-1">
               {searchTerm ? 'Nie znaleziono grafik' : 'Brak grafik'}
             </h4>
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-gray-400 text-sm mb-4">
               {searchTerm 
                 ? 'Spróbuj zmienić frazy wyszukiwania'
                 : 'Zaimportuj swoje logo i grafiki'
@@ -209,12 +209,12 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
             {filteredAssets.map((asset) => (
               <div
                 key={asset.id}
-                className="group relative bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200 hover:border-gray-300"
+                className="group relative bg-gray-800 rounded-lg p-3 hover:bg-gray-700 transition-colors cursor-pointer border border-gray-600 hover:border-gray-500"
                 onClick={() => handleAssetClick(asset)}
               >
                 {/* Asset Preview */}
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 border border-gray-300">
+                  <div className="w-12 h-12 bg-gray-700 rounded-lg overflow-hidden flex-shrink-0 border border-gray-600">
                     {asset.url ? (
                       <img
                         src={asset.url}
@@ -239,7 +239,7 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1 text-sm border border-gray-600 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                           autoFocus
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleEditSave();
@@ -261,7 +261,7 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
                               e.stopPropagation();
                               handleEditCancel();
                             }}
-                            className="px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400"
+                            className="px-2 py-1 bg-gray-600 text-gray-200 text-xs rounded hover:bg-gray-500"
                           >
                             Anuluj
                           </button>
@@ -269,18 +269,18 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
                       </div>
                     ) : (
                       <>
-                        <h4 className="font-medium text-gray-900 text-sm truncate">
+                        <h4 className="font-medium text-white text-sm truncate">
                           {asset.name}
                         </h4>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-400 truncate">
                           {asset.fileName}
                         </p>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-500">
                             {formatFileSize(asset.fileSize)}
                           </span>
                           {asset.width && asset.height && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-500">
                               {asset.width}×{asset.height}
                             </span>
                           )}
@@ -329,16 +329,16 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-lg p-4 shadow-lg border max-w-sm mx-4"
+              className="bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-lg max-w-sm mx-4"
             >
-              <h4 className="font-semibold text-gray-900 mb-2">Usuń grafikę</h4>
-              <p className="text-gray-600 text-sm mb-4">
+              <h4 className="font-semibold text-white mb-2">Usuń grafikę</h4>
+              <p className="text-gray-300 text-sm mb-4">
                 Czy na pewno chcesz usunąć tę grafikę? Tej operacji nie można cofnąć.
               </p>
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setDeleteConfirm(null)}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                  className="px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded text-sm hover:bg-gray-600"
                 >
                   Anuluj
                 </button>

@@ -159,17 +159,6 @@ export const ProfileSettings: React.FC<ProfileTabProps & {
               <span className="toggle-slider"></span>
             </label>
           </div>
-
-          <div className="preference-item">
-            <div className="preference-info">
-              <span className="preference-label">Motyw ciemny</span>
-              <span className="preference-description">Używaj ciemnego motywu interfejsu</span>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" defaultChecked />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
         </div>
       </div>
 

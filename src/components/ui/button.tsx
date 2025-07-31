@@ -20,8 +20,8 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const variants = {
     default: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
-    outline: 'border border-gray-300 bg-white hover:bg-gray-50 text-gray-700',
-    ghost: 'hover:bg-gray-100 text-gray-700',
+    outline: 'border border-gray-600 bg-gray-800 hover:bg-gray-700 text-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200',
+    ghost: 'hover:bg-gray-700 text-gray-200 dark:hover:bg-gray-700 dark:text-gray-200',
     destructive: 'bg-red-600 hover:bg-red-700 text-white shadow-sm',
   };
 

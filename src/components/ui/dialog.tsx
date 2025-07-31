@@ -72,7 +72,7 @@ export const DialogContent: React.FC<DialogContentProps> = ({
 }) => {
   return (
     <div className={`
-      bg-white rounded-lg shadow-xl p-6 mx-4 max-w-lg w-full max-h-[90vh] overflow-y-auto
+      bg-gray-900 dark:bg-gray-900 rounded-lg shadow-xl p-6 mx-4 max-w-lg w-full max-h-[90vh] overflow-y-auto
       ${className}
     `}>
       {children}

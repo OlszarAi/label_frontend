@@ -163,29 +163,29 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-white rounded-xl shadow-xl border border-gray-200 max-h-[90vh] overflow-hidden"
+            className="relative w-full max-w-2xl bg-gray-900 dark:bg-gray-900 rounded-xl shadow-xl border border-gray-700 dark:border-gray-700 max-h-[90vh] overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+            <div className="flex items-center justify-between p-6 border-b border-gray-700 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-white dark:text-white">
                 Importuj Grafiki
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] bg-gray-900 dark:bg-gray-900">
               {/* Drop Zone */}
               <div
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
                   dragActive
-                    ? 'border-blue-400 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-blue-400 bg-blue-900/20'
+                    : 'border-gray-600 hover:border-gray-500'
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -193,10 +193,10 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
                 onDrop={handleDrop}
               >
                 <CloudArrowUpIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-lg font-medium text-white mb-2">
                   Przeciągnij pliki tutaj
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-gray-400 mb-4">
                   lub kliknij aby wybrać pliki
                 </p>
                 <button
@@ -214,7 +214,7 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
                   onChange={handleFileInput}
                   className="hidden"
                 />
-                <p className="text-xs text-gray-400 mt-4">
+                <p className="text-xs text-gray-500 mt-4">
                   PNG, JPEG, WebP, SVG • Maksymalnie 5MB na plik
                 </p>
               </div>
@@ -222,7 +222,7 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
               {/* Selected Files */}
               {selectedFiles.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="font-medium text-gray-900 mb-3">
+                  <h4 className="font-medium text-white mb-3">
                     Wybrane pliki ({selectedFiles.length})
                   </h4>
                   <div className="space-y-3">
@@ -233,7 +233,7 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
                       return (
                         <div
                           key={file.name}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                          className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg"
                         >
                           <FileIcon className="w-8 h-8 text-gray-400 flex-shrink-0" />
                           
@@ -242,10 +242,10 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
                               type="text"
                               value={fileNames[file.name] || ''}
                               onChange={(e) => updateFileName(file.name, e.target.value)}
-                              className="w-full text-sm font-medium text-gray-900 bg-transparent border-none outline-none focus:bg-white focus:border focus:border-blue-300 focus:rounded px-2 py-1"
+                              className="w-full text-sm font-medium text-white bg-transparent border-none outline-none focus:bg-gray-700 focus:border focus:border-blue-300 focus:rounded px-2 py-1"
                               placeholder="Nazwa grafiki..."
                             />
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-400">
                               {file.name} • {formatFileSize(file.size)}
                             </p>
                           </div>
@@ -281,15 +281,15 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-500">
+            <div className="flex items-center justify-between p-6 border-t border-gray-700 bg-gray-800">
+              <div className="text-sm text-gray-400">
                 {selectedFiles.length > 0 && `${selectedFiles.length} plik(ów) wybranych`}
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
                   disabled={uploading}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
                 >
                   Anuluj
                 </button>
