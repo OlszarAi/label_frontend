@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { EditorState, CanvasObject } from '../types/editor.types';
 import { snapCoordinatesToGrid } from '../utils/grid';
 import { DEFAULT_OBJECT_PROPS, DEFAULT_POSITION, TOOL_TYPES } from '../constants';
+import { UserAsset } from '../../../services/userAsset.service';
 
 interface UseToolHandlersProps {
   state: EditorState;
@@ -104,11 +105,53 @@ export const useToolHandlers = ({
     toast.success('UUID added');
   }, [addObject, state.preferences.grid, setSelectedTool]);
 
+  const handleAddImage = useCallback((asset: UserAsset) => {
+    const coords = snapCoordinatesToGrid(
+      DEFAULT_POSITION.X,
+      DEFAULT_POSITION.Y, 
+      state.preferences.grid.size, 
+      state.preferences.grid.snapToGrid
+    );
+
+    // Calculate dimensions while maintaining aspect ratio
+    let width = 20; // Default width in mm
+    let height = 20; // Default height in mm
+
+    if (asset.width && asset.height) {
+      // Convert from pixels to mm (assuming 96 DPI)
+      const mmPerPixel = 25.4 / 96;
+      const assetWidthMm = asset.width * mmPerPixel;
+      const assetHeightMm = asset.height * mmPerPixel;
+
+      // Scale to fit within a reasonable size (max 50mm)
+      const maxSize = 50;
+      const scale = Math.min(maxSize / assetWidthMm, maxSize / assetHeightMm, 1);
+      
+      width = assetWidthMm * scale;
+      height = assetHeightMm * scale;
+    }
+
+    addObject({
+      type: 'image',
+      x: coords.x,
+      y: coords.y,
+      width,
+      height,
+      imageUrl: asset.url,
+      imageAssetId: asset.id,
+      imageOriginalWidth: asset.width || undefined,
+      imageOriginalHeight: asset.height || undefined,
+    });
+    setSelectedTool(TOOL_TYPES.SELECT);
+    toast.success(`Added image: ${asset.name}`);
+  }, [addObject, state.preferences.grid, setSelectedTool]);
+
   return {
     handleAddText,
     handleAddRectangle,
     handleAddCircle,
     handleAddQRCode,
-    handleAddUUID
+    handleAddUUID,
+    handleAddImage
   };
 }; 

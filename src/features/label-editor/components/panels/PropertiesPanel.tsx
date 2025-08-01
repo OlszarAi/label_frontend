@@ -21,7 +21,8 @@ const getObjectTypeName = (type: string): string => {
     rectangle: 'Prostokąt',
     circle: 'Koło',
     qrcode: 'Kod QR',
-    uuid: 'UUID'
+    uuid: 'UUID',
+    image: 'Obraz'
   };
   return typeNames[type] || type.charAt(0).toUpperCase() + type.slice(1);
 };
@@ -120,8 +121,16 @@ export const PropertiesPanel = ({
     selectedObject && onObjectUpdate(selectedObject.id, { width: value })
   );
   const objectHeightInput = useEditableValue(selectedObject?.height || 0, (value) => 
-    selectedObject && onObjectUpdate(selectedObject.id, { height: value })
+    handleObjectUpdate({ height: value })
   );
+  const qrCodeSizeInput = useEditableValue(selectedObject?.width || 0, (value) => 
+    selectedObject && onObjectUpdate(selectedObject.id, { width: value, height: value })
+  );
+  
+  const qrCodeHeightInput = useEditableValue(selectedObject?.height || 0, (value) =>
+    handleObjectUpdate({ height: value })
+  );
+  
   const fontSizeInput = useEditableValue(selectedObject?.fontSize || 12, (value) => 
     selectedObject && onObjectUpdate(selectedObject.id, { fontSize: value })
   );
@@ -253,22 +262,24 @@ export const PropertiesPanel = ({
                                 step="0.01"
                               />
                             </div>
-                            {(selectedObject.type === 'rectangle' || selectedObject.type === 'circle' || selectedObject.type === 'qrcode') && (
+                            {(selectedObject.type === 'rectangle' || selectedObject.type === 'circle' || selectedObject.type === 'qrcode' || selectedObject.type === 'image') && (
                               <>
                                 <div>
                                   <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Szerokość</label>
                                   <input
                                     type="number"
-                                    {...objectWidthInput}
+                                    {...(selectedObject.type === 'qrcode' ? qrCodeSizeInput : objectWidthInput)}
                                     className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                     step="0.01"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wysokość</label>
+                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                    {selectedObject.type === 'qrcode' ? 'Wysokość' : 'Wysokość'}
+                                  </label>
                                   <input
                                     type="number"
-                                    {...objectHeightInput}
+                                    {...(selectedObject.type === 'qrcode' ? qrCodeHeightInput : objectHeightInput)}
                                     className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                     step="0.01"
                                   />
@@ -583,6 +594,67 @@ export const PropertiesPanel = ({
                                 <option value="H">Wysoka (30%)</option>
                               </select>
                             </div>
+                          </div>
+                        )}
+
+                        {/* Image specific settings */}
+                        {selectedObject.type === 'image' && (
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Ustawienia obrazu</label>
+                            
+                            {/* Flip controls - removed for simplicity */}
+                            <div>
+                              <label className="block text-xs text-gray-600 dark:text-gray-400 mb-2">Odbicie</label>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  onClick={() => {
+                                    // TODO: Implement flip functionality without imageScaleX/Y
+                                    console.log('Flip horizontal - to be implemented');
+                                  }}
+                                  className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded border border-gray-300 dark:border-gray-600 transition-colors"
+                                >
+                                  Odbij poziomo
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    // TODO: Implement flip functionality without imageScaleX/Y
+                                    console.log('Flip vertical - to be implemented');
+                                  }}
+                                  className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded border border-gray-300 dark:border-gray-600 transition-colors"
+                                >
+                                  Odbij pionowo
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Reset to original size */}
+                            <div>
+                              <button
+                                onClick={() => {
+                                  if (selectedObject.imageOriginalWidth && selectedObject.imageOriginalHeight) {
+                                    // Convert from pixels to mm (assuming 96 DPI)
+                                    const mmPerPixel = 25.4 / 96;
+                                    const originalWidthMm = selectedObject.imageOriginalWidth * mmPerPixel;
+                                    const originalHeightMm = selectedObject.imageOriginalHeight * mmPerPixel;
+                                    
+                                    handleObjectUpdate({
+                                      width: originalWidthMm,
+                                      height: originalHeightMm
+                                    });
+                                  }
+                                }}
+                                className="w-full px-3 py-2 text-xs bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded border border-blue-300 dark:border-blue-600 transition-colors text-blue-800 dark:text-blue-200"
+                              >
+                                Przywróć oryginalny rozmiar
+                              </button>
+                            </div>
+
+                            {/* Image info */}
+                            {selectedObject.imageOriginalWidth && selectedObject.imageOriginalHeight && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                Oryginalne wymiary: {selectedObject.imageOriginalWidth}×{selectedObject.imageOriginalHeight}px
+                              </div>
+                            )}
                           </div>
                         )}
 

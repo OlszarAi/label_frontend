@@ -12,6 +12,7 @@ import { MainToolbar } from './toolbar/MainToolbar';
 import { ToolboxPanel } from './panels/ToolboxPanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { GalleryPanel } from './panels/GalleryPanel';
+import { UserAssetsPanel } from './assets/UserAssetsPanel';
 import { KEYBOARD_SHORTCUTS, TOOL_TYPES } from '../constants';
 import type { Label } from '../services/labelManagementService';
 import '../styles/editor.css';
@@ -29,6 +30,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   const [panelVisibility, setPanelVisibility] = useState({
     properties: true,
     gallery: true,
+    assets: false,
   });
 
   // Connection monitoring
@@ -97,6 +99,26 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
       setEffectiveProjectId(currentLabel.projectId);
     }
   }, [currentLabel?.projectId, effectiveProjectId]);
+
+  const onToggleAssets = () => {
+    togglePanel('assets');
+  };
+
+  const onAssetSelect = (asset: any) => {
+    // Add the selected asset as an image object
+    addObject({
+      type: 'image',
+      x: 10,
+      y: 10,
+      width: 50,
+      height: 50,
+      imageUrl: asset.url,
+      imageOriginalWidth: asset.width,
+      imageOriginalHeight: asset.height,
+    });
+    // Close the assets panel after selection
+    togglePanel('assets');
+  };
 
   // Enhanced autosave effect that uses optimized save function
   useEffect(() => {
@@ -202,6 +224,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
         onAddCircle={toolHandlers.handleAddCircle}
         onAddQRCode={toolHandlers.handleAddQRCode}
         onAddUUID={toolHandlers.handleAddUUID}
+        onToggleAssets={onToggleAssets}
         selectedTool={selectedTool}
         onToolSelect={setSelectedTool}
         isVisible={true}
@@ -230,6 +253,12 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
         onCreateLabel={labelActions.handleCreateLabel}
         isVisible={panelVisibility.gallery}
         onClose={() => togglePanel('gallery')}
+      />
+
+      <UserAssetsPanel
+        onAssetSelect={onAssetSelect}
+        isVisible={panelVisibility.assets}
+        onClose={() => togglePanel('assets')}
       />
     </div>
   );

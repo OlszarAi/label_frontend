@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Canvas, FabricObject, Text, IText, Rect, Circle, Line, FabricImage } from 'fabric';
-import QRCode from 'qrcode';
+import { Canvas, FabricObject, Text, IText, Line } from 'fabric';
 import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
 import { snapToGrid } from '../utils/grid';
+import { createRectangleObject, updateRectangleObject, handleRectangleModified } from './canvas-objects/RectangleObject';
+import { createCircleObject, updateCircleObject, handleCircleModified } from './canvas-objects/CircleObject';
+import { createImageObject, updateImageObject, handleImageModified } from './canvas-objects/ImageObject';
+import { createQRCodeObject, updateQRCodeObject, handleQRCodeModified } from './canvas-objects/QRCodeObject';
 
 interface CanvasEditorProps {
   dimensions: LabelDimensions;
@@ -38,29 +41,6 @@ interface FabricEvent {
   target?: FabricObject;
   selected?: FabricObject[];
 }
-
-// QR Image interface
-interface QRImage extends FabricImage {
-  _lastQRData?: string;
-}
-
-// Helper function to create QR code data URL
-const createQRCodeDataURL = async (data: string, size: number, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M', foreground = '#000000', background = '#ffffff'): Promise<string> => {
-  try {
-    return await QRCode.toDataURL(data, {
-      width: size,
-      errorCorrectionLevel,
-      color: {
-        dark: foreground,
-        light: background,
-      },
-      margin: 1,
-    });
-  } catch (error) {
-    console.error('Error generating QR code:', error);
-    return '';
-  }
-};
 
 // Helper function to draw grid on canvas
 const drawGrid = (canvas: Canvas, dimensions: LabelDimensions, gridPreferences: GridPreferences) => {
@@ -116,7 +96,7 @@ const drawGrid = (canvas: Canvas, dimensions: LabelDimensions, gridPreferences: 
     gridLines.push(line);
   }
 
-  // Add all grid lines at once - they will be automatically at the back since we add them first
+  // Add all grid lines at once
   gridLines.forEach(line => {
     canvas.add(line);
   });
@@ -176,38 +156,14 @@ export const CanvasEditor = ({
       skipTargetFind: false,
     });
 
-    // Configure canvas to enable proportional scaling from corners
-    canvas.on('object:scaling', (e) => {
-      const obj = e.target;
-      if (!obj) return;
-      
-      // Check if we're scaling from a corner control
-      if (obj.__corner) {
-        const corner = obj.__corner;
-        // Corner controls: tl, tr, bl, br (top-left, top-right, bottom-left, bottom-right)
-        if (['tl', 'tr', 'bl', 'br'].includes(corner)) {
-          const scaleX = obj.scaleX || 1;
-          const scaleY = obj.scaleY || 1;
-          const scale = Math.max(Math.abs(scaleX), Math.abs(scaleY));
-          obj.set({
-            scaleX: scaleX < 0 ? -scale : scale,
-            scaleY: scaleY < 0 ? -scale : scale
-          });
-          obj.setCoords();
-          canvas.renderAll();
-        }
-      }
-    });
-
     fabricCanvasRef.current = canvas;
 
-    // Notify parent component that canvas is ready for thumbnail generation
+    // Notify parent component that canvas is ready
     if (onCanvasReady) {
       onCanvasReady(canvas);
     }
 
     // Set up event listeners
-    // Handle text changes for editable text objects
     canvas.on('text:changed', (e: FabricEvent) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData && (obj.type === 'text' || obj.type === 'i-text')) {
@@ -221,7 +177,7 @@ export const CanvasEditor = ({
     canvas.on('object:modified', (e: FabricEvent) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData) {
-        // Prevent event loops by checking if we're already updating or replacing QR
+        // Prevent event loops
         if (obj._isUpdating || obj._isReplacingQR) return;
         obj._isUpdating = true;
 
@@ -230,83 +186,69 @@ export const CanvasEditor = ({
           y: pxToMm(obj.top || 0),
         };
 
-        // Handle text objects differently for scaling
+        // Get the object type from our canvas objects state
+        const canvasObjData = obj.customData && obj.customData.id ? objects.find(o => o.id === obj.customData!.id) : null;
+
         if (obj.type === 'text' || obj.type === 'i-text') {
+          // Handle text objects
           const textObj = obj as IText;
-          // For text objects, scale affects fontSize instead of width/height
-          if (textObj.fontSize && (textObj.scaleX || textObj.scaleY)) {
-            const originalFontSize = textObj.fontSize;
-            const scaleX = textObj.scaleX || 1;
-            const scaleY = textObj.scaleY || 1;
-            const newFontSize = originalFontSize * Math.max(scaleX, scaleY);
-            const finalFontSize = Math.max(1, Math.round(newFontSize)); // Ensure minimum font size of 1
+          if (textObj.fontSize && (textObj.scaleX !== 1 || textObj.scaleY !== 1)) {
+            const scale = Math.max(textObj.scaleX || 1, textObj.scaleY || 1);
+            const newFontSize = Math.max(1, Math.round((textObj.fontSize || 12) * scale));
             
-            updates.fontSize = finalFontSize;
-            // Reset scale to 1 after applying to fontSize
+            updates.fontSize = newFontSize;
             textObj.set({ 
               scaleX: 1, 
               scaleY: 1,
-              fontSize: finalFontSize
+              fontSize: newFontSize
             });
             canvas.renderAll();
           }
-          // Update text content if it was edited
           if (textObj.text) {
             updates.text = textObj.text;
           }
-        } else {
-          // Get the object type from our canvas objects state
-          const canvasObjData = obj.customData && obj.customData.id ? objects.find(o => o.id === obj.customData!.id) : null;
-          
-          if (canvasObjData?.type === 'uuid') {
-            // Handle UUID objects similarly to text but without text content updates
-            const textObj = obj as Text;
-            if (textObj.fontSize && (textObj.scaleX || textObj.scaleY)) {
-              const originalFontSize = textObj.fontSize;
-              const scaleX = textObj.scaleX || 1;
-              const scaleY = textObj.scaleY || 1;
-              const newFontSize = originalFontSize * Math.max(scaleX, scaleY);
-              const finalFontSize = Math.max(1, Math.round(newFontSize));
-              
-              updates.fontSize = finalFontSize;
-              textObj.set({ 
-                scaleX: 1, 
-                scaleY: 1,
-                fontSize: finalFontSize
-              });
-              canvas.renderAll();
-            }
-            // Don't update text content for UUID objects - it should remain as sharedUUID
-          } else if (canvasObjData?.type === 'qrcode') {
-            // For QR codes, maintain square proportions
-            const scale = Math.max(obj.scaleX || 1, obj.scaleY || 1);
-            const newSize = obj.width ? obj.width * scale : 0;
+        } else if (canvasObjData?.type === 'uuid') {
+          // Handle UUID objects
+          const textObj = obj as Text;
+          if (textObj.fontSize && (textObj.scaleX !== 1 || textObj.scaleY !== 1)) {
+            const scale = Math.max(textObj.scaleX || 1, textObj.scaleY || 1);
+            const newFontSize = Math.max(1, Math.round((textObj.fontSize || 12) * scale));
             
-            if (newSize > 0) {
-              updates.width = pxToMm(newSize);
-              updates.height = pxToMm(newSize); // Keep it square
-            }
-            
-            // Reset scale and apply uniform size
-            obj.set({ 
+            updates.fontSize = newFontSize;
+            textObj.set({ 
               scaleX: 1, 
               scaleY: 1,
-              width: newSize > 0 ? newSize : obj.width,
-              height: newSize > 0 ? newSize : obj.height
+              fontSize: newFontSize
             });
-          } else {
-            // For other objects, handle width/height scaling normally
-            const newWidth = obj.width ? obj.width * (obj.scaleX || 1) : 0;
-            const newHeight = obj.height ? obj.height * (obj.scaleY || 1) : 0;
-            
-            if (newWidth > 0) updates.width = pxToMm(newWidth);
-            if (newHeight > 0) updates.height = pxToMm(newHeight);
-            
-            // Reset scale to prevent compound scaling
-            obj.set({ scaleX: 1, scaleY: 1 });
-            if (obj.width && newWidth > 0) obj.set({ width: newWidth });
-            if (obj.height && newHeight > 0) obj.set({ height: newHeight });
+            canvas.renderAll();
           }
+        } else if (canvasObjData?.type === 'qrcode') {
+          // Handle QR codes using separate module
+          const qrUpdates = handleQRCodeModified(obj as any, canvasObjData);
+          Object.assign(updates, qrUpdates);
+        } else if (canvasObjData?.type === 'rectangle') {
+          // Handle rectangles using separate module
+          const rectUpdates = handleRectangleModified(obj as any, canvasObjData);
+          Object.assign(updates, rectUpdates);
+        } else if (canvasObjData?.type === 'circle') {
+          // Handle circles using separate module
+          const circleUpdates = handleCircleModified(obj as any);
+          Object.assign(updates, circleUpdates);
+        } else if (canvasObjData?.type === 'image') {
+          // Handle images using separate module
+          const imageUpdates = handleImageModified(obj as any);
+          Object.assign(updates, imageUpdates);
+        } else if (canvasObjData?.type === 'line') {
+          // Handle lines - same logic as rectangle
+          const newWidth = obj.width ? obj.width * (obj.scaleX || 1) : 0;
+          const newHeight = obj.height ? obj.height * (obj.scaleY || 1) : 0;
+          
+          if (newWidth > 0) updates.width = pxToMm(newWidth);
+          if (newHeight > 0) updates.height = pxToMm(newHeight);
+          
+          obj.set({ scaleX: 1, scaleY: 1 });
+          if (obj.width && newWidth > 0) obj.set({ width: newWidth });
+          if (obj.height && newHeight > 0) obj.set({ height: newHeight });
         }
 
         onObjectUpdate(obj.customData.id, updates);
@@ -319,28 +261,24 @@ export const CanvasEditor = ({
     });
 
     canvas.on('selection:created', (e: FabricEvent) => {
-      // Only handle single object selection
       if (e.selected && e.selected.length === 1) {
         const obj = e.selected[0] as CustomFabricObject;
         if (obj && obj.customData) {
           onObjectSelect(obj.customData.id);
         }
       } else if (e.selected && e.selected.length > 1) {
-        // Disable multi-selection by clearing it
         canvas.discardActiveObject();
         canvas.renderAll();
       }
     });
 
     canvas.on('selection:updated', (e: FabricEvent) => {
-      // Only handle single object selection
       if (e.selected && e.selected.length === 1) {
         const obj = e.selected[0] as CustomFabricObject;
         if (obj && obj.customData) {
           onObjectSelect(obj.customData.id);
         }
       } else if (e.selected && e.selected.length > 1) {
-        // Disable multi-selection by clearing it
         canvas.discardActiveObject();
         canvas.renderAll();
       }
@@ -384,27 +322,22 @@ export const CanvasEditor = ({
 
     // Add wheel event listener for zoom functionality
     const handleWheel = (event: WheelEvent) => {
-      console.log('Canvas wheel event detected:', event);
-      // Handle wheel events for zooming (without requiring Ctrl key)
       if (onWheelZoom) {
         onWheelZoom(event);
       }
     };
 
-    // Add the wheel event listener to the container element for better coverage
     const containerElement = containerRef.current;
     if (containerElement) {
       containerElement.addEventListener('wheel', handleWheel, { passive: false });
     }
 
     return () => {
-      // Clean up wheel event listener
       if (containerElement) {
         containerElement.removeEventListener('wheel', handleWheel);
       }
       canvas.dispose();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onObjectUpdate, onObjectSelect, onWheelZoom, dimensions.width, dimensions.height, preferences.grid]);
 
   // Update canvas size and sync objects
@@ -413,7 +346,7 @@ export const CanvasEditor = ({
 
     const canvas = fabricCanvasRef.current;
     
-    // First update canvas size
+    // Update canvas size
     const widthPx = mmToPx(dimensions.width) * zoom;
     const heightPx = mmToPx(dimensions.height) * zoom;
 
@@ -427,7 +360,7 @@ export const CanvasEditor = ({
     // Draw grid after canvas size update
     drawGrid(canvas, dimensions, preferences.grid);
 
-    // Then sync objects
+    // Sync objects
     const currentObjects = canvas.getObjects() as CustomFabricObject[];
     
     // Create a map of existing objects by their custom data ID
@@ -451,11 +384,10 @@ export const CanvasEditor = ({
       const existingFabricObj = existingObjectsMap.get(obj.id);
       
       if (existingFabricObj) {
-        // Update existing object without recreating it
-        // Skip update if object is currently being modified to prevent loops
-        if (existingFabricObj._isUpdating) return;
+        // Update existing object
+        // Remove _isUpdating check to allow input updates to work
+        // if (existingFabricObj._isUpdating) return;
         
-        // Update properties
         existingFabricObj.set({
           left: mmToPx(obj.x),
           top: mmToPx(obj.y),
@@ -477,20 +409,9 @@ export const CanvasEditor = ({
             fill: obj.fill || '#000000',
           });
         } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
-          existingFabricObj.set({
-            width: mmToPx(obj.width || 20),
-            height: mmToPx(obj.height || 10),
-            fill: obj.fill || 'transparent',
-            stroke: obj.stroke || '#000000',
-            strokeWidth: obj.strokeWidth || 1,
-          });
+          updateRectangleObject(existingFabricObj as any, obj);
         } else if (obj.type === 'circle' && existingFabricObj.type === 'circle') {
-          existingFabricObj.set({
-            radius: mmToPx((obj.width || 20) / 2),
-            fill: obj.fill || 'transparent',
-            stroke: obj.stroke || '#000000',
-            strokeWidth: obj.strokeWidth || 1,
-          });
+          updateCircleObject(existingFabricObj as any, obj);
         } else if (obj.type === 'line' && existingFabricObj.type === 'line') {
           existingFabricObj.set({
             x2: mmToPx(obj.x + (obj.width || 20)),
@@ -514,69 +435,22 @@ export const CanvasEditor = ({
             fill: obj.fill || '#000000',
           });
         } else if (obj.type === 'qrcode' && existingFabricObj.type === 'image') {
-          // For QR codes, only regenerate if data or size actually changed
-          const currentQRData = `${preferences.uuid.qrPrefix}${obj.sharedUUID || ''}`;
-          const imageObj = existingFabricObj as FabricImage;
-          const currentSize = mmToPx(obj.width || 20);
-           const needsRegeneration = (
-            imageObj.width !== currentSize ||
-            imageObj.height !== currentSize ||
-            (imageObj as QRImage)._lastQRData !== currentQRData
-          );
-          
-          if (needsRegeneration && !existingFabricObj._isReplacingQR) {
-            existingFabricObj._isReplacingQR = true;
+          // Handle QR codes using separate module
+          updateQRCodeObject(existingFabricObj as any, obj, preferences.uuid.qrPrefix, (newImg) => {
+            const objectsToRemove = canvas.getObjects().filter(o => 
+              (o as CustomFabricObject).customData?.id === obj.id
+            );
+            objectsToRemove.forEach(oldObj => canvas.remove(oldObj));
             
-            createQRCodeDataURL(
-              currentQRData,
-              currentSize,
-              obj.qrErrorCorrectionLevel || 'M',
-              obj.fill || '#000000',
-              obj.stroke || '#ffffff'
-            ).then((dataURL) => {
-              if (dataURL && existingFabricObj._isReplacingQR) {
-                FabricImage.fromURL(dataURL).then((newImg) => {
-                  newImg.set({
-                    left: mmToPx(obj.x),
-                    top: mmToPx(obj.y),
-                    scaleX: 1,
-                    scaleY: 1,
-                    selectable: true,
-                    hasControls: true,
-                    hasBorders: true,
-                    lockUniScaling: true,
-                  });
-                  (newImg as CustomFabricObject).customData = { id: obj.id };
-                  (newImg as QRImage)._lastQRData = currentQRData;
-                  
-                  // Safely remove all objects with this ID to prevent duplicates
-                  const objectsToRemove = canvas.getObjects().filter(o => 
-                    (o as CustomFabricObject).customData?.id === obj.id
-                  );
-                  objectsToRemove.forEach(oldObj => canvas.remove(oldObj));
-                  
-                  canvas.add(newImg);
-                  canvas.renderAll();
-                  
-                  if (obj.id === selectedObjectId) {
-                    canvas.setActiveObject(newImg);
-                  }
-                }).catch(() => {
-                  if (existingFabricObj) existingFabricObj._isReplacingQR = false;
-                });
-              } else {
-                if (existingFabricObj) existingFabricObj._isReplacingQR = false;
-              }
-            }).catch(() => {
-              if (existingFabricObj) existingFabricObj._isReplacingQR = false;
-            });
-          } else if (!needsRegeneration) {
-            // Just update position if no regeneration needed
-            existingFabricObj.set({
-              left: mmToPx(obj.x),
-              top: mmToPx(obj.y),
-            });
-          }
+            canvas.add(newImg);
+            canvas.renderAll();
+            
+            if (obj.id === selectedObjectId) {
+              canvas.setActiveObject(newImg);
+            }
+          });
+        } else if (obj.type === 'image' && existingFabricObj.type === 'image') {
+          updateImageObject(existingFabricObj as any, obj);
         }
         
         existingFabricObj.setCoords();
@@ -607,26 +481,11 @@ export const CanvasEditor = ({
             break;
 
           case 'rectangle':
-            fabricObj = new Rect({
-              left: mmToPx(obj.x),
-              top: mmToPx(obj.y),
-              width: mmToPx(obj.width || 20),
-              height: mmToPx(obj.height || 10),
-              fill: obj.fill || 'transparent',
-              stroke: obj.stroke || '#000000',
-              strokeWidth: obj.strokeWidth || 1,
-            }) as CustomFabricObject;
+            fabricObj = createRectangleObject(obj);
             break;
 
           case 'circle':
-            fabricObj = new Circle({
-              left: mmToPx(obj.x),
-              top: mmToPx(obj.y),
-              radius: mmToPx((obj.width || 20) / 2),
-              fill: obj.fill || 'transparent',
-              stroke: obj.stroke || '#000000',
-              strokeWidth: obj.strokeWidth || 1,
-            }) as CustomFabricObject;
+            fabricObj = createCircleObject(obj);
             break;
 
           case 'line':
@@ -663,47 +522,36 @@ export const CanvasEditor = ({
             break;
 
           case 'qrcode':
-            const qrData = `${preferences.uuid.qrPrefix}${obj.sharedUUID || ''}`;
-            const qrSize = mmToPx(obj.width || 20);
-            
-            createQRCodeDataURL(
-              qrData,
-              qrSize,
-              obj.qrErrorCorrectionLevel || 'M',
-              obj.fill || '#000000',
-              obj.stroke || '#ffffff'
-            ).then((dataURL) => {
-              if (dataURL) {
-                FabricImage.fromURL(dataURL).then((img) => {
-                  img.set({
-                    left: mmToPx(obj.x),
-                    top: mmToPx(obj.y),
-                    scaleX: 1,
-                    scaleY: 1,
-                    selectable: true,
-                    hasControls: true,
-                    hasBorders: true,
-                    lockUniScaling: true,
-                  });
-                  (img as CustomFabricObject).customData = { id: obj.id };
-                  (img as QRImage)._lastQRData = qrData;
-                  
-                  // Remove any existing objects with the same ID to prevent duplicates
-                  const existingObjects = canvas.getObjects().filter(o => 
-                    (o as CustomFabricObject).customData?.id === obj.id
-                  );
-                  existingObjects.forEach(oldObj => canvas.remove(oldObj));
-                  
-                  canvas.add(img);
-                  canvas.renderAll();
-                  
-                  if (obj.id === selectedObjectId) {
-                    canvas.setActiveObject(img);
-                  }
-                });
+            createQRCodeObject(obj, preferences.uuid.qrPrefix, (fabricObj) => {
+              const existingObjects = canvas.getObjects().filter(o => 
+                (o as CustomFabricObject).customData?.id === obj.id
+              );
+              existingObjects.forEach(oldObj => canvas.remove(oldObj));
+              
+              canvas.add(fabricObj);
+              canvas.renderAll();
+              
+              if (obj.id === selectedObjectId) {
+                canvas.setActiveObject(fabricObj);
               }
             });
-            return; // Exit early for async QR code creation
+            return;
+
+          case 'image':
+            createImageObject(obj, (fabricObj) => {
+              const existingObjects = canvas.getObjects().filter(o => 
+                (o as CustomFabricObject).customData?.id === obj.id
+              );
+              existingObjects.forEach(oldObj => canvas.remove(oldObj));
+              
+              canvas.add(fabricObj);
+              canvas.renderAll();
+              
+              if (obj.id === selectedObjectId) {
+                canvas.setActiveObject(fabricObj);
+              }
+            });
+            return;
 
           default:
             return;
