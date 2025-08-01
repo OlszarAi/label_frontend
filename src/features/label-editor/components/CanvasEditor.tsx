@@ -4,10 +4,10 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { Canvas, FabricObject, Text, IText, Line } from 'fabric';
 import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
-import { createRectangleObject, updateRectangleObject, handleRectangleModified, CustomFabricObject as RectangleCustomFabricObject } from './canvas-objects/RectangleObject';
-import { createCircleObject, updateCircleObject, handleCircleModified, CustomFabricObject as CircleCustomFabricObject } from './canvas-objects/CircleObject';
-import { createImageObject, updateImageObject, handleImageModified, CustomFabricObject as ImageCustomFabricObject } from './canvas-objects/ImageObject';
-import { createQRCodeObject, updateQRCodeObject, handleQRCodeModified, CustomFabricObject as QRCodeCustomFabricObject } from './canvas-objects/QRCodeObject';
+import { createRectangleObject, handleRectangleModified, CustomFabricObject as RectangleCustomFabricObject } from './canvas-objects/RectangleObject';
+import { createCircleObject, handleCircleModified, CustomFabricObject as CircleCustomFabricObject } from './canvas-objects/CircleObject';
+import { createImageObject, handleImageModified, CustomFabricObject as ImageCustomFabricObject } from './canvas-objects/ImageObject';
+import { createQRCodeObject, handleQRCodeModified, CustomFabricObject as QRCodeCustomFabricObject } from './canvas-objects/QRCodeObject';
 
 interface CanvasEditorProps {
   dimensions: LabelDimensions;
@@ -254,7 +254,7 @@ export const CanvasEditor = ({
     if (obj.id === selectedObjectId) {
       canvas.setActiveObject(fabricObj);
     }
-  }, [selectedObjectId]);
+  }, [selectedObjectId, preferences.uuid.qrPrefix]);
 
   // Handle object modifications
   const handleObjectModified = useCallback((obj: CustomFabricObject): Partial<CanvasObject> => {
@@ -549,6 +549,7 @@ export const CanvasEditor = ({
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dimensions.width, dimensions.height, zoom, memoizedObjects, selectedObjectId, preferences.grid.showGrid, preferences.grid.size, preferences.uuid.qrPrefix]);
 
   // Separate effect for grid updates
@@ -557,7 +558,8 @@ export const CanvasEditor = ({
     
     const canvas = fabricCanvasRef.current;
     drawGrid(canvas, dimensions, preferences.grid);
-  }, [dimensions.width, dimensions.height, preferences.grid.showGrid, preferences.grid.size, preferences.grid.color, preferences.grid.opacity]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dimensions.width, dimensions.height, preferences.grid.showGrid, preferences.grid.size, preferences.grid.color, preferences.grid.opacity, preferences.grid]);
 
   // Calculate ruler marks based on canvas size with better scaling for small labels
   const widthPx = mmToPx(dimensions.width) * zoom;
