@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Canvas, FabricObject, Text, IText, Line } from 'fabric';
 import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
@@ -115,12 +115,25 @@ export const CanvasEditor = ({
   onObjectUpdate,
   onObjectSelect,
   onCanvasReady,
-  onWheelZoom
+  onWheelZoom,
 }: CanvasEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 1200, height: 800 });
+  
+  // Local state to avoid race conditions with object:modified events
+  const [localObjects, setLocalObjects] = useState<CanvasObject[]>(objects);
+  
+  // Sync localObjects with props objects
+  useEffect(() => {
+    setLocalObjects(objects);
+  }, [objects]);
+  
+  // Function to add object to local state immediately
+  const addObjectToLocalState = useCallback((newObject: CanvasObject) => {
+    setLocalObjects(prev => [...prev, newObject]);
+  }, []);
 
   // Update container size when it changes
   useEffect(() => {
@@ -177,6 +190,7 @@ export const CanvasEditor = ({
     canvas.on('object:modified', (e: FabricEvent) => {
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData) {
+        
         // Prevent event loops
         if (obj._isUpdating || obj._isReplacingQR) return;
         obj._isUpdating = true;
@@ -187,8 +201,8 @@ export const CanvasEditor = ({
         };
 
         // Get the object type from our canvas objects state
-        const canvasObjData = obj.customData && obj.customData.id ? objects.find(o => o.id === obj.customData!.id) : null;
-
+        const canvasObjData = obj.customData && obj.customData.id ? localObjects.find(o => o.id === obj.customData!.id) : null;
+        
         if (obj.type === 'text' || obj.type === 'i-text') {
           // Handle text objects
           const textObj = obj as IText;
@@ -338,7 +352,7 @@ export const CanvasEditor = ({
       }
       canvas.dispose();
     };
-  }, [onObjectUpdate, onObjectSelect, onWheelZoom, dimensions.width, dimensions.height, preferences.grid]);
+  }, [onObjectUpdate, onObjectSelect, onWheelZoom, dimensions.width, dimensions.height, preferences.grid, localObjects, addObjectToLocalState]);
 
   // Update canvas size and sync objects
   useEffect(() => {
@@ -386,7 +400,6 @@ export const CanvasEditor = ({
       if (existingFabricObj) {
         // Update existing object
         // Remove _isUpdating check to allow input updates to work
-        // if (existingFabricObj._isUpdating) return;
         
         existingFabricObj.set({
           left: mmToPx(obj.x),
@@ -450,6 +463,7 @@ export const CanvasEditor = ({
             }
           });
         } else if (obj.type === 'image' && existingFabricObj.type === 'image') {
+          // Handle images using separate module
           updateImageObject(existingFabricObj as any, obj);
         }
         
@@ -534,6 +548,12 @@ export const CanvasEditor = ({
               if (obj.id === selectedObjectId) {
                 canvas.setActiveObject(fabricObj);
               }
+              
+              // Fast invisible refresh to fix resize issue
+              requestAnimationFrame(() => {
+                fabricObj.setCoords();
+                canvas.requestRenderAll();
+              });
             });
             return;
 
@@ -550,6 +570,12 @@ export const CanvasEditor = ({
               if (obj.id === selectedObjectId) {
                 canvas.setActiveObject(fabricObj);
               }
+              
+              // Fast invisible refresh to fix resize issue
+              requestAnimationFrame(() => {
+                fabricObj.setCoords();
+                canvas.requestRenderAll();
+              });
             });
             return;
 
@@ -559,6 +585,9 @@ export const CanvasEditor = ({
 
         fabricObj.customData = { id: obj.id };
         canvas.add(fabricObj);
+        
+        // Add object to local state immediately to avoid race conditions
+        addObjectToLocalState(obj);
       }
 
       // Handle selection
@@ -576,7 +605,7 @@ export const CanvasEditor = ({
     drawGrid(canvas, dimensions, preferences.grid);
 
     canvas.renderAll();
-  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix]);
+  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix, localObjects, addObjectToLocalState]);
 
   // Calculate ruler marks based on canvas size with better scaling for small labels
   const widthPx = mmToPx(dimensions.width) * zoom;

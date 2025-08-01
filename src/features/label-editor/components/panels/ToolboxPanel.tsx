@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { 
-  DocumentTextIcon,
-  RectangleGroupIcon,
-  StopIcon,
+  ChatBubbleBottomCenterTextIcon,
+  RectangleStackIcon,
+  PlusCircleIcon,
   QrCodeIcon,
-  IdentificationIcon,
+  TagIcon,
   PhotoIcon,
 } from '@heroicons/react/24/outline';
 import { AssetUploadModal } from '../assets/AssetUploadModal';
@@ -47,7 +47,7 @@ export const ToolboxPanel = ({
     {
       id: 'text',
       name: 'Tekst',
-      icon: DocumentTextIcon,
+      icon: ChatBubbleBottomCenterTextIcon,
       shortcut: 'T',
       description: 'Dodaj element tekstowy',
       action: onAddText,
@@ -55,7 +55,7 @@ export const ToolboxPanel = ({
     {
       id: 'rectangle',
       name: 'Prostokąt',
-      icon: RectangleGroupIcon,
+      icon: RectangleStackIcon,
       shortcut: 'R',
       description: 'Dodaj kształt prostokąta',
       action: onAddRectangle,
@@ -63,7 +63,7 @@ export const ToolboxPanel = ({
     {
       id: 'circle',
       name: 'Koło',
-      icon: StopIcon,
+      icon: PlusCircleIcon,
       shortcut: 'C',
       description: 'Dodaj kształt koła',
       action: onAddCircle,
@@ -79,7 +79,7 @@ export const ToolboxPanel = ({
     {
       id: 'uuid',
       name: 'UUID',
-      icon: IdentificationIcon,
+      icon: TagIcon,
       shortcut: 'U',
       description: 'Dodaj unikalny identyfikator',
       action: onAddUUID,

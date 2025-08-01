@@ -68,6 +68,9 @@ export const updateQRCodeObject = async (
   qrPrefix: string,
   onUpdated: (fabricObj: CustomFabricObject) => void
 ): Promise<void> => {
+  // Don't update if object is being modified or is active
+  if (fabricObj._isUpdating || fabricObj.canvas?.getActiveObject() === fabricObj) return;
+  
   const currentQRData = `${qrPrefix}${obj.sharedUUID || ''}`;
   const targetSizePx = mmToPx(obj.width || 20);
   
@@ -137,6 +140,9 @@ export const handleQRCodeModified = (
   fabricObj: CustomFabricObject,
   obj: CanvasObject
 ): Partial<CanvasObject> => {
+  // Mark object as updating to prevent updateQRCodeObject from interfering
+  fabricObj._isUpdating = true;
+  
   // Calculate new dimensions from current scale and original QR size
   const originalSize = fabricObj.width || 0;
   const newSizePx = originalSize * (fabricObj.scaleX || 1);
@@ -148,7 +154,13 @@ export const handleQRCodeModified = (
     height: pxToMm(newSizePx), // Keep it square
   };
   
-  // DON'T reset scaleX/scaleY - let Fabric.js handle it naturally!
+  // Let Fabric.js handle scaling naturally - don't reset scale
+  // This should work like other objects that resize properly
+  
+  // Clear updating flag after a brief delay
+  setTimeout(() => {
+    fabricObj._isUpdating = false;
+  }, 200);
   
   return updates;
 }; 

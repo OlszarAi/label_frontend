@@ -57,6 +57,9 @@ export const updateImageObject = (
   fabricObj: CustomFabricObject, 
   obj: CanvasObject
 ): void => {
+  // Don't update if object is being modified or is active
+  if (fabricObj._isUpdating || fabricObj.canvas?.getActiveObject() === fabricObj) return;
+  
   // Update position
   fabricObj.set({
     left: mmToPx(obj.x),
@@ -86,6 +89,9 @@ export const updateImageObject = (
 export const handleImageModified = (
   fabricObj: CustomFabricObject
 ): Partial<CanvasObject> => {
+  // Mark object as updating to prevent updateImageObject from interfering
+  fabricObj._isUpdating = true;
+  
   // Calculate new dimensions from current scale and original image size
   const originalWidth = fabricObj.width || 0;
   const originalHeight = fabricObj.height || 0;
@@ -100,7 +106,13 @@ export const handleImageModified = (
     height: pxToMm(newHeightPx),
   };
   
-  // DON'T reset scaleX/scaleY - keep the stretched scaling!
+  // Let Fabric.js handle scaling naturally - don't reset scale
+  // This should work like other objects that resize properly
+  
+  // Clear updating flag after a brief delay
+  setTimeout(() => {
+    fabricObj._isUpdating = false;
+  }, 200);
   
   return updates;
 }; 
