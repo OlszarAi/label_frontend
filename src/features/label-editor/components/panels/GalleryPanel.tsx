@@ -390,6 +390,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
       defaultSize={{ width: 480, height: 700 }}
       minSize={{ width: 400, height: 600 }}
       maxSize={{ width: 1000, height: 900 }}
+      isMaximizable={false}
       onClose={onClose}
       className="backdrop-blur-lg bg-white/95 dark:bg-gray-800/95"
     >

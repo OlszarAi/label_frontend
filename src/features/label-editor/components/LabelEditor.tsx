@@ -13,6 +13,7 @@ import { ToolboxPanel } from './panels/ToolboxPanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { GalleryPanel } from './panels/GalleryPanel';
 import { UserAssetsPanel } from './assets/UserAssetsPanel';
+import { AssetUploadModal } from './assets/AssetUploadModal';
 import { KEYBOARD_SHORTCUTS, TOOL_TYPES } from '../constants';
 import type { Label } from '../services/labelManagementService';
 import { UserAsset } from '../types/editor.types';
@@ -33,6 +34,12 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     gallery: true,
     assets: false,
   });
+
+  // Asset upload modal state
+  const [showAssetUploadModal, setShowAssetUploadModal] = useState(false);
+  
+  // Key to force refresh of UserAssetsPanel after upload
+  const [refreshAssetsKey, setRefreshAssetsKey] = useState(0);
 
   // Connection monitoring
   const [isConnected] = useState(true);
@@ -119,6 +126,18 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     });
     // Close the assets panel after selection
     togglePanel('assets');
+  };
+
+  const handleImportAssets = () => {
+    setShowAssetUploadModal(true);
+  };
+
+  const handleAssetUploaded = () => {
+    console.log('Asset uploaded, closing modal and refreshing assets list');
+    setShowAssetUploadModal(false);
+    // Force refresh of assets panel by clearing hasAttemptedLoad state
+    // This will be achieved by passing a refresh trigger to UserAssetsPanel
+    setRefreshAssetsKey(prev => prev + 1);
   };
 
   // Enhanced autosave effect that uses optimized save function
@@ -258,8 +277,16 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
 
       <UserAssetsPanel
         onAssetSelect={onAssetSelect}
+        onImportClick={handleImportAssets}
+        refreshKey={refreshAssetsKey}
         isVisible={panelVisibility.assets}
         onClose={() => togglePanel('assets')}
+      />
+
+      <AssetUploadModal
+        isOpen={showAssetUploadModal}
+        onClose={() => setShowAssetUploadModal(false)}
+        onAssetUploaded={handleAssetUploaded}
       />
     </div>
   );

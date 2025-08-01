@@ -23,6 +23,7 @@ import { UserAsset } from '../../../../services/userAsset.service';
 interface UserAssetsPanelProps {
   onAssetSelect?: (asset: UserAsset) => void;
   onImportClick?: () => void;
+  refreshKey?: number;
   isVisible: boolean;
   onClose?: () => void;
 }
@@ -30,6 +31,7 @@ interface UserAssetsPanelProps {
 export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
   onAssetSelect,
   onImportClick,
+  refreshKey,
   isVisible,
   onClose,
 }) => {
@@ -56,6 +58,15 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
       loadAssets();
     }
   }, [isVisible, hasAttemptedLoad, loading, error, loadAssets]);
+
+  // Force refresh when refreshKey changes (after asset upload)
+  useEffect(() => {
+    if (refreshKey && refreshKey > 0 && isVisible) {
+      console.log('UserAssetsPanel: refreshKey changed to', refreshKey, 'forcing asset reload');
+      setHasAttemptedLoad(false); // Reset so assets can be loaded again
+      loadAssets();
+    }
+  }, [refreshKey, isVisible, loadAssets]);
 
   const imageAssets = getImageAssets();
   
@@ -128,6 +139,7 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
       defaultSize={{ width: 320, height: 500 }}
       minSize={{ width: 280, height: 300 }}
       maxSize={{ width: 500, height: 800 }}
+      isMaximizable={false}
       onClose={onClose}
       headerActions={headerActions}
       className="user-assets-panel"

@@ -167,6 +167,7 @@ export const PropertiesPanel = ({
       defaultSize={{ width: 340, height: 650 }}
       minSize={{ width: 320, height: 500 }}
       maxSize={{ width: 500, height: 900 }}
+      isMaximizable={false}
       onClose={onClose}
       className="backdrop-blur-lg bg-white/95 dark:bg-gray-800/95"
     >

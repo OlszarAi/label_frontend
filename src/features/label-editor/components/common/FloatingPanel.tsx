@@ -20,6 +20,7 @@ interface FloatingPanelProps {
   maxSize?: { width: number; height: number };
   isCollapsible?: boolean;
   isResizable?: boolean;
+  isMaximizable?: boolean;
   onClose?: () => void;
   onMinimize?: () => void;
   className?: string;
@@ -36,6 +37,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
   maxSize = { width: 800, height: 600 },
   isCollapsible = true,
   isResizable = true,
+  isMaximizable = true,
   onClose,
   className = '',
   headerActions,
@@ -273,17 +275,19 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
             </button>
           )}
 
-          <button
-            onClick={handleToggleMaximize}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            title={isMaximized ? 'Przywróć' : 'Maksymalizuj'}
-          >
-            {isMaximized ? (
-              <ArrowsPointingInIcon className="w-4 h-4" />
-            ) : (
-              <ArrowsPointingOutIcon className="w-4 h-4" />
-            )}
-          </button>
+          {isMaximizable && (
+            <button
+              onClick={handleToggleMaximize}
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title={isMaximized ? 'Przywróć' : 'Maksymalizuj'}
+            >
+              {isMaximized ? (
+                <ArrowsPointingInIcon className="w-4 h-4" />
+              ) : (
+                <ArrowsPointingOutIcon className="w-4 h-4" />
+              )}
+            </button>
+          )}
 
           {onClose && (
             <button

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   ChatBubbleBottomCenterTextIcon,
   RectangleStackIcon,
@@ -9,7 +9,6 @@ import {
   TagIcon,
   PhotoIcon,
 } from '@heroicons/react/24/outline';
-import { AssetUploadModal } from '../assets/AssetUploadModal';
 import { UserAsset } from '../../../../services/userAsset.service';
 
 interface ToolboxPanelProps {
@@ -37,12 +36,6 @@ export const ToolboxPanel = ({
   onToolSelect,
   isVisible
 }: ToolboxPanelProps) => {
-  const [showUploadModal, setShowUploadModal] = useState(false);
-
-  const handleUploadComplete = () => {
-    setShowUploadModal(false);
-    // Assets panel will automatically refresh
-  };
   const tools = [
     {
       id: 'text',
@@ -162,13 +155,6 @@ export const ToolboxPanel = ({
           })}
         </div>
       </div>
-
-      {/* Upload Modal */}
-      <AssetUploadModal
-        isOpen={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onAssetUploaded={handleUploadComplete}
-      />
     </div>
   );
 }; 
