@@ -65,9 +65,9 @@ export function PricingSection() {
     <section className="pricing-section">
       <div className="pricing-container">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           viewport={{ once: true }}
           className="pricing-header"
         >
@@ -84,11 +84,11 @@ export function PricingSection() {
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
+              transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
               viewport={{ once: true }}
-              whileHover={{ y: -10 }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
               className={`pricing-card ${plan.popular ? 'pricing-card-popular' : ''}`}
             >
               {plan.popular && (
@@ -125,7 +125,7 @@ export function PricingSection() {
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                 whileTap={{ scale: 0.98 }}
                 className={`pricing-btn ${plan.popular ? 'pricing-btn-popular' : 'pricing-btn-default'}`}
               >
@@ -136,9 +136,9 @@ export function PricingSection() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
           viewport={{ once: true }}
           className="pricing-guarantee"
         >

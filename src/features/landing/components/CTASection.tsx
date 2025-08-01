@@ -12,18 +12,18 @@ export function CTASection({ onStartRegister }: CTASectionProps) {
     <section className="cta-section">
       <div className="cta-container">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           viewport={{ once: true }}
           className="cta-content"
         >
           <motion.div
             animate={{
-              y: [0, -5, 0],
+              y: [0, -4, 0],
             }}
             transition={{
-              duration: 2,
+              duration: 1.8,
               repeat: Infinity,
               ease: "easeInOut"
             }}
@@ -43,9 +43,9 @@ export function CTASection({ onStartRegister }: CTASectionProps) {
           </p>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
             viewport={{ once: true }}
             className="cta-actions"
           >

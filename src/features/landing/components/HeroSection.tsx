@@ -12,24 +12,24 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
     <section className="hero-section">
       <div className="hero-container">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           className="hero-content"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
             className="hero-badge"
           >
             Profesjonalny edytor etykiet
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
             className="hero-title"
           >
             Twórz profesjonalne
@@ -38,9 +38,9 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
             className="hero-description"
           >
             Zaawansowany edytor etykiet z setkami szablonów i możliwością 
@@ -48,9 +48,9 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 }}
+            transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
             className="hero-actions"
           >
             <button className="hero-btn-primary" onClick={onStartRegister}>
@@ -65,9 +65,9 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
+            transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
             className="hero-stats"
           >
             <div className="hero-stat">
@@ -86,18 +86,18 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, x: 50 }}
+          initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
           className="hero-visual"
         >
           <div className="hero-visual-container">
             <motion.div
               animate={{
-                y: [0, -10, 0],
+                y: [0, -8, 0],
               }}
               transition={{
-                duration: 3,
+                duration: 2,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}

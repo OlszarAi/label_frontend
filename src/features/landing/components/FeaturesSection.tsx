@@ -58,9 +58,9 @@ export function FeaturesSection({ onStartRegister }: FeaturesSectionProps) {
     <section className="features-section">
       <div className="features-container">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           viewport={{ once: true }}
           className="features-header"
         >
@@ -77,11 +77,11 @@ export function FeaturesSection({ onStartRegister }: FeaturesSectionProps) {
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.4, delay: index * 0.08, ease: "easeOut" }}
               viewport={{ once: true }}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -3, transition: { duration: 0.2 } }}
               className="feature-card"
             >
               <div className={`feature-icon-wrapper bg-gradient-to-r ${feature.color}`}>
@@ -94,9 +94,9 @@ export function FeaturesSection({ onStartRegister }: FeaturesSectionProps) {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
           viewport={{ once: true }}
           className="features-showcase"
         >
