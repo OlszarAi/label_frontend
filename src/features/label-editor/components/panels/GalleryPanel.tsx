@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { 
   FolderIcon, 
   PlusIcon,
@@ -93,7 +92,7 @@ const SmartThumbnail: React.FC<{
       
       {/* Image or fallback */}
       {label.thumbnail && !imageError ? (
-        <Image 
+        <img 
           src={label.thumbnail} 
           alt={label.name}
           width={width}

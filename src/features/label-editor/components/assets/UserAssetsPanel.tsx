@@ -6,7 +6,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   PhotoIcon,
@@ -229,7 +228,7 @@ export const UserAssetsPanel: React.FC<UserAssetsPanelProps> = ({
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 bg-gray-700 rounded-lg overflow-hidden flex-shrink-0 border border-gray-600">
                     {asset.url ? (
-                      <Image
+                      <img
                         src={asset.url}
                         alt={asset.name}
                         width={48}

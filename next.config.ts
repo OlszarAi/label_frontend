@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         port: '3001',
         pathname: '/api/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'label-backend-server.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // Handle CORS for API routes
