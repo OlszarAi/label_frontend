@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Canvas, FabricObject, Text, IText, Line } from 'fabric';
 import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
@@ -120,22 +120,21 @@ export const CanvasEditor = ({
   const fabricCanvasRef = useRef<Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 1200, height: 800 });
+  const previousObjectsRef = useRef<CanvasObject[]>([]);
+  const previousDimensionsRef = useRef<LabelDimensions>({ width: 0, height: 0 });
+  const previousZoomRef = useRef<number>(1);
   
-  // Local state to avoid race conditions with object:modified events
-  const [localObjects, setLocalObjects] = useState<CanvasObject[]>(objects);
+  // Memoize objects to prevent unnecessary re-renders
+  const memoizedObjects = useMemo(() => objects, [objects]);
   
-  // Sync localObjects with props objects
-  useEffect(() => {
-    setLocalObjects(objects);
-  }, [objects]);
-  
-  // Function to add object to local state immediately
-  const addObjectToLocalState = useCallback((newObject: CanvasObject) => {
-    setLocalObjects(prev => [...prev, newObject]);
-  }, []);
-
   // Function to add object to canvas
   const addObjectToCanvas = useCallback((obj: CanvasObject, canvas: Canvas) => {
+    // Remove any existing objects with the same ID first
+    const existingObjects = canvas.getObjects().filter(o => 
+      (o as CustomFabricObject).customData?.id === obj.id
+    );
+    existingObjects.forEach(oldObj => canvas.remove(oldObj));
+
     let fabricObj: CustomFabricObject;
 
     switch (obj.type) {
@@ -255,7 +254,7 @@ export const CanvasEditor = ({
     if (obj.id === selectedObjectId) {
       canvas.setActiveObject(fabricObj);
     }
-  }, [preferences.uuid.qrPrefix, selectedObjectId]);
+  }, [selectedObjectId]);
 
   // Handle object modifications
   const handleObjectModified = useCallback((obj: CustomFabricObject): Partial<CanvasObject> => {
@@ -269,7 +268,7 @@ export const CanvasEditor = ({
     };
 
     // Get the object type from our canvas objects state
-    const canvasObjData = obj.customData && obj.customData.id ? localObjects.find(o => o.id === obj.customData!.id) : null;
+    const canvasObjData = obj.customData && obj.customData.id ? memoizedObjects.find(o => o.id === obj.customData!.id) : null;
     
     if (obj.type === 'text' || obj.type === 'i-text') {
       // Handle text objects
@@ -339,7 +338,7 @@ export const CanvasEditor = ({
     }, 50);
 
     return updates;
-  }, [localObjects]);
+  }, [memoizedObjects]);
 
   // Update container size when it changes
   useEffect(() => {
@@ -410,7 +409,7 @@ export const CanvasEditor = ({
     });
 
     // Add objects to canvas
-    localObjects.forEach((obj) => {
+    memoizedObjects.forEach((obj) => {
       addObjectToCanvas(obj, canvas);
     });
 
@@ -445,7 +444,7 @@ export const CanvasEditor = ({
       canvas.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dimensions.width, dimensions.height, zoom, preferences.grid, onCanvasReady, addObjectToCanvas]);
+  }, [dimensions.width, dimensions.height, zoom, preferences.grid, onCanvasReady, addObjectToCanvas, memoizedObjects]);
 
   // Add wheel event listener separately to prevent multiple listeners
   useEffect(() => {
@@ -489,6 +488,19 @@ export const CanvasEditor = ({
 
     const canvas = fabricCanvasRef.current;
     
+    // Check if objects have actually changed
+    const objectsChanged = memoizedObjects.length !== previousObjectsRef.current.length ||
+      memoizedObjects.some((obj, index) => obj.id !== previousObjectsRef.current[index]?.id);
+    previousObjectsRef.current = memoizedObjects;
+    
+    // Check if dimensions or zoom have changed
+    const dimensionsChanged = dimensions.width !== previousDimensionsRef.current.width ||
+      dimensions.height !== previousDimensionsRef.current.height;
+    previousDimensionsRef.current = dimensions;
+    
+    const zoomChanged = zoom !== previousZoomRef.current;
+    previousZoomRef.current = zoom;
+    
     // Update canvas size
     const widthPx = mmToPx(dimensions.width) * zoom;
     const heightPx = mmToPx(dimensions.height) * zoom;
@@ -500,124 +512,52 @@ export const CanvasEditor = ({
 
     canvas.setZoom(zoom);
 
-    // Draw grid after canvas size update
-    drawGrid(canvas, dimensions, preferences.grid);
-
-    // Sync objects
-    const currentObjects = canvas.getObjects() as CustomFabricObject[];
-    
-    // Create a map of existing objects by their custom data ID
-    const existingObjectsMap = new Map<string, CustomFabricObject>();
-    currentObjects.forEach(obj => {
-      if (obj.customData?.id) {
-        existingObjectsMap.set(obj.customData.id, obj);
-      }
-    });
-
-    // Remove objects that no longer exist in state
-    const stateObjectIds = new Set(objects.map(obj => obj.id));
-    currentObjects.forEach(obj => {
-      if (obj.customData?.id && !stateObjectIds.has(obj.customData.id)) {
-        canvas.remove(obj);
-      }
-    });
-
-    // Add or update objects
-    objects.forEach((obj) => {
-      const existingFabricObj = existingObjectsMap.get(obj.id);
+    // Only clear and redraw if objects changed or dimensions/zoom changed
+    if (objectsChanged || dimensionsChanged || zoomChanged) {
+      // Clear all objects first to prevent ghost objects
+      canvas.clear();
       
-      if (existingFabricObj) {
-        // Update existing object
-        // Remove _isUpdating check to allow input updates to work
-        
-        existingFabricObj.set({
-          left: mmToPx(obj.x),
-          top: mmToPx(obj.y),
-        });
+      // Draw grid after canvas size update
+      drawGrid(canvas, dimensions, preferences.grid);
 
-        if (obj.type === 'text' && (existingFabricObj.type === 'text' || existingFabricObj.type === 'i-text')) {
-          const textObj = existingFabricObj as IText;
-          textObj.set({
-            text: obj.text || 'Tekst',
-            fontSize: obj.fontSize || 12,
-            fontFamily: obj.fontFamily || 'Arial',
-            fontWeight: obj.fontWeight || 'normal',
-            fontStyle: obj.fontStyle || 'normal',
-            underline: obj.underline || false,
-            linethrough: obj.linethrough || false,
-            textAlign: obj.textAlign || 'left',
-            lineHeight: obj.lineHeight || 1.2,
-            charSpacing: obj.charSpacing || 0,
-            fill: obj.fill || '#000000',
-          });
-        } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
-          updateRectangleObject(existingFabricObj as RectangleCustomFabricObject, obj);
-        } else if (obj.type === 'circle' && existingFabricObj.type === 'circle') {
-          updateCircleObject(existingFabricObj as CircleCustomFabricObject, obj);
-        } else if (obj.type === 'line' && existingFabricObj.type === 'line') {
-          existingFabricObj.set({
-            x2: mmToPx(obj.x + (obj.width || 20)),
-            y2: mmToPx(obj.y),
-            stroke: obj.stroke || '#000000',
-            strokeWidth: obj.strokeWidth || 1,
-          });
-        } else if (obj.type === 'uuid' && existingFabricObj.type === 'text') {
-          const textObj = existingFabricObj as Text;
-          textObj.set({
-            text: obj.text || obj.sharedUUID || 'UUID',
-            fontSize: obj.fontSize || 12,
-            fontFamily: obj.fontFamily || 'Arial',
-            fontWeight: obj.fontWeight || 'normal',
-            fontStyle: obj.fontStyle || 'normal',
-            underline: obj.underline || false,
-            linethrough: obj.linethrough || false,
-            textAlign: obj.textAlign || 'left',
-            lineHeight: obj.lineHeight || 1.2,
-            charSpacing: obj.charSpacing || 0,
-            fill: obj.fill || '#000000',
-          });
-        } else if (obj.type === 'qrcode' && existingFabricObj.type === 'image') {
-          // Handle QR codes using separate module
-          updateQRCodeObject(existingFabricObj as QRCodeCustomFabricObject, obj, preferences.uuid.qrPrefix, (newImg) => {
-            const objectsToRemove = canvas.getObjects().filter(o => 
-              (o as CustomFabricObject).customData?.id === obj.id
-            );
-            objectsToRemove.forEach(oldObj => canvas.remove(oldObj));
-            
-            canvas.add(newImg);
-            canvas.renderAll();
-            
-            if (obj.id === selectedObjectId) {
-              canvas.setActiveObject(newImg);
-            }
-          });
-        } else if (obj.type === 'image' && existingFabricObj.type === 'image') {
-          // Handle images using separate module
-          updateImageObject(existingFabricObj as ImageCustomFabricObject, obj);
-        }
-        
-        existingFabricObj.setCoords();
-      } else {
-        // Create new object
+      // Add all objects fresh
+      memoizedObjects.forEach((obj) => {
         addObjectToCanvas(obj, canvas);
-      }
+      });
 
-      // Handle selection
-      if (obj.id === selectedObjectId) {
-        const targetObj = existingObjectsMap.get(obj.id) || canvas.getObjects().find(
-          o => (o as CustomFabricObject).customData?.id === obj.id
+      // Handle selection after all objects are added
+      if (selectedObjectId) {
+        const targetObj = canvas.getObjects().find(
+          o => (o as CustomFabricObject).customData?.id === selectedObjectId
         );
         if (targetObj) {
           canvas.setActiveObject(targetObj);
         }
       }
-    });
 
-    // Draw grid after all objects are synced
+      canvas.renderAll();
+    } else {
+      // Just update grid and selection if objects didn't change
+      drawGrid(canvas, dimensions, preferences.grid);
+      
+      if (selectedObjectId) {
+        const targetObj = canvas.getObjects().find(
+          o => (o as CustomFabricObject).customData?.id === selectedObjectId
+        );
+        if (targetObj) {
+          canvas.setActiveObject(targetObj);
+        }
+      }
+    }
+  }, [dimensions.width, dimensions.height, zoom, memoizedObjects, selectedObjectId, preferences.grid.showGrid, preferences.grid.size, preferences.uuid.qrPrefix]);
+
+  // Separate effect for grid updates
+  useEffect(() => {
+    if (!fabricCanvasRef.current) return;
+    
+    const canvas = fabricCanvasRef.current;
     drawGrid(canvas, dimensions, preferences.grid);
-
-    canvas.renderAll();
-  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix, localObjects, addObjectToLocalState, addObjectToCanvas]);
+  }, [dimensions.width, dimensions.height, preferences.grid.showGrid, preferences.grid.size, preferences.grid.color, preferences.grid.opacity]);
 
   // Calculate ruler marks based on canvas size with better scaling for small labels
   const widthPx = mmToPx(dimensions.width) * zoom;

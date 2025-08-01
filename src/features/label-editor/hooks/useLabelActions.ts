@@ -113,6 +113,11 @@ export const useLabelActions = ({
 
   // Updated label selection using the safe switching function
   const handleLabelSelect = useCallback(async (selectedLabelId: string) => {
+    // Don't switch if it's the same label
+    if (currentLabel?.id === selectedLabelId) {
+      return;
+    }
+
     if (hasUnsavedChanges && !autoSave) {
       if (!confirm('You have unsaved changes. Continue anyway?')) {
         return;
@@ -127,7 +132,7 @@ export const useLabelActions = ({
       console.error('Error switching label:', error);
       toast.error('Failed to switch label');
     }
-  }, [hasUnsavedChanges, autoSave, switchToLabel]);
+  }, [hasUnsavedChanges, autoSave, switchToLabel, currentLabel?.id]);
 
   const handleCreateLabel = useCallback(async () => {
     if (currentLabel?.projectId && !isCreatingLabel) {

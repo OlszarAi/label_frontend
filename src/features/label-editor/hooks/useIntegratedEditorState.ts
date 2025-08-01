@@ -119,9 +119,12 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
           processedObjects = labelUUIDManager.updateObjectsWithUUID(objects, labelUUIDManager.labelUUID);
         }
         
-        setState(prev => ({
-          ...prev,
+        // Use direct state setting instead of function to prevent race conditions
+        setState({
           dimensions: { width: label.width, height: label.height },
+          zoom: 1,
+          panX: 0,
+          panY: 0,
           objects: processedObjects,
           selectedObjectId: null,
           preferences: {
@@ -131,19 +134,23 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
               uuidLength: existingUUID?.length || preferences.uuid?.uuidLength || 8,
             }
           },
-        }));
+        });
         
         // Update UUID manager length to match preferences
         if (preferences.uuid?.uuidLength) {
           labelUUIDManager.updateUUIDLength(preferences.uuid.uuidLength);
         }
       } else {
-        setState(prev => ({
-          ...prev,
+        // Use direct state setting for empty label
+        setState({
           dimensions: { width: label.width, height: label.height },
+          zoom: 1,
+          panX: 0,
+          panY: 0,
           objects: [],
           selectedObjectId: null,
-        }));
+          preferences: initialPreferences,
+        });
       }
 
       setHasUnsavedChanges(false);
@@ -293,6 +300,12 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
     try {
       isSwitchingLabelsRef.current = true;
       cleanup();
+
+      // Clear current state immediately to prevent ghost objects
+      setState(initialState);
+      setCurrentLabel(null);
+      setHasUnsavedChanges(false);
+      setLastSaved(null);
 
       const label = await labelManager.loadLabel(newLabelId);
       if (label) {
