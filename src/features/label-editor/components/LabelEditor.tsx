@@ -188,14 +188,14 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
   }, { preventDefault: true });
 
   return (
-    <div className="label-editor-container min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="label-editor-container min-h-screen bg-slate-900 dark">
       {/* Minimal background pattern */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Very subtle grid pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.04)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.08)_1px,transparent_0)] bg-[size:40px_40px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(71,85,105,0.08)_1px,transparent_0)] bg-[size:40px_40px]" />
         
         {/* Single subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/10 via-transparent to-purple-50/10 dark:from-blue-900/5 dark:via-transparent dark:to-purple-900/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 via-transparent to-purple-900/5" />
       </div>
       
       {/* Main Toolbar */}

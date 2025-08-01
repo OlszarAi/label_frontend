@@ -73,7 +73,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-lg border-b border-gray-700">
       <div className="flex items-center justify-between px-4 py-3">
         {/* Left section - Navigation & Save */}
         <div className="flex items-center space-x-3">
@@ -84,7 +84,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   onClick={onBack}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:text-gray-100 hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Powrót</span>
@@ -100,25 +100,25 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
           </Tooltip.Provider>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
+          <div className="w-px h-6 bg-gray-600 mx-2" />
           
           {/* Current Label Info */}
           <div className="flex items-center space-x-2">
             <div className="text-sm">
               <div className="flex items-center space-x-2">
-                <div className="font-medium text-gray-900 dark:text-gray-100">
+                <div className="font-medium text-gray-100">
                   {currentLabel?.name || 'Etykieta bez nazwy'}
                 </div>
                 {/* Unsaved changes indicator - integrated into label info */}
                 {hasUnsavedChanges && (
-                  <div className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-md text-xs">
+                  <div className="flex items-center space-x-1 bg-amber-900/30 text-amber-300 px-2 py-1 rounded-md text-xs">
                     <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
                     <span>Niezapisane</span>
                     {!autoSave && <span>• Ręcznie</span>}
                   </div>
                 )}
               </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center space-x-2 text-xs text-gray-400">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span>{isConnected ? 'Połączono' : 'Offline'}</span>
               </div>
@@ -135,7 +135,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
               ${hasUnsavedChanges 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                : 'bg-gray-700 text-gray-300'
               }
               ${isSaving ? 'opacity-75 cursor-not-allowed' : ''}
             `}
@@ -155,8 +155,8 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   className={`
                     flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                     ${autoSave 
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-green-900/30 text-green-300 hover:bg-green-900/50' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }
                   `}
                 >
@@ -181,7 +181,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
         </div>
 
         {/* Center section - Zoom controls */}
-        <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="flex items-center space-x-2 bg-gray-800 rounded-lg p-1">
           <Tooltip.Provider>
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
@@ -189,7 +189,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   onClick={onZoomOut}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                  className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-md transition-colors"
                 >
                   <MagnifyingGlassMinusIcon className="w-4 h-4" />
                 </motion.button>
@@ -207,7 +207,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             onClick={onResetZoom}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors min-w-[60px]"
+            className="px-3 py-1 text-sm font-medium text-gray-200 hover:bg-gray-700 rounded-md transition-colors min-w-[60px]"
           >
             {formatZoom(zoom)}
           </motion.button>
@@ -219,7 +219,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   onClick={onZoomIn}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                  className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-md transition-colors"
                 >
                   <MagnifyingGlassPlusIcon className="w-4 h-4" />
                 </motion.button>
@@ -240,7 +240,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   onClick={onResetZoom}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                  className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-md transition-colors"
                 >
                   <ArrowsPointingOutIcon className="w-4 h-4" />
                 </motion.button>
@@ -258,7 +258,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
         {/* Right section - Panel toggles & Actions */}
         <div className="flex items-center space-x-1">
           {/* Panel toggles */}
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center space-x-1 bg-gray-800 rounded-lg p-1">
             <Tooltip.Provider>
               <Tooltip.Root>
                 <Tooltip.Trigger asChild>
@@ -266,7 +266,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                     onClick={onToggleProperties}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                    className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-md transition-colors"
                   >
                     <SwatchIcon className="w-4 h-4" />
                   </motion.button>
@@ -287,7 +287,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                     onClick={onToggleGallery}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                    className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-md transition-colors"
                   >
                     <BookmarkIcon className="w-4 h-4" />
                   </motion.button>
@@ -303,7 +303,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
           </div>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2" />
+          <div className="w-px h-6 bg-gray-600 mx-2" />
 
           {/* Action buttons */}
           <div className="flex items-center space-x-1">
@@ -314,7 +314,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                     onClick={onPreview}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <EyeIcon className="w-4 h-4" />
                   </motion.button>
@@ -335,7 +335,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                     onClick={onShare}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    className="p-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <ShareIcon className="w-4 h-4" />
                   </motion.button>

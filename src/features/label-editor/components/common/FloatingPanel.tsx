@@ -238,7 +238,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       className={`
-        fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+        fixed bg-gray-800 border border-gray-700 
         rounded-lg shadow-2xl backdrop-blur-sm
         ${isDragging || isResizing ? 'shadow-3xl ring-2 ring-blue-500' : ''}
         ${isMaximized ? 'rounded-none' : ''}
@@ -249,15 +249,15 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
       <div 
         onMouseDown={handleMouseDown}
         className={`
-          flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700
-          bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800
+          flex items-center justify-between px-4 py-3 border-b border-gray-700
+          bg-gradient-to-r from-gray-700 to-gray-800
           ${isMaximized ? 'rounded-none' : 'rounded-t-lg'}
           cursor-move select-none
         `}
       >
         <div className="flex items-center space-x-2">
           <Bars3Icon className="w-4 h-4 text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-sm font-semibold text-gray-100">
             {title}
           </h3>
         </div>
@@ -268,7 +268,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
           {isCollapsible && (
             <button
               onClick={handleToggleCollapse}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
               title={isCollapsed ? 'Rozwiń' : 'Zwiń'}
             >
               <MinusIcon className="w-4 h-4" />
@@ -278,7 +278,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
           {isMaximizable && (
             <button
               onClick={handleToggleMaximize}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
               title={isMaximized ? 'Przywróć' : 'Maksymalizuj'}
             >
               {isMaximized ? (

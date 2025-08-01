@@ -77,17 +77,17 @@ const SmartThumbnail: React.FC<{
   return (
     <div 
       className={`
-        relative overflow-hidden rounded-lg border-2 border-gray-200 dark:border-gray-600
-        ${isGridView ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}
+        relative overflow-hidden rounded-lg border-2 border-gray-600
+        ${isGridView ? 'bg-gray-800' : 'bg-gray-700'}
         flex items-center justify-center
-        group-hover:border-blue-300 dark:group-hover:border-blue-500
+        group-hover:border-blue-500
         transition-all duration-200
       `}
       style={{ width: `${width}px`, height: `${height}px`, minHeight: isGridView ? '120px' : '40px' }}
     >
       {/* Loading state */}
       {!imageLoaded && !imageError && label.thumbnail && (
-        <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700"></div>
+        <div className="absolute inset-0 animate-pulse bg-gray-700"></div>
       )}
       
       {/* Image or fallback */}
@@ -110,7 +110,7 @@ const SmartThumbnail: React.FC<{
           }}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+        <div className="flex flex-col items-center justify-center text-gray-500">
           <TagIcon className={`${isGridView ? 'w-12 h-12' : 'w-6 h-6'} mb-1`} />
           {isGridView && (
             <span className="text-xs">Brak podglądu</span>
@@ -201,8 +201,8 @@ const ResponsiveGrid: React.FC<{
                 ${viewMode === 'grid' ? 'p-4' : 'p-3'}
                 border rounded-xl
                 ${currentLabelId === label.id 
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' 
-                  : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md bg-white dark:bg-gray-800'
+                  ? 'border-blue-500 bg-blue-900/20 shadow-lg ring-2 ring-blue-800' 
+                  : 'border-gray-600 hover:border-blue-500 hover:shadow-md bg-gray-800'
                 }
                 hover:scale-[1.02] active:scale-[0.98]
               `}
@@ -217,18 +217,18 @@ const ResponsiveGrid: React.FC<{
                   
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+                      <h4 className="text-sm font-semibold text-gray-100 line-clamp-2">
                         {label.name}
                       </h4>
                     </div>
                     
                     {label.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                      <p className="text-xs text-gray-400 line-clamp-2">
                         {label.description}
                       </p>
                     )}
                     
-                    <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
                       <div className="flex items-center space-x-1">
                         <ClockIcon className="w-3 h-3" />
                         <span>{new Date(label.updatedAt).toLocaleDateString()}</span>
@@ -243,13 +243,13 @@ const ResponsiveGrid: React.FC<{
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <h4 className="text-sm font-medium text-gray-100 truncate">
                         {label.name}
                       </h4>
                     </div>
                     
                     <div className="flex items-center justify-between mt-1">
-                      <div className="flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500">
+                      <div className="flex items-center space-x-1 text-xs text-gray-500">
                         <ClockIcon className="w-3 h-3" />
                         <span>{new Date(label.updatedAt).toLocaleDateString()}</span>
                       </div>
@@ -260,7 +260,7 @@ const ResponsiveGrid: React.FC<{
 
               {/* Action menu */}
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 backdrop-blur-sm">
+                <button className="p-1.5 text-gray-400 hover:text-gray-300 bg-gray-800/90 rounded-lg shadow-sm border border-gray-600 backdrop-blur-sm">
                   <EllipsisVerticalIcon className="w-4 h-4" />
                 </button>
               </div>
@@ -391,7 +391,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
       maxSize={{ width: 1000, height: 900 }}
       isMaximizable={false}
       onClose={onClose}
-      className="backdrop-blur-lg bg-white/95 dark:bg-gray-800/95"
+      className="backdrop-blur-lg bg-gray-800/95"
     >
       <div ref={containerRef} className="space-y-4 h-full flex flex-col">
         {/* Header Actions */}
@@ -408,22 +408,22 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
           
           <div className="flex items-center space-x-2">
             {/* Zoom Controls */}
-            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex items-center space-x-1 bg-gray-700 rounded-lg p-1">
               <button
                 onClick={() => setScale(Math.max(0.3, scale - 0.1))}
                 disabled={scale <= 0.3}
-                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+                className="p-1.5 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
                 title="Zoom out"
               >
                 <MagnifyingGlassMinusIcon className="w-4 h-4" />
               </button>
-              <span className="text-xs font-mono text-gray-600 dark:text-gray-300 min-w-[3rem] text-center">
+              <span className="text-xs font-mono text-gray-300 min-w-[3rem] text-center">
                 {Math.round(scale * 100)}%
               </span>
               <button
                 onClick={() => setScale(Math.min(2.0, scale + 0.1))}
                 disabled={scale >= 2.0}
-                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+                className="p-1.5 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
                 title="Zoom in"
               >
                 <MagnifyingGlassPlusIcon className="w-4 h-4" />
@@ -433,7 +433,7 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
             {/* View Mode Toggle */}
             <button
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors bg-gray-100 dark:bg-gray-700 rounded-lg"
+              className="p-2 text-gray-400 hover:text-gray-200 transition-colors bg-gray-700 rounded-lg"
               title={`Switch to ${viewMode === 'grid' ? 'list' : 'grid'} view`}
             >
               {viewMode === 'grid' ? (
@@ -453,7 +453,12 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
             placeholder="Szukaj etykiet..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-600 rounded-xl bg-gray-800 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            style={{
+              backgroundColor: '#1f2937 !important',
+              color: '#f3f4f6 !important',
+              borderColor: '#4b5563 !important'
+            }}
           />
         </div>
 
@@ -462,19 +467,29 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 text-xs"
+            className="px-3 py-2 border border-gray-600 rounded-lg bg-gray-800 text-gray-100 focus:ring-2 focus:ring-blue-500 text-xs"
+            style={{
+              backgroundColor: '#1f2937 !important',
+              color: '#f3f4f6 !important',
+              borderColor: '#4b5563 !important',
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+              backgroundPosition: 'right 0.5rem center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '1.5em 1.5em',
+              paddingRight: '2.5rem'
+            }}
           >
-            <option value="created">Data utworzenia</option>
-            <option value="updated">Ostatnio aktualizowane</option>           
-            <option value="name">Nazwa</option>
-            <option value="size">Rozmiar</option>
+            <option value="created" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>Data utworzenia</option>
+            <option value="updated" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>Ostatnio aktualizowane</option>           
+            <option value="name" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>Nazwa</option>
+            <option value="size" style={{ backgroundColor: '#1f2937', color: '#f3f4f6' }}>Rozmiar</option>
           </select>
         </div>
 
         {/* Stats */}
-        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium px-1 shrink-0 flex items-center justify-between">
+        <div className="text-xs text-gray-400 font-medium px-1 shrink-0 flex items-center justify-between">
           <span>{filteredAndSortedLabels.length} etykiet{filteredAndSortedLabels.length !== 1 ? 'a' : 'a'} znaleziono</span>
-          <span className="text-blue-600 dark:text-blue-400">
+          <span className="text-blue-400">
             {viewMode === 'grid' ? `${getCurrentColumns()} kol${getCurrentColumns() > 1 ? '.' : '.'}` : 'Lista'} • {Math.round(scale * 100)}%
           </span>
         </div>
@@ -487,9 +502,9 @@ export const GalleryPanel: React.FC<GalleryPanelProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="text-center py-12 text-gray-500 dark:text-gray-400"
+                className="text-center py-12 text-gray-400"
               >
-                <FolderIcon className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <FolderIcon className="w-12 h-12 mx-auto mb-3 text-gray-600" />
                 <p className="text-sm font-medium">Nie znaleziono etykiet</p>
                 <p className="text-xs mt-1">Spróbuj dostosować wyszukiwanie lub filtry</p>
               </motion.div>

@@ -163,11 +163,11 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-gray-900 dark:bg-gray-900 rounded-xl shadow-xl border border-gray-700 dark:border-gray-700 max-h-[90vh] overflow-hidden"
+            className="relative w-full max-w-2xl bg-gray-900 rounded-xl shadow-xl border border-gray-700 max-h-[90vh] overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-700 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-white dark:text-white">
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-xl font-semibold text-white">
                 Importuj Grafiki
               </h2>
               <button
@@ -179,7 +179,7 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] bg-gray-900 dark:bg-gray-900">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] bg-gray-900">
               {/* Drop Zone */}
               <div
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
