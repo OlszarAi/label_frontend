@@ -535,7 +535,7 @@ export const CanvasEditor = ({
               obj.stroke || '#ffffff'
             ).then((dataURL) => {
               if (dataURL && existingFabricObj._isReplacingQR) {
-                FabricImage.fromURL(dataURL, { crossOrigin: 'anonymous' }).then((newImg) => {
+                FabricImage.fromURL(dataURL).then((newImg) => {
                   newImg.set({
                     left: mmToPx(obj.x),
                     top: mmToPx(obj.y),
@@ -674,7 +674,7 @@ export const CanvasEditor = ({
               obj.stroke || '#ffffff'
             ).then((dataURL) => {
               if (dataURL) {
-                FabricImage.fromURL(dataURL, { crossOrigin: 'anonymous' }).then((img) => {
+                FabricImage.fromURL(dataURL).then((img) => {
                   img.set({
                     left: mmToPx(obj.x),
                     top: mmToPx(obj.y),
@@ -704,52 +704,6 @@ export const CanvasEditor = ({
               }
             });
             return; // Exit early for async QR code creation
-
-          case 'image':
-            if (obj.imageUrl) {
-              FabricImage.fromURL(obj.imageUrl, { crossOrigin: 'anonymous' }).then((img) => {
-                // Calculate scaling to maintain aspect ratio
-                const targetWidth = mmToPx(obj.width || 20);
-                const targetHeight = mmToPx(obj.height || 20);
-                
-                // Use stored scale factors if available, otherwise calculate from dimensions
-                let scaleX = obj.imageScaleX || 1;
-                let scaleY = obj.imageScaleY || 1;
-                
-                if (obj.imageOriginalWidth && obj.imageOriginalHeight) {
-                  scaleX = targetWidth / obj.imageOriginalWidth;
-                  scaleY = targetHeight / obj.imageOriginalHeight;
-                }
-
-                img.set({
-                  left: mmToPx(obj.x),
-                  top: mmToPx(obj.y),
-                  scaleX: scaleX,
-                  scaleY: scaleY,
-                  selectable: true,
-                  hasControls: true,
-                  hasBorders: true,
-                });
-
-                (img as CustomFabricObject).customData = { id: obj.id };
-                
-                // Remove any existing objects with the same ID to prevent duplicates
-                const existingObjects = canvas.getObjects().filter(o => 
-                  (o as CustomFabricObject).customData?.id === obj.id
-                );
-                existingObjects.forEach(oldObj => canvas.remove(oldObj));
-                
-                canvas.add(img);
-                canvas.renderAll();
-                
-                if (obj.id === selectedObjectId) {
-                  canvas.setActiveObject(img);
-                }
-              }).catch((error) => {
-                console.error('Failed to load image:', error);
-              });
-            }
-            return; // Exit early for async image loading
 
           default:
             return;

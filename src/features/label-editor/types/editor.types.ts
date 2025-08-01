@@ -32,7 +32,7 @@ export interface EditorPreferences {
 
 export interface CanvasObject {
   id: string;
-  type: 'text' | 'rectangle' | 'circle' | 'line' | 'qrcode' | 'uuid' | 'image';
+  type: 'text' | 'rectangle' | 'circle' | 'line' | 'qrcode' | 'uuid';
   x: number;      // position in mm
   y: number;      // position in mm
   width?: number; // in mm
@@ -54,13 +54,6 @@ export interface CanvasObject {
   qrErrorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
   // Shared UUID for both QR and UUID objects
   sharedUUID?: string;
-  // Image specific properties
-  imageUrl?: string;
-  imageAssetId?: string;
-  imageOriginalWidth?: number;
-  imageOriginalHeight?: number;
-  imageScaleX?: number;
-  imageScaleY?: number;
 }
 
 export interface EditorState {
@@ -71,28 +64,4 @@ export interface EditorState {
   objects: CanvasObject[];
   selectedObjectId: string | null;
   preferences: EditorPreferences;
-}
-
-export interface UserAsset {
-  id: string;
-  name: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  mimeType: string;
-  width: number | null;
-  height: number | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  url: string;
-}
-
-export interface AssetUploadProgress {
-  file: File;
-  name: string;
-  progress: number;
-  status: 'uploading' | 'success' | 'error';
-  error?: string;
-  asset?: UserAsset;
 }
