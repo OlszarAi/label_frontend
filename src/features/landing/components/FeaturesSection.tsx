@@ -13,8 +13,8 @@ import {
 const features = [
   {
     icon: SparklesIcon,
-    title: 'AI-Powered Design',
-    description: 'Sztuczna inteligencja pomoże Ci stworzyć idealne etykiety w kilka kliknięć',
+    title: 'Interfejs',
+    description: 'Prosty i przejrzysty interfejs pozwala na szybkie tworzenie etykiet bez skomplikowanych instrukcji',
     color: 'from-blue-500 to-cyan-500'
   },
   {

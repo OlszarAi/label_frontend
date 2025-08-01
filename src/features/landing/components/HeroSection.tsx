@@ -23,7 +23,7 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="hero-badge"
           >
-            ✨ Nowa generacja etykiet
+            Profesjonalny edytor etykiet
           </motion.div>
 
           <motion.h1
@@ -43,7 +43,7 @@ export function HeroSection({ onStartRegister }: HeroSectionProps) {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="hero-description"
           >
-            Zaawansowany edytor etykiet z AI, setkami szablonów i możliwością 
+            Zaawansowany edytor etykiet z setkami szablonów i możliwością 
             eksportu w wysokiej jakości. Idealne dla firm, sklepów i użytku domowego.
           </motion.p>
 

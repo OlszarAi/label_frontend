@@ -23,28 +23,23 @@ export function PreAlphaModal() {
 
   const bugs: BugItem[] = [
     {
-      title: "QR Code w edytorze",
-      description: "Problemy z generowaniem i wyświetlaniem kodów QR w edytorze etykiet",
-      severity: "high"
-    },
-    {
       title: "Strona projektów",
       description: "Błędy na stronie szczegółów projektu (/projects/[id])",
       severity: "high"
     },
     {
-      title: "Eksport kolorów",
-      description: "Niepoprawne renderowanie kolorów podczas eksportu etykiet",
+      title: "Błędy z siatką w edytorze",
+      description: "Problemy z wyświetlaniem i funkcjonowaniem siatki w edytorze etykiet",
+      severity: "high"
+    },
+    {
+      title: "Błędy z linijkami w edytorze",
+      description: "Niepoprawne działanie linijek i pomiarów w edytorze etykiet",
       severity: "medium"
     }
   ];
 
   const minorFeatures: FeatureItem[] = [
-    {
-      title: "Import zdjęć w edytorze",
-      description: "Możliwość dodawania własnych obrazów do etykiet",
-      category: "minor"
-    },
     {
       title: "Edycja nazwy etykiety",
       description: "Zmiana nazw etykiet bezpośrednio w edytorze i projektach",
@@ -58,21 +53,6 @@ export function PreAlphaModal() {
     {
       title: "Redesign strony projektu",
       description: "Całkowite przeprojektowanie interfejsu projects/[id]",
-      category: "minor"
-    },
-    {
-      title: "Poprawa scrollowania",
-      description: "Optymalizacja przewijania w edytorze etykiet",
-      category: "minor"
-    },
-    {
-      title: "Aktualizacja galerii",
-      description: "Drobne ulepszenia w galerii projektów",
-      category: "minor"
-    },
-    {
-      title: "Wsparcie języków",
-      description: "Poprawa polskiego i dodanie innych języków",
       category: "minor"
     }
   ];
