@@ -15,6 +15,7 @@ import { GalleryPanel } from './panels/GalleryPanel';
 import { UserAssetsPanel } from './assets/UserAssetsPanel';
 import { KEYBOARD_SHORTCUTS, TOOL_TYPES } from '../constants';
 import type { Label } from '../services/labelManagementService';
+import { UserAsset } from '../types/editor.types';
 import '../styles/editor.css';
 
 interface LabelEditorProps {
@@ -104,7 +105,7 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
     togglePanel('assets');
   };
 
-  const onAssetSelect = (asset: any) => {
+  const onAssetSelect = (asset: UserAsset) => {
     // Add the selected asset as an image object
     addObject({
       type: 'image',
@@ -113,8 +114,8 @@ export const LabelEditor = ({ labelId, projectId }: LabelEditorProps) => {
       width: 50,
       height: 50,
       imageUrl: asset.url,
-      imageOriginalWidth: asset.width,
-      imageOriginalHeight: asset.height,
+      imageOriginalWidth: asset.width || undefined,
+      imageOriginalHeight: asset.height || undefined,
     });
     // Close the assets panel after selection
     togglePanel('assets');

@@ -2,13 +2,25 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Allow external images from Supabase
+    // Allow external images from Supabase and localhost for development
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**.supabase.co',
         port: '',
         pathname: '/storage/v1/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3001',
+        pathname: '/api/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+        port: '3001',
+        pathname: '/api/**',
       },
     ],
   },

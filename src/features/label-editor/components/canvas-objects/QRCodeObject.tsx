@@ -137,8 +137,7 @@ export const updateQRCodeObject = async (
 };
 
 export const handleQRCodeModified = (
-  fabricObj: CustomFabricObject,
-  obj: CanvasObject
+  fabricObj: CustomFabricObject
 ): Partial<CanvasObject> => {
   // Mark object as updating to prevent updateQRCodeObject from interfering
   fabricObj._isUpdating = true;

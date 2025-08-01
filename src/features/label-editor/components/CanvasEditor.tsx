@@ -5,10 +5,10 @@ import { Canvas, FabricObject, Text, IText, Line } from 'fabric';
 import { LabelDimensions, CanvasObject, EditorPreferences, GridPreferences } from '../types/editor.types';
 import { mmToPx, pxToMm } from '../utils/dimensions';
 import { snapToGrid } from '../utils/grid';
-import { createRectangleObject, updateRectangleObject, handleRectangleModified } from './canvas-objects/RectangleObject';
-import { createCircleObject, updateCircleObject, handleCircleModified } from './canvas-objects/CircleObject';
-import { createImageObject, updateImageObject, handleImageModified } from './canvas-objects/ImageObject';
-import { createQRCodeObject, updateQRCodeObject, handleQRCodeModified } from './canvas-objects/QRCodeObject';
+import { createRectangleObject, updateRectangleObject, handleRectangleModified, CustomFabricObject as RectangleCustomFabricObject } from './canvas-objects/RectangleObject';
+import { createCircleObject, updateCircleObject, handleCircleModified, CustomFabricObject as CircleCustomFabricObject } from './canvas-objects/CircleObject';
+import { createImageObject, updateImageObject, handleImageModified, CustomFabricObject as ImageCustomFabricObject } from './canvas-objects/ImageObject';
+import { createQRCodeObject, updateQRCodeObject, handleQRCodeModified, CustomFabricObject as QRCodeCustomFabricObject } from './canvas-objects/QRCodeObject';
 
 interface CanvasEditorProps {
   dimensions: LabelDimensions;
@@ -238,19 +238,19 @@ export const CanvasEditor = ({
           }
         } else if (canvasObjData?.type === 'qrcode') {
           // Handle QR codes using separate module
-          const qrUpdates = handleQRCodeModified(obj as any, canvasObjData);
+          const qrUpdates = handleQRCodeModified(obj as QRCodeCustomFabricObject);
           Object.assign(updates, qrUpdates);
         } else if (canvasObjData?.type === 'rectangle') {
           // Handle rectangles using separate module
-          const rectUpdates = handleRectangleModified(obj as any, canvasObjData);
+          const rectUpdates = handleRectangleModified(obj as RectangleCustomFabricObject, canvasObjData);
           Object.assign(updates, rectUpdates);
         } else if (canvasObjData?.type === 'circle') {
           // Handle circles using separate module
-          const circleUpdates = handleCircleModified(obj as any);
+          const circleUpdates = handleCircleModified(obj as CircleCustomFabricObject);
           Object.assign(updates, circleUpdates);
         } else if (canvasObjData?.type === 'image') {
           // Handle images using separate module
-          const imageUpdates = handleImageModified(obj as any);
+          const imageUpdates = handleImageModified(obj as ImageCustomFabricObject);
           Object.assign(updates, imageUpdates);
         } else if (canvasObjData?.type === 'line') {
           // Handle lines - same logic as rectangle
@@ -352,7 +352,7 @@ export const CanvasEditor = ({
       }
       canvas.dispose();
     };
-  }, [onObjectUpdate, onObjectSelect, onWheelZoom, dimensions.width, dimensions.height, preferences.grid, localObjects, addObjectToLocalState]);
+  }, [onObjectUpdate, onObjectSelect, onWheelZoom, onCanvasReady, dimensions.width, dimensions.height, preferences.grid, localObjects, addObjectToLocalState]);
 
   // Update canvas size and sync objects
   useEffect(() => {
@@ -422,9 +422,9 @@ export const CanvasEditor = ({
             fill: obj.fill || '#000000',
           });
         } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
-          updateRectangleObject(existingFabricObj as any, obj);
+          updateRectangleObject(existingFabricObj as RectangleCustomFabricObject, obj);
         } else if (obj.type === 'circle' && existingFabricObj.type === 'circle') {
-          updateCircleObject(existingFabricObj as any, obj);
+          updateCircleObject(existingFabricObj as CircleCustomFabricObject, obj);
         } else if (obj.type === 'line' && existingFabricObj.type === 'line') {
           existingFabricObj.set({
             x2: mmToPx(obj.x + (obj.width || 20)),
@@ -449,7 +449,7 @@ export const CanvasEditor = ({
           });
         } else if (obj.type === 'qrcode' && existingFabricObj.type === 'image') {
           // Handle QR codes using separate module
-          updateQRCodeObject(existingFabricObj as any, obj, preferences.uuid.qrPrefix, (newImg) => {
+          updateQRCodeObject(existingFabricObj as QRCodeCustomFabricObject, obj, preferences.uuid.qrPrefix, (newImg) => {
             const objectsToRemove = canvas.getObjects().filter(o => 
               (o as CustomFabricObject).customData?.id === obj.id
             );
@@ -464,7 +464,7 @@ export const CanvasEditor = ({
           });
         } else if (obj.type === 'image' && existingFabricObj.type === 'image') {
           // Handle images using separate module
-          updateImageObject(existingFabricObj as any, obj);
+          updateImageObject(existingFabricObj as ImageCustomFabricObject, obj);
         }
         
         existingFabricObj.setCoords();
