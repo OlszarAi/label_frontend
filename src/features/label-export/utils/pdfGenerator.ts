@@ -34,6 +34,7 @@ interface FabricObjectData {
   qrData?: string;
   qrErrorCorrectionLevel?: string;
   id?: string;
+  imageUrl?: string; // Dodane pole dla obrazów
   customData?: {
     type?: string;
     content?: string;
@@ -41,6 +42,28 @@ interface FabricObjectData {
     errorCorrectionLevel?: string;
     foregroundColor?: string;
     backgroundColor?: string;
+  };
+}
+
+// Dodaję interfejs dla preferencji etykiety
+interface LabelPreferences {
+  uuid?: {
+    uuidLength?: number;
+    qrPrefix?: string;
+  };
+  grid?: {
+    size?: number;
+    snapToGrid?: boolean;
+    showGrid?: boolean;
+    color?: string;
+    opacity?: number;
+  };
+  ruler?: {
+    showRulers?: boolean;
+    color?: string;
+    backgroundColor?: string;
+    opacity?: number;
+    size?: number;
   };
 }
 
@@ -76,7 +99,8 @@ const mmToPx = (mm: number, dpi: number = PDF_SETTINGS.DPI): number => {
 // Renderowanie etykiety do canvas i konwersja na obraz
 const renderLabelToImage = async (
   labelData: LabelExportData,
-  dpi: number = PDF_SETTINGS.DPI
+  dpi: number = PDF_SETTINGS.DPI,
+  labelPreferences?: LabelPreferences
 ): Promise<string | null> => {
   try {
     const { width: widthMm, height: heightMm, fabricData } = labelData;
@@ -204,7 +228,9 @@ const renderLabelToImage = async (
             break;
 
           case 'qrcode':
-            const qrData = objData.qrData || objData.sharedUUID || 'QR';
+            // Pobierz prefix QR z preferencji etykiety
+            const qrPrefix = labelPreferences?.uuid?.qrPrefix || 'https://example.com/';
+            const qrData = objData.sharedUUID ? `${qrPrefix}${objData.sharedUUID}` : objData.qrData || objData.sharedUUID || 'QR';
             const qrSize = mmToPx(objData.width || 20, dpi);
             
             const qrDataURL = await createQRCodeDataURL(
@@ -216,7 +242,7 @@ const renderLabelToImage = async (
             );
             
             if (qrDataURL) {
-              const img = await FabricImage.fromURL(qrDataURL);
+              const img = await FabricImage.fromURL(qrDataURL, { crossOrigin: 'anonymous' });
               img.set({
                 left: mmToPx(objData.x || 0, dpi),
                 top: mmToPx(objData.y || 0, dpi),
@@ -226,6 +252,47 @@ const renderLabelToImage = async (
                 hasControls: false,
                 hasBorders: false,
               });
+              fabricObj = img as CustomFabricObject;
+            }
+            break;
+
+          case 'image':
+            if (objData.imageUrl) {
+              const img = await FabricImage.fromURL(objData.imageUrl, { crossOrigin: 'anonymous' });
+              
+              // Jeśli mamy wymiary, skalować obraz do nich
+              if (objData.width && objData.height) {
+                const targetWidthPx = mmToPx(objData.width, dpi);
+                const targetHeightPx = mmToPx(objData.height, dpi);
+                
+                const originalWidth = img.width || 1;
+                const originalHeight = img.height || 1;
+                
+                const scaleX = targetWidthPx / originalWidth;
+                const scaleY = targetHeightPx / originalHeight;
+                
+                img.set({
+                  left: mmToPx(objData.x || 0, dpi),
+                  top: mmToPx(objData.y || 0, dpi),
+                  scaleX: scaleX,
+                  scaleY: scaleY,
+                  selectable: false,
+                  hasControls: false,
+                  hasBorders: false,
+                });
+              } else {
+                // Bez skalowania
+                img.set({
+                  left: mmToPx(objData.x || 0, dpi),
+                  top: mmToPx(objData.y || 0, dpi),
+                  scaleX: 1,
+                  scaleY: 1,
+                  selectable: false,
+                  hasControls: false,
+                  hasBorders: false,
+                });
+              }
+              
               fabricObj = img as CustomFabricObject;
             }
             break;
@@ -303,8 +370,12 @@ export const generatePDFFromLabels = async (
       }
 
       try {
-        // Renderowanie etykiety do obrazu
-        const imageDataURL = await renderLabelToImage(label, PDF_SETTINGS.DPI);
+        // Pobierz preferencje z fabricData etykiety
+        const fabricData = label.fabricData as unknown as { preferences?: LabelPreferences };
+        const labelPreferences: LabelPreferences = fabricData?.preferences || {};
+        
+        // Renderowanie etykiety do obrazu z preferencjami etykiety
+        const imageDataURL = await renderLabelToImage(label, PDF_SETTINGS.DPI, labelPreferences);
         
         if (!imageDataURL) {
           console.warn(`Failed to render label: ${label.name}`);
