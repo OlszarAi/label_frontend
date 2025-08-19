@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/providers/AuthProvider';
 import { projectService } from '../services/projectService';
 import { 
   Project, 
@@ -13,7 +13,7 @@ import {
 } from '../types/project.types';
 
 export const useProjects = () => {
-  const { token } = useAuth();
+  const { token } = useAuthContext();
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [labels, setLabels] = useState<Label[]>([]);
@@ -32,7 +32,10 @@ export const useProjects = () => {
 
   // Project operations
   const fetchProjects = useCallback(async (params?: ProjectsParams) => {
+    console.log('🔄 useProjects: fetchProjects called', { token: !!token, params });
+    
     if (!token) {
+      console.error('❌ useProjects: No authentication token');
       setError('No authentication token');
       return;
     }
@@ -41,15 +44,20 @@ export const useProjects = () => {
     setError(null);
 
     try {
+      console.log('📡 useProjects: Calling projectService.getProjects...');
       const result = await projectService.getProjects(token, params);
+      console.log('📡 useProjects: API response:', result);
       
       if (result.success && result.data) {
+        console.log('✅ useProjects: Setting projects:', result.data.projects.length, 'projects');
         setProjects(result.data.projects);
         setPagination(result.data.pagination);
       } else {
+        console.error('❌ useProjects: Failed to fetch projects:', result.error);
         setError(result.error || 'Failed to fetch projects');
       }
     } catch (err) {
+      console.error('❌ useProjects: Exception during fetch:', err);
       setError('Failed to fetch projects');
       console.error('Fetch projects error:', err);
     } finally {
@@ -84,6 +92,8 @@ export const useProjects = () => {
   }, [token]);
 
   const createProject = useCallback(async (projectData: CreateProjectRequest) => {
+    console.log('🆕 useProjects: Creating project', projectData);
+    
     if (!token) {
       setError('No authentication token');
       return { success: false, error: 'No authentication token' };
@@ -94,10 +104,15 @@ export const useProjects = () => {
 
     try {
       const result = await projectService.createProject(token, projectData);
+      console.log('🆕 useProjects: Create result', result);
       
       if (result.success && result.data) {
         // Add new project to the list
-        setProjects(prev => [result.data!, ...prev]);
+        setProjects(prev => {
+          const newProjects = [result.data!, ...prev];
+          console.log('🆕 useProjects: Updated projects list', newProjects.length);
+          return newProjects;
+        });
         return { success: true, data: result.data };
       } else {
         setError(result.error || 'Failed to create project');
@@ -114,6 +129,8 @@ export const useProjects = () => {
   }, [token]);
 
   const updateProject = useCallback(async (projectId: string, projectData: UpdateProjectRequest) => {
+    console.log('✏️ useProjects: Updating project', projectId, projectData);
+    
     if (!token) {
       setError('No authentication token');
       return { success: false, error: 'No authentication token' };
@@ -124,12 +141,18 @@ export const useProjects = () => {
 
     try {
       const result = await projectService.updateProject(token, projectId, projectData);
+      console.log('✏️ useProjects: Update result', result);
       
       if (result.success && result.data) {
         // Update project in the list
-        setProjects(prev => prev.map(p => p.id === projectId ? result.data! : p));
+        setProjects(prev => {
+          const updatedProjects = prev.map(p => p.id === projectId ? result.data! : p);
+          console.log('✏️ useProjects: Updated projects list', updatedProjects.length);
+          return updatedProjects;
+        });
         if (currentProject?.id === projectId) {
           setCurrentProject(result.data);
+          console.log('✏️ useProjects: Updated current project');
         }
         return { success: true, data: result.data };
       } else {
@@ -147,6 +170,8 @@ export const useProjects = () => {
   }, [token, currentProject]);
 
   const deleteProject = useCallback(async (projectId: string) => {
+    console.log('🗑️ useProjects: Deleting project', projectId);
+    
     if (!token) {
       setError('No authentication token');
       return { success: false, error: 'No authentication token' };
@@ -157,13 +182,19 @@ export const useProjects = () => {
 
     try {
       const result = await projectService.deleteProject(token, projectId);
+      console.log('🗑️ useProjects: Delete result', result);
       
       if (result.success) {
         // Remove project from the list
-        setProjects(prev => prev.filter(p => p.id !== projectId));
+        setProjects(prev => {
+          const filteredProjects = prev.filter(p => p.id !== projectId);
+          console.log('🗑️ useProjects: Updated projects list', filteredProjects.length);
+          return filteredProjects;
+        });
         if (currentProject?.id === projectId) {
           setCurrentProject(null);
           setLabels([]);
+          console.log('🗑️ useProjects: Cleared current project');
         }
         return { success: true };
       } else {

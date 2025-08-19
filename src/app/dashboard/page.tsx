@@ -6,6 +6,7 @@ import { DashboardView } from '@/features/landing/components/DashboardView';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { ProjectProvider } from '@/features/project-management/context/ProjectContext';
 import '@/features/landing/components/landing.styles.css';
 
 export default function DashboardPage() {
@@ -32,19 +33,21 @@ export default function DashboardPage() {
   };
 
   const dashboardContent = (
-    <div className="dashboard-page-wrapper">
-      <Navigation 
-        onOpenLogin={openLoginModal}
-        onOpenRegister={openRegisterModal}
-      />
-      <DashboardView />
-      
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authModalMode}
-      />
-    </div>
+    <ProjectProvider>
+      <div className="dashboard-page-wrapper">
+        <Navigation 
+          onOpenLogin={openLoginModal}
+          onOpenRegister={openRegisterModal}
+        />
+        <DashboardView />
+        
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          initialMode={authModalMode}
+        />
+      </div>
+    </ProjectProvider>
   );
 
   console.log('📊 Dashboard: Rendering protected content');

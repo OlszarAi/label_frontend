@@ -1,0 +1,105 @@
+/* Workspace Layout Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+.workspace-layout {
+  display: flex;
+  height: 100vh;
+  background: #0a0b14;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dashboard-style Background */
+.workspace-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+
+.background-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: grid-move 20s linear infinite;
+}
+
+.background-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  animation: glow-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes grid-move {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(60px, 60px, 0); }
+}
+
+@keyframes glow-pulse {
+  0% { opacity: 0.3; transform: scale3d(1, 1, 1); }
+  100% { opacity: 0.6; transform: scale3d(1.1, 1.1, 1); }
+}
+
+.workspace-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+  margin-left: 280px; /* Space for sidebar */
+  transition: margin-left 0.3s ease;
+  z-index: 1;
+  overflow-y: auto;
+}
+
+.workspace-main.sidebar-collapsed {
+  margin-left: 64px; /* Space for collapsed sidebar */
+}
+
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  display: none;
+}
+
+/* Mobile styles */
+@media (max-width: 1024px) {
+  .workspace-main {
+    margin-left: 0 !important; /* No margin on mobile */
+  }
+  
+  .project-navigation {
+    transform: translateX(-100%); /* Hide sidebar by default */
+    transition: transform 0.3s ease;
+  }
+  
+  .project-navigation.mobile-open {
+    transform: translateX(0); /* Show when open */
+  }
+  
+  .mobile-nav-overlay {
+    display: block;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .workspace-main {
+    padding: 0.5rem;
+  }
+}

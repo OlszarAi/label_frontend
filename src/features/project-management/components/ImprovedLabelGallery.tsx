@@ -347,7 +347,6 @@ export function ImprovedLabelGallery({
               key={label.id}
               label={label}
               isSelected={selectedLabels.has(label.id)}
-              onClick={() => onLabelClick(label)}
               onEdit={() => onEditLabel(label)}
               onDelete={() => onDeleteLabel(label.id)}
               onSelect={() => toggleLabelSelection(label.id)}
@@ -436,7 +435,6 @@ export function ImprovedLabelGallery({
 interface LabelCardProps {
   label: Label;
   isSelected: boolean;
-  onClick: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onSelect: () => void;
@@ -484,24 +482,22 @@ function LabelCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.02 }}
       className={`enhanced-label-card ${isSelected ? 'selected' : ''}`}
-      style={getCardStyle()}
+      style={{
+        ...getCardStyle(),
+        outline: isSelected ? '3px solid #007bff' : 'none',
+        borderRadius: isSelected ? '8px' : 'initial'
+      }}
+      onClick={onSelect}
     >
-      {/* Selection Indicator */}
-      <div className="card-selection">
-        <div 
-          className={`selection-indicator ${isSelected ? 'selected' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-        >
-          {isSelected && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <polyline points="20,6 9,17 4,12"/>
-            </svg>
-          )}
+      {/* Selection Badge - Visual only */}
+      {isSelected && (
+        <div className="card-selection-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
+            <circle cx="12" cy="12" r="12" fill="#007bff"/>
+            <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" fill="none"/>
+          </svg>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="card-quick-actions">
@@ -525,10 +521,7 @@ function LabelCard({
       </div>
 
       {/* Image/Preview */}
-      <div className="card-image" onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}>
+      <div className="card-image">
         {label.thumbnail ? (
           <SmartImage
             src={label.thumbnail}

@@ -59,17 +59,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedUser = localStorage.getItem(USER_KEY);
 
+      console.log('🔐 checkAuthOnMount: Starting validation', { 
+        hasStoredToken: !!storedToken, 
+        hasStoredUser: !!storedUser,
+        tokenPreview: storedToken?.substring(0, 10) + '...'
+      });
+
       if (!storedToken || !storedUser) {
+        console.log('🔐 checkAuthOnMount: No stored credentials');
         setAuthState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
       // Validate token with backend
+      console.log('🔐 checkAuthOnMount: Validating with backend...');
       const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
         headers: {
           'Authorization': `Bearer ${storedToken}`
         }
       });
+
+      console.log('🔐 checkAuthOnMount: Backend response:', response.status, response.statusText);
 
       if (response.ok) {
         await response.json(); // We don't need the data but need to consume the response
@@ -81,6 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         // Token is invalid, clear storage
+        console.log('🔐 Auth validation failed, clearing token. Response status:', response.status);
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
         setAuthState({

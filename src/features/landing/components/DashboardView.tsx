@@ -36,7 +36,7 @@ interface RecentProject {
 }
 
 export function DashboardView() {
-  const { user } = useAuthContext();
+  const { user, isAuthenticated, isLoading: authLoading, token } = useAuthContext();
   const { projects, fetchProjects, isLoading } = useProjects();
   const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
@@ -49,10 +49,20 @@ export function DashboardView() {
 
   // Fetch real data from API
   useEffect(() => {
-    if (user) {
+    console.log('📊 DashboardView: Auth state check', { 
+      user: !!user, 
+      isAuthenticated, 
+      authLoading, 
+      hasToken: !!token 
+    });
+    
+    if (isAuthenticated && !authLoading && token && user) {
+      console.log('📊 DashboardView: Fetching projects...');
       fetchProjects({ limit: 5 });
+    } else {
+      console.log('📊 DashboardView: Not ready to fetch projects');
     }
-  }, [user, fetchProjects]);
+  }, [user, isAuthenticated, authLoading, token, fetchProjects]);
 
   // Calculate stats from real data
   useEffect(() => {
@@ -190,40 +200,8 @@ export function DashboardView() {
             
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <Link 
-                href="/editor/new"
-                title="Stwórz nową etykietę" 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#6EE7B7',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.25)';
-                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <Plus size={20} />
-                Nowa Etykieta
-              </Link>
-              
-              <Link 
-                href="/projects"
-                title="Zarządzaj projektami" 
+                href="/workspace"
+                title="Przejdź do Workspace" 
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -249,8 +227,8 @@ export function DashboardView() {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                <Folder size={20} />
-                Nowy Projekt
+                <FolderOpen size={20} />
+                Workspace
               </Link>
             </div>
           </div>
@@ -368,7 +346,7 @@ export function DashboardView() {
                   Ostatnie Projekty
                 </h2>
                 <Link 
-                  href="/projects" 
+                  href="/workspace" 
                   title="Zobacz wszystkie projekty"
                   style={{
                     display: 'flex',
@@ -408,7 +386,7 @@ export function DashboardView() {
                       transition={{ duration: 0.4, delay: 0.1 * index }}
                     >
                       <Link 
-                        href={`/projects/${project.id}/labels`}
+                        href={`/workspace/${project.id}`}
                         title={`Otwórz projekt: ${project.name}`}
                         style={{
                           display: 'block',
@@ -464,7 +442,7 @@ export function DashboardView() {
                     <Folder size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
                     <p style={{ margin: 0 }}>Nie masz jeszcze żadnych projektów</p>
                     <Link 
-                      href="/projects" 
+                      href="/workspace" 
                       title="Stwórz pierwszy projekt"
                       style={{
                         color: '#3B82F6',
@@ -491,7 +469,7 @@ export function DashboardView() {
             </div>
           </motion.section>
 
-          {/* Quick Actions - Ciemny styl */}
+          {/* Workspace Actions - Ciemny styl */}
           <motion.section
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -499,13 +477,13 @@ export function DashboardView() {
           >
             <div className="feature-card" style={{ padding: '32px 24px', height: 'fit-content' }}>
               <h2 style={{ margin: '0 0 24px 0', fontSize: '1.5rem', fontWeight: '700', color: '#F9FAFB' }}>
-                Szybkie Akcje
+                Workspace
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <Link 
-                  href="/editor/new"
-                  title="Stwórz nową etykietę"
+                  href="/workspace"
+                  title="Przeglądaj wszystkie projekty"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -532,48 +510,50 @@ export function DashboardView() {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <Edit3 size={24} />
+                  <FolderOpen size={24} />
                   <div>
-                    <h3 style={{ margin: '0 0 4px 0', fontWeight: '600' }}>Projektuj Nową Etykietę</h3>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#9CA3AF' }}>Stwórz etykietę od podstaw</p>
+                    <h3 style={{ margin: '0 0 4px 0', fontWeight: '600' }}>Wszystkie Projekty</h3>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#9CA3AF' }}>Przejdź do głównego workspace</p>
                   </div>
                 </Link>
 
-                <Link 
-                  href="/projects"
-                  title="Zarządzaj swoimi projektami"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    padding: '20px',
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: '#6EE7B7',
-                    transition: 'all 0.3s ease',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.25)';
-                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <Folder size={24} />
-                  <div>
-                    <h3 style={{ margin: '0 0 4px 0', fontWeight: '600' }}>Zarządzaj Projektami</h3>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#9CA3AF' }}>Organizuj swoje etykiety</p>
-                  </div>
-                </Link>
+                {recentProjects.length > 0 && (
+                  <Link 
+                    href={`/workspace/${recentProjects[0].id}`}
+                    title={`Ostatni projekt: ${recentProjects[0].name}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '20px',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      color: '#6EE7B7',
+                      transition: 'all 0.3s ease',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(16, 185, 129, 0.25)';
+                      e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                      e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <Folder size={24} />
+                    <div>
+                      <h3 style={{ margin: '0 0 4px 0', fontWeight: '600' }}>Ostatni Projekt</h3>
+                      <p style={{ margin: 0, fontSize: '0.875rem', color: '#9CA3AF' }}>{recentProjects[0].name}</p>
+                    </div>
+                  </Link>
+                )}
 
                 <Link 
                   href="/profile"
