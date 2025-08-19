@@ -5,6 +5,8 @@ import { mmToPx, pxToMm } from '../../utils/dimensions';
 export interface CustomFabricObject extends FabricImage {
   customData?: { id: string };
   _isUpdating?: boolean;
+  _wasManuallyResized?: boolean;
+  _lastSavedScale?: { scaleX: number; scaleY: number };
 }
 
 export const createImageObject = async (
@@ -47,6 +49,11 @@ export const createImageObject = async (
     }
 
     (img as CustomFabricObject).customData = { id: obj.id };
+    (img as CustomFabricObject)._wasManuallyResized = false;
+    (img as CustomFabricObject)._lastSavedScale = {
+      scaleX: img.scaleX || 1,
+      scaleY: img.scaleY || 1,
+    };
     onCreated(img as CustomFabricObject);
   } catch (error) {
     console.error('Failed to load image:', error);
@@ -55,34 +62,54 @@ export const createImageObject = async (
 
 export const updateImageObject = (
   fabricObj: CustomFabricObject, 
-  obj: CanvasObject
+  obj: CanvasObject,
+  forceUpdate: boolean = false
 ): void => {
-  // Don't update if object is being modified or is active
-  if (fabricObj._isUpdating || fabricObj.canvas?.getActiveObject() === fabricObj) return;
+  // Don't update if object is being modified or is active (unless forced)
+  if (!forceUpdate && (fabricObj._isUpdating || fabricObj.canvas?.getActiveObject() === fabricObj)) return;
   
-  // Update position
-  fabricObj.set({
-    left: mmToPx(obj.x),
-    top: mmToPx(obj.y),
-  });
+  // Mark as updating to prevent loops
+  fabricObj._isUpdating = true;
   
-  // If we have target dimensions, stretch the image to fill the entire box
-  if (obj.width && obj.height) {
-    const targetWidthPx = mmToPx(obj.width);
-    const targetHeightPx = mmToPx(obj.height);
-    
-    // Calculate scale factors to stretch image to fill the entire box
-    const originalWidth = fabricObj.width || 1;
-    const originalHeight = fabricObj.height || 1;
-    
-    const scaleX = targetWidthPx / originalWidth;
-    const scaleY = targetHeightPx / originalHeight;
-    
-    // Set the image to stretch and fill the entire bounding box
-    fabricObj.set({
-      scaleX: scaleX,
-      scaleY: scaleY,
-    });
+      try {
+      // Update position
+      fabricObj.set({
+        left: mmToPx(obj.x),
+        top: mmToPx(obj.y),
+      });
+      
+      // Only update scale if object wasn't manually resized
+      if (!fabricObj._wasManuallyResized && obj.width && obj.height) {
+        const targetWidthPx = mmToPx(obj.width);
+        const targetHeightPx = mmToPx(obj.height);
+        
+        // Calculate scale factors to stretch image to fill the entire box
+        const originalWidth = fabricObj.width || 1;
+        const originalHeight = fabricObj.height || 1;
+        
+        const scaleX = targetWidthPx / originalWidth;
+        const scaleY = targetHeightPx / originalHeight;
+        
+        // Set the image to stretch and fill the entire bounding box
+        fabricObj.set({
+          scaleX: scaleX,
+          scaleY: scaleY,
+        });
+        
+        // Save the scale for future reference
+        fabricObj._lastSavedScale = { scaleX, scaleY };
+      } else if (fabricObj._wasManuallyResized && fabricObj._lastSavedScale) {
+        // If manually resized, preserve the user's scale
+        fabricObj.set({
+          scaleX: fabricObj._lastSavedScale.scaleX,
+          scaleY: fabricObj._lastSavedScale.scaleY,
+        });
+      }
+    } finally {
+    // Clear updating flag after a brief delay
+    setTimeout(() => {
+      fabricObj._isUpdating = false;
+    }, 100);
   }
 };
 
@@ -91,6 +118,15 @@ export const handleImageModified = (
 ): Partial<CanvasObject> => {
   // Mark object as updating to prevent updateImageObject from interfering
   fabricObj._isUpdating = true;
+  
+  // Mark as manually resized to preserve user's changes
+  fabricObj._wasManuallyResized = true;
+  
+  // Save current scale
+  fabricObj._lastSavedScale = {
+    scaleX: fabricObj.scaleX || 1,
+    scaleY: fabricObj.scaleY || 1,
+  };
   
   // Calculate new dimensions from current scale and original image size
   const originalWidth = fabricObj.width || 0;
@@ -105,9 +141,6 @@ export const handleImageModified = (
     width: pxToMm(newWidthPx),
     height: pxToMm(newHeightPx),
   };
-  
-  // Let Fabric.js handle scaling naturally - don't reset scale
-  // This should work like other objects that resize properly
   
   // Clear updating flag after a brief delay
   setTimeout(() => {

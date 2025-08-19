@@ -8,6 +8,8 @@ export interface CustomFabricObject extends FabricImage {
   _isUpdating?: boolean;
   _isReplacingQR?: boolean;
   _lastQRData?: string;
+  _wasManuallyResized?: boolean;
+  _lastSavedScale?: { scaleX: number; scaleY: number };
 }
 
 // Helper function to create QR code data URL
@@ -54,10 +56,13 @@ export const createQRCodeObject = async (
       selectable: true,
       hasControls: true,
       hasBorders: true,
-      // Remove lockUniScaling to allow free resizing
+      lockUniScaling: false,
+      lockScalingFlip: false,
     });
     (img as CustomFabricObject).customData = { id: obj.id };
     (img as CustomFabricObject)._lastQRData = qrData;
+    (img as CustomFabricObject)._wasManuallyResized = false;
+    (img as CustomFabricObject)._lastSavedScale = { scaleX: 1, scaleY: 1 };
     onCreated(img as CustomFabricObject);
   }
 };
@@ -66,10 +71,11 @@ export const updateQRCodeObject = async (
   fabricObj: CustomFabricObject,
   obj: CanvasObject,
   qrPrefix: string,
-  onUpdated: (fabricObj: CustomFabricObject) => void
+  onUpdated: (fabricObj: CustomFabricObject) => void,
+  forceUpdate: boolean = false
 ): Promise<void> => {
-  // Don't update if object is being modified or is active
-  if (fabricObj._isUpdating || fabricObj.canvas?.getActiveObject() === fabricObj) return;
+  // Don't update if object is being modified, is active, or is already being replaced (unless forced)
+  if (!forceUpdate && (fabricObj._isUpdating || fabricObj._isReplacingQR || fabricObj.canvas?.getActiveObject() === fabricObj)) return;
   
   const currentQRData = `${qrPrefix}${obj.sharedUUID || ''}`;
   const targetSizePx = mmToPx(obj.width || 20);
@@ -80,48 +86,62 @@ export const updateQRCodeObject = async (
   );
   
   const needsRegeneration = (
-    Math.abs(currentDisplaySize - targetSizePx) > 1 ||
+    Math.abs(currentDisplaySize - targetSizePx) > 5 || // Increased threshold to reduce sensitivity
     fabricObj._lastQRData !== currentQRData
   );
   
-  if (needsRegeneration && !fabricObj._isReplacingQR) {
+  if (needsRegeneration) {
     fabricObj._isReplacingQR = true;
     
-    const dataURL = await createQRCodeDataURL(
-      currentQRData,
-      targetSizePx,
-      obj.qrErrorCorrectionLevel || 'M',
-      obj.fill || '#000000',
-      obj.stroke || '#ffffff'
-    );
-    
-    if (dataURL && fabricObj._isReplacingQR) {
-      const newImg = await FabricImage.fromURL(dataURL, { crossOrigin: 'anonymous' });
-      newImg.set({
-        left: mmToPx(obj.x),
-        top: mmToPx(obj.y),
-        scaleX: 1,
-        scaleY: 1,
-        selectable: true,
-        hasControls: true,
-        hasBorders: true,
-        // Remove lockUniScaling to allow free resizing
-      });
-      (newImg as CustomFabricObject).customData = { id: obj.id };
-      (newImg as CustomFabricObject)._lastQRData = currentQRData;
-      onUpdated(newImg as CustomFabricObject);
-    } else {
-      fabricObj._isReplacingQR = false;
+    try {
+      const dataURL = await createQRCodeDataURL(
+        currentQRData,
+        targetSizePx,
+        obj.qrErrorCorrectionLevel || 'M',
+        obj.fill || '#000000',
+        obj.stroke || '#ffffff'
+      );
+      
+      if (dataURL && fabricObj._isReplacingQR) {
+        const newImg = await FabricImage.fromURL(dataURL, { crossOrigin: 'anonymous' });
+        newImg.set({
+          left: mmToPx(obj.x),
+          top: mmToPx(obj.y),
+          scaleX: 1,
+          scaleY: 1,
+          selectable: true,
+          hasControls: true,
+          hasBorders: true,
+          lockUniScaling: false,
+          lockScalingFlip: false,
+        });
+        (newImg as CustomFabricObject).customData = { id: obj.id };
+        (newImg as CustomFabricObject)._lastQRData = currentQRData;
+        (newImg as CustomFabricObject)._wasManuallyResized = fabricObj._wasManuallyResized || false;
+        (newImg as CustomFabricObject)._lastSavedScale = fabricObj._lastSavedScale || { scaleX: 1, scaleY: 1 };
+        
+        // Add a small delay to prevent rapid fire updates
+        setTimeout(() => {
+          onUpdated(newImg as CustomFabricObject);
+        }, 50);
+      }
+    } catch (error) {
+      console.error('Failed to update QR code:', error);
+    } finally {
+      // Clear the flag after a delay to prevent immediate retriggering
+      setTimeout(() => {
+        fabricObj._isReplacingQR = false;
+      }, 200);
     }
   } else {
-    // Update position and scale based on saved dimensions
+    // Update position
     fabricObj.set({
       left: mmToPx(obj.x),
       top: mmToPx(obj.y),
     });
     
-    // Calculate and set scaleX/scaleY based on saved width/height
-    if (obj.width && obj.height && fabricObj.width && fabricObj.height) {
+    // Only update scale if object wasn't manually resized, or if we have saved scale values
+    if (!fabricObj._wasManuallyResized && obj.width && obj.height && fabricObj.width && fabricObj.height) {
       const targetWidthPx = mmToPx(obj.width);
       const targetHeightPx = mmToPx(obj.height);
       
@@ -131,6 +151,15 @@ export const updateQRCodeObject = async (
       fabricObj.set({
         scaleX: scaleX,
         scaleY: scaleY,
+      });
+      
+      // Save the scale for future reference
+      fabricObj._lastSavedScale = { scaleX, scaleY };
+    } else if (fabricObj._wasManuallyResized && fabricObj._lastSavedScale) {
+      // If manually resized, preserve the user's scale
+      fabricObj.set({
+        scaleX: fabricObj._lastSavedScale.scaleX,
+        scaleY: fabricObj._lastSavedScale.scaleY,
       });
     }
   }
@@ -142,6 +171,15 @@ export const handleQRCodeModified = (
   // Mark object as updating to prevent updateQRCodeObject from interfering
   fabricObj._isUpdating = true;
   
+  // Mark as manually resized to preserve user's changes
+  fabricObj._wasManuallyResized = true;
+  
+  // Save current scale
+  fabricObj._lastSavedScale = {
+    scaleX: fabricObj.scaleX || 1,
+    scaleY: fabricObj.scaleY || 1,
+  };
+  
   // Calculate new dimensions from current scale and original QR size
   const originalSize = fabricObj.width || 0;
   const newSizePx = originalSize * (fabricObj.scaleX || 1);
@@ -152,9 +190,6 @@ export const handleQRCodeModified = (
     width: pxToMm(newSizePx),
     height: pxToMm(newSizePx), // Keep it square
   };
-  
-  // Let Fabric.js handle scaling naturally - don't reset scale
-  // This should work like other objects that resize properly
   
   // Clear updating flag after a brief delay
   setTimeout(() => {

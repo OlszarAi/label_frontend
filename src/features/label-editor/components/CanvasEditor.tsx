@@ -124,15 +124,31 @@ export const CanvasEditor = ({
   
   // Local state to avoid race conditions with object:modified events
   const [localObjects, setLocalObjects] = useState<CanvasObject[]>(objects);
+  const lastLocalUpdateRef = useRef<number>(0);
   
-  // Sync localObjects with props objects
+  // Sync localObjects with props objects (with smart throttling)
   useEffect(() => {
-    setLocalObjects(objects);
+    const timeoutId = setTimeout(() => {
+      // Don't override recent local changes (within 200ms)
+      const timeSinceLastUpdate = Date.now() - lastLocalUpdateRef.current;
+      if (timeSinceLastUpdate > 200) {
+        setLocalObjects(objects);
+      }
+    }, 50); // Throttle to prevent rapid updates
+    
+    return () => clearTimeout(timeoutId);
   }, [objects]);
   
   // Function to add object to local state immediately
   const addObjectToLocalState = useCallback((newObject: CanvasObject) => {
-    setLocalObjects(prev => [...prev, newObject]);
+    lastLocalUpdateRef.current = Date.now(); // Track when we made local changes
+    setLocalObjects(prev => {
+      // Avoid duplicates - only add if not already present
+      if (prev.some(obj => obj.id === newObject.id)) {
+        return prev;
+      }
+      return [...prev, newObject];
+    });
   }, []);
 
   // Update container size when it changes
@@ -200,10 +216,16 @@ export const CanvasEditor = ({
           y: pxToMm(obj.top || 0),
         };
 
-        // Get the object type from our canvas objects state
-        const canvasObjData = obj.customData && obj.customData.id ? localObjects.find(o => o.id === obj.customData!.id) : null;
+        // Get the object type from our canvas objects state (with robust fallbacks)
+        const canvasObjData = obj.customData && obj.customData.id 
+          ? (localObjects.find(o => o.id === obj.customData!.id) || objects.find(o => o.id === obj.customData!.id) || null)
+          : null;
+        // Determine effective type to handle even if local cache isn't up-to-date
+        const effectiveType = canvasObjData?.type 
+          || (obj.type === 'i-text' ? 'text' : obj.type) 
+          || undefined;
         
-        if (obj.type === 'text' || obj.type === 'i-text') {
+        if (effectiveType === 'text' || obj.type === 'i-text') {
           // Handle text objects
           const textObj = obj as IText;
           if (textObj.fontSize && (textObj.scaleX !== 1 || textObj.scaleY !== 1)) {
@@ -221,7 +243,7 @@ export const CanvasEditor = ({
           if (textObj.text) {
             updates.text = textObj.text;
           }
-        } else if (canvasObjData?.type === 'uuid') {
+        } else if (effectiveType === 'uuid') {
           // Handle UUID objects
           const textObj = obj as Text;
           if (textObj.fontSize && (textObj.scaleX !== 1 || textObj.scaleY !== 1)) {
@@ -236,19 +258,19 @@ export const CanvasEditor = ({
             });
             canvas.renderAll();
           }
-        } else if (canvasObjData?.type === 'qrcode') {
+        } else if (effectiveType === 'qrcode') {
           // Handle QR codes using separate module
           const qrUpdates = handleQRCodeModified(obj as QRCodeCustomFabricObject);
           Object.assign(updates, qrUpdates);
-        } else if (canvasObjData?.type === 'rectangle') {
+        } else if (effectiveType === 'rectangle') {
           // Handle rectangles using separate module
           const rectUpdates = handleRectangleModified(obj as RectangleCustomFabricObject, canvasObjData);
           Object.assign(updates, rectUpdates);
-        } else if (canvasObjData?.type === 'circle') {
+        } else if (effectiveType === 'circle') {
           // Handle circles using separate module
           const circleUpdates = handleCircleModified(obj as CircleCustomFabricObject);
           Object.assign(updates, circleUpdates);
-        } else if (canvasObjData?.type === 'image') {
+        } else if (effectiveType === 'image' || obj.type === 'image') {
           // Handle images using separate module
           const imageUpdates = handleImageModified(obj as ImageCustomFabricObject);
           Object.assign(updates, imageUpdates);
@@ -352,7 +374,7 @@ export const CanvasEditor = ({
       }
       canvas.dispose();
     };
-  }, [onObjectUpdate, onObjectSelect, onWheelZoom, onCanvasReady, dimensions.width, dimensions.height, preferences.grid, localObjects, addObjectToLocalState]);
+  }, [onObjectUpdate, onObjectSelect, onWheelZoom, onCanvasReady, dimensions.width, dimensions.height, preferences.grid]);
 
   // Update canvas size and sync objects
   useEffect(() => {
@@ -542,12 +564,28 @@ export const CanvasEditor = ({
               );
               existingObjects.forEach(oldObj => canvas.remove(oldObj));
               
+              // Check if object has custom dimensions (indicating it was manually resized)
+              const customFabricObj = fabricObj as CustomFabricObject;
+              if (obj.width && obj.height) {
+                const defaultSize = 20; // Default QR code size in mm
+                if (obj.width !== defaultSize || obj.height !== defaultSize) {
+                  customFabricObj._wasManuallyResized = true;
+                  customFabricObj._lastSavedScale = {
+                    scaleX: fabricObj.scaleX || 1,
+                    scaleY: fabricObj.scaleY || 1,
+                  };
+                }
+              }
+              
               canvas.add(fabricObj);
               canvas.renderAll();
               
               if (obj.id === selectedObjectId) {
                 canvas.setActiveObject(fabricObj);
               }
+              
+              // Add to local state immediately for resize functionality
+              addObjectToLocalState(obj);
               
               // Fast invisible refresh to fix resize issue
               requestAnimationFrame(() => {
@@ -564,12 +602,33 @@ export const CanvasEditor = ({
               );
               existingObjects.forEach(oldObj => canvas.remove(oldObj));
               
+              // Check if object has custom dimensions (indicating it was manually resized)
+              const customFabricObj = fabricObj as CustomFabricObject;
+              if (obj.width && obj.height && fabricObj.width && fabricObj.height) {
+                // Calculate what the scale should be for the original image size
+                const naturalScaleX = (fabricObj.width || 1) / (fabricObj.width || 1);
+                const naturalScaleY = (fabricObj.height || 1) / (fabricObj.height || 1);
+                
+                // If current scale differs significantly from natural scale, it was manually resized
+                if (Math.abs((fabricObj.scaleX || 1) - naturalScaleX) > 0.1 ||
+                    Math.abs((fabricObj.scaleY || 1) - naturalScaleY) > 0.1) {
+                  customFabricObj._wasManuallyResized = true;
+                  customFabricObj._lastSavedScale = {
+                    scaleX: fabricObj.scaleX || 1,
+                    scaleY: fabricObj.scaleY || 1,
+                  };
+                }
+              }
+              
               canvas.add(fabricObj);
               canvas.renderAll();
               
               if (obj.id === selectedObjectId) {
                 canvas.setActiveObject(fabricObj);
               }
+              
+              // Add to local state immediately for resize functionality
+              addObjectToLocalState(obj);
               
               // Fast invisible refresh to fix resize issue
               requestAnimationFrame(() => {
@@ -586,8 +645,11 @@ export const CanvasEditor = ({
         fabricObj.customData = { id: obj.id };
         canvas.add(fabricObj);
         
-        // Add object to local state immediately to avoid race conditions
-        addObjectToLocalState(obj);
+        // Add object to local state immediately for synchronous objects only
+        // QR codes and images handle this in their async callbacks
+        if (obj.type !== 'qrcode' && obj.type !== 'image') {
+          addObjectToLocalState(obj);
+        }
       }
 
       // Handle selection
@@ -605,7 +667,7 @@ export const CanvasEditor = ({
     drawGrid(canvas, dimensions, preferences.grid);
 
     canvas.renderAll();
-  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix, localObjects, addObjectToLocalState]);
+  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix]);
 
   // Calculate ruler marks based on canvas size with better scaling for small labels
   const widthPx = mmToPx(dimensions.width) * zoom;
