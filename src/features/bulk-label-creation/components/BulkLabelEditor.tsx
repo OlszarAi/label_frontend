@@ -92,6 +92,7 @@ export const BulkLabelEditor: React.FC<BulkLabelEditorProps> = ({
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTemplate]); // Removed addObject and updateDimensions to prevent re-execution on every object addition
 
   const handleCanvasReady = useCallback((canvas: Canvas) => {

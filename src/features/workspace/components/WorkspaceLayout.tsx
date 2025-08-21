@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { NewProjectSidebar } from './NewProjectSidebar';
+import { EnhancedProjectSidebar } from './EnhancedProjectSidebar';
 import { ProjectWorkspace } from './ProjectWorkspace';
 import { WorkspaceOverview } from './WorkspaceOverview';
 import './workspace-layout.css';
@@ -26,8 +26,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         <div className="background-glow"></div>
       </div>
 
-      {/* Sidebar Navigation */}
-      <NewProjectSidebar 
+      {/* Enhanced Sidebar Navigation */}
+      <EnhancedProjectSidebar 
         isCollapsed={isNavCollapsed}
         onToggle={() => setIsNavCollapsed(!isNavCollapsed)}
         isMobileOpen={isMobileNavOpen}
@@ -40,6 +40,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
+        style={{ 
+          marginLeft: isNavCollapsed ? '64px' : '320px',
+          transition: 'margin-left 0.3s ease'
+        }}
       >
         {projectId ? (
           <ProjectWorkspace 
