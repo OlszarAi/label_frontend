@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import NextImage from 'next/image';
 import { motion } from 'framer-motion';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { TemplateService, Template } from '../services/TemplateService';
@@ -159,10 +160,13 @@ export const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
               >
                 <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-md mb-3 flex items-center justify-center">
                   {template.thumbnail ? (
-                    <img 
+                    <NextImage
                       src={template.thumbnail} 
                       alt={template.name}
-                      className="max-w-full max-h-full object-contain rounded"
+                      className="rounded object-contain"
+                      width={200}
+                      height={112}
+                      style={{ maxWidth: '100%', maxHeight: '100%' }}
                     />
                   ) : (
                     <div className="text-gray-400 text-xs">

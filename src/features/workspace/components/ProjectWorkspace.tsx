@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import NextImage from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { 
@@ -618,10 +619,13 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
               <div className="preview-content">
                 <div className="preview-image-section">
                   {previewLabel.thumbnail ? (
-                    <img 
+                    <NextImage
                       src={previewLabel.thumbnail} 
                       alt={previewLabel.name}
                       className="preview-image"
+                      width={400}
+                      height={300}
+                      style={{ objectFit: 'contain' }}
                     />
                   ) : (
                     <div className="preview-placeholder">

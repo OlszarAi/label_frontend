@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import NextImage from 'next/image';
 import { useOptimizedThumbnail, OptimizedWorkspaceService } from '@/services/optimizedWorkspace.service';
 import { Image, RefreshCw } from 'lucide-react';
 
@@ -190,7 +191,7 @@ export const OptimizedThumbnail: React.FC<OptimizedThumbnailProps> = ({
       return (
         <div className={`thumbnail-placeholder ${className}`}>
           <div className="placeholder-content">
-            <Image size={24} className="placeholder-icon" />
+            <Image size={24} className="placeholder-icon" aria-label="No preview available" />
             <span className="placeholder-text">No Preview</span>
             {generateOnError && (
               <button 
@@ -208,14 +209,16 @@ export const OptimizedThumbnail: React.FC<OptimizedThumbnailProps> = ({
 
     // Success state
     return (
-      <img
+      <NextImage
         ref={imgRef}
         src={thumbnailUrl}
         alt={alt || `Thumbnail for label ${labelId}`}
         className={`thumbnail-image ${className}`}
         onLoad={handleImageLoad}
         onError={handleImageError}
-        loading="lazy"
+        width={200}
+        height={150}
+        style={{ objectFit: 'contain' }}
       />
     );
   };

@@ -66,7 +66,7 @@ export function ImprovedLabelGallery({
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [previewLabel, setPreviewLabel] = useState<Label | null>(null);
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
+  // const [showTemplates, setShowTemplates] = useState(false); // TODO: Uncomment when QuickTemplates component is available
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   // Filter and sort labels
@@ -264,7 +264,10 @@ export function ImprovedLabelGallery({
 
             {onCreateFromTemplate && (
               <button
-                onClick={() => setShowTemplates(true)}
+                onClick={() => {
+                  // TODO: Implement when QuickTemplates component is available
+                  console.log('Templates feature coming soon');
+                }}
                 className="template-btn"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">

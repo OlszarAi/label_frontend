@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import NextImage from 'next/image';
 // import { motion } from 'framer-motion';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { BulkLabelDesign, BulkCreationOptions } from '../types/bulk-label.types';
@@ -70,10 +71,13 @@ export const QuantitySelectionModal: React.FC<QuantitySelectionModalProps> = ({
               </h3>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 lg:p-6 flex items-center justify-center min-h-[200px]">
                 {design.thumbnail ? (
-                  <img
+                  <NextImage
                     src={design.thumbnail}
                     alt="Podgląd etykiety"
-                    className="max-w-full max-h-40 lg:max-h-48 rounded shadow-md"
+                    className="rounded shadow-md"
+                    width={320}
+                    height={192}
+                    style={{ maxWidth: '100%', maxHeight: '12rem', objectFit: 'contain' }}
                   />
                 ) : (
                   <div className="w-40 lg:w-48 h-24 lg:h-32 bg-white dark:bg-gray-700 rounded shadow-md flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
