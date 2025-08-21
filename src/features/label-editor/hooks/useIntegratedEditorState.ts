@@ -92,12 +92,26 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
       saveAbortControllerRef.current.abort();
       saveAbortControllerRef.current = null;
     }
+    // Clear editor state when switching labels
+    setState(prev => ({
+      ...prev,
+      objects: [],
+      selectedObjectId: null,
+    }));
   }, []);
 
   // Load label data into editor state
   const loadLabelIntoEditor = useCallback((label: LabelData) => {
     try {
       setCurrentLabel(label);
+      
+      // Clear previous state completely before loading new label
+      setState(prev => ({
+        ...prev,
+        objects: [], // Clear all objects first
+        selectedObjectId: null, // Clear selection
+        dimensions: { width: label.width, height: label.height },
+      }));
       
       // Parse fabric data if it exists
       const fabricData = label.fabricData as unknown;

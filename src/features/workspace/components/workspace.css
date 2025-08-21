@@ -588,6 +588,7 @@
   background: rgba(255, 255, 255, 0.02);
   border-radius: 16px 16px 0 0;
   transition: all 0.3s ease;
+  /* Remove fixed sizes - now handled by OptimizedThumbnail component */
 }
 
 .label-placeholder {

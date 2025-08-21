@@ -13,6 +13,12 @@ interface OptimizedThumbnailProps {
   onError?: () => void;
   enableIntersectionObserver?: boolean;
   generateOnError?: boolean;
+  // New props for dynamic sizing based on label dimensions
+  labelWidth?: number; // in mm
+  labelHeight?: number; // in mm
+  maxWidth?: number; // max container width in px
+  maxHeight?: number; // max container height in px
+  maintainAspectRatio?: boolean;
 }
 
 /**
@@ -28,13 +34,73 @@ export const OptimizedThumbnail: React.FC<OptimizedThumbnailProps> = ({
   onLoad,
   onError,
   enableIntersectionObserver = true,
-  generateOnError = false
+  generateOnError = false,
+  labelWidth = 100,
+  labelHeight = 50,
+  maxWidth,
+  maxHeight,
+  maintainAspectRatio = true
 }) => {
   const [isIntersecting, setIsIntersecting] = useState(!enableIntersectionObserver);
   const [imageError, setImageError] = useState(false);
   const [generating, setGenerating] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate container dimensions based on label aspect ratio
+  const getContainerDimensions = useCallback(() => {
+    if (!maintainAspectRatio) {
+      // Use default fixed sizes if not maintaining aspect ratio
+      const sizeMap = { sm: 60, md: 120, lg: 200 };
+      const fixedSize = sizeMap[size];
+      return { width: fixedSize, height: fixedSize };
+    }
+
+    const aspectRatio = labelWidth / labelHeight;
+    
+    // Get base dimensions for each size
+    const baseDimensions = {
+      sm: { width: 80, height: 60 },
+      md: { width: 200, height: 150 },
+      lg: { width: 300, height: 200 }
+    };
+
+    const base = baseDimensions[size];
+    
+    // Apply custom max dimensions if provided
+    const maxW = maxWidth || base.width;
+    const maxH = maxHeight || base.height;
+    
+    // Calculate dimensions maintaining aspect ratio
+    let width = maxW;
+    let height = width / aspectRatio;
+    
+    // If height exceeds max, constrain by height
+    if (height > maxH) {
+      height = maxH;
+      width = height * aspectRatio;
+    }
+    
+    // Ensure minimum dimensions for very small labels
+    const minSize = size === 'sm' ? 40 : size === 'md' ? 80 : 120;
+    if (width < minSize && height < minSize) {
+      if (aspectRatio > 1) {
+        width = minSize;
+        height = minSize / aspectRatio;
+      } else {
+        height = minSize;
+        width = minSize * aspectRatio;
+      }
+    }
+    
+    return { 
+      width: Math.round(width), 
+      height: Math.round(height),
+      aspectRatio 
+    };
+  }, [labelWidth, labelHeight, size, maxWidth, maxHeight, maintainAspectRatio]);
+
+  const containerDimensions = getContainerDimensions();
 
   // Use provided thumbnail URL or fetch from API if not provided
   const shouldFetchFromApi = !providedThumbnailUrl && isIntersecting;
@@ -157,7 +223,13 @@ export const OptimizedThumbnail: React.FC<OptimizedThumbnailProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`optimized-thumbnail ${size} ${loading ? 'loading' : ''} ${error ? 'error' : ''}`}
+      className={`optimized-thumbnail ${size} ${loading ? 'loading' : ''} ${error ? 'error' : ''} ${className}`}
+      style={{
+        width: `${containerDimensions.width}px`,
+        height: `${containerDimensions.height}px`,
+        minWidth: `${containerDimensions.width}px`,
+        minHeight: `${containerDimensions.height}px`,
+      }}
     >
       {renderContent()}
     </div>
@@ -175,27 +247,13 @@ const thumbnailStyles = `
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease-in-out;
-  }
-
-  .optimized-thumbnail.sm {
-    width: 60px;
-    height: 60px;
-  }
-
-  .optimized-thumbnail.md {
-    width: 120px;
-    height: 120px;
-  }
-
-  .optimized-thumbnail.lg {
-    width: 200px;
-    height: 200px;
+    /* Remove fixed sizes - now handled dynamically */
   }
 
   .thumbnail-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: opacity 0.2s ease-in-out;
   }
 

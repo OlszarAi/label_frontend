@@ -2,13 +2,23 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SmartImage } from '../../../components/ui/SmartImage';
-import { Label } from '../types/project.types';
-import { QuickTemplates } from './QuickTemplates';
-import { CreateLabelButton } from '@/features/label-management';
+import { CreateLabelButton } from '@/features/label-management/components/CreateLabelButton';
+import { OptimizedThumbnail } from '@/components/ui/OptimizedThumbnail';
 import '../styles/improved-gallery.css';
 
 // Types for our enhanced gallery
+interface Label {
+  id: string;
+  name: string;
+  description?: string;
+  thumbnail?: string;
+  width: number;
+  height: number;
+  updatedAt: string;
+  createdAt: string;
+  version?: number;
+}
+
 interface GalleryFilters {
   search: string;
   sortBy: 'name' | 'size' | 'date' | 'dimensions';
@@ -370,7 +380,8 @@ export function ImprovedLabelGallery({
       </AnimatePresence>
 
       {/* Quick Templates Modal */}
-      {onCreateFromTemplate && (
+      {/* TODO: Add QuickTemplates component back when available */}
+      {/* {onCreateFromTemplate && (
         <QuickTemplates
           isOpen={showTemplates}
           onClose={() => setShowTemplates(false)}
@@ -379,7 +390,7 @@ export function ImprovedLabelGallery({
             setShowTemplates(false);
           }}
         />
-      )}
+      )} */}
 
       {/* Bulk Delete Confirmation Modal */}
       <AnimatePresence>
@@ -520,25 +531,30 @@ function LabelCard({
 
       {/* Image/Preview */}
       <div className="card-image">
-        {label.thumbnail ? (
-          <SmartImage
-            src={label.thumbnail}
-            alt={label.name}
-            fill
-            className="label-thumbnail"
-          />
-        ) : (
-          <div className="label-placeholder">
-            <div className="placeholder-content">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-              </svg>
-              <div className="placeholder-dimensions">
-                {formatDimensions(label.width, label.height)}
+        <OptimizedThumbnail
+          labelId={label.id}
+          thumbnailUrl={label.thumbnail}
+          size="md"
+          alt={label.name}
+          labelWidth={label.width}
+          labelHeight={label.height}
+          maxWidth={300}
+          maxHeight={220}
+          maintainAspectRatio={true}
+          className="label-thumbnail"
+          fallback={
+            <div className="label-placeholder">
+              <div className="placeholder-content">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+                <div className="placeholder-dimensions">
+                  {formatDimensions(label.width, label.height)}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          }
+        />
       </div>
 
       {/* Card Info */}
@@ -606,22 +622,27 @@ function QuickPreviewModal({ label, onClose, onEdit }: QuickPreviewModalProps) {
 
         <div className="preview-content">
           <div className="preview-image-container">
-            {label.thumbnail ? (
-              <SmartImage
-                src={label.thumbnail}
-                alt={label.name}
-                width={600}
-                height={400}
-                className="preview-image"
-              />
-            ) : (
-              <div className="preview-placeholder">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                </svg>
-                <p>No preview available</p>
-              </div>
-            )}
+            <OptimizedThumbnail
+              labelId={label.id}
+              thumbnailUrl={label.thumbnail}
+              size="lg"
+              alt={label.name}
+              labelWidth={label.width}
+              labelHeight={label.height}
+              maxWidth={600}
+              maxHeight={400}
+              maintainAspectRatio={true}
+              className="preview-image"
+              fallback={
+                <div className="preview-placeholder">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  <p>Podgląd niedostępny</p>
+                  <span>{formatDimensions(label.width, label.height)}</span>
+                </div>
+              }
+            />
           </div>
 
           <div className="preview-details">

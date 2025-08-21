@@ -140,6 +140,14 @@ export const CanvasEditor = ({
     
     return () => clearTimeout(timeoutId);
   }, [objects]);
+
+  // Clear local objects when the objects array is empty (label switching)
+  useEffect(() => {
+    if (objects.length === 0) {
+      setLocalObjects([]);
+      lastLocalUpdateRef.current = Date.now();
+    }
+  }, [objects]);
   
   // Function to add object to local state immediately
   const addObjectToLocalState = useCallback((newObject: CanvasObject) => {
@@ -412,14 +420,17 @@ export const CanvasEditor = ({
     });
 
     // Remove objects that no longer exist in state
-    // Combine objects from props and localObjects to get all current objects
-    const allCurrentObjects = [...objects];
-    // Add local objects that aren't in props yet
-    localObjects.forEach(localObj => {
-      if (!objects.some(obj => obj.id === localObj.id)) {
-        allCurrentObjects.push(localObj);
-      }
-    });
+    // When objects array is empty (label switching), use only objects array
+    // Otherwise combine objects from props and localObjects to get all current objects
+    const allCurrentObjects = objects.length === 0 ? [] : [...objects];
+    // Add local objects that aren't in props yet (only if we have objects)
+    if (objects.length > 0) {
+      localObjects.forEach(localObj => {
+        if (!objects.some(obj => obj.id === localObj.id)) {
+          allCurrentObjects.push(localObj);
+        }
+      });
+    }
     
     const stateObjectIds = new Set(allCurrentObjects.map(obj => obj.id));
     currentObjects.forEach(obj => {

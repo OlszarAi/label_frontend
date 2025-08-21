@@ -330,6 +330,11 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
             alt={label.name}
             className="label-thumbnail"
             generateOnError={false}
+            labelWidth={width}
+            labelHeight={height}
+            maxWidth={viewMode === 'list' ? 80 : displayWidth}
+            maxHeight={viewMode === 'list' ? 60 : displayHeight}
+            maintainAspectRatio={true}
             fallback={
               <div className="label-placeholder">
                 <Tags size={24} />

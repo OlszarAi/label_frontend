@@ -215,7 +215,7 @@ export function useOptimizedRequest<T>(
     dependencies?: any[];
   } = {}
 ) {
-  const { enabled = true, ttl, dependencies = [] } = options;
+  const { enabled = true, ttl } = options;
   
   const [state, setState] = useState<RequestState<T>>(() => {
     return cache.getState<T>(key) || {

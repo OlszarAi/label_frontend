@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { 
   FolderIcon, 
   PlusIcon,
@@ -16,6 +15,7 @@ import {
   MagnifyingGlassMinusIcon
 } from '@heroicons/react/24/outline';
 import { FloatingPanel } from '../common/FloatingPanel';
+import { OptimizedThumbnail } from '@/components/ui/OptimizedThumbnail';
 
 interface Label {
   id: string;
@@ -44,88 +44,6 @@ interface GalleryPanelProps {
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'updated' | 'created' | 'size';
-
-// Thumbnail component with smart scaling
-const SmartThumbnail: React.FC<{
-  label: Label;
-  scale: number;
-  isGridView: boolean;
-}> = ({ label, scale, isGridView }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  // Calculate thumbnail dimensions maintaining aspect ratio
-  const getLabelAspectRatio = () => {
-    return label.height / label.width;
-  };
-
-  const getThumbnailDimensions = () => {
-    const aspectRatio = getLabelAspectRatio();
-    
-    if (isGridView) {
-      const baseWidth = 280 * scale;
-      const baseHeight = Math.min(baseWidth * aspectRatio, 200 * scale);
-      return { width: baseWidth, height: baseHeight };
-    } else {
-      const baseWidth = 80 * scale;
-      const baseHeight = Math.min(baseWidth * aspectRatio, 60 * scale);
-      return { width: baseWidth, height: baseHeight };
-    }
-  };
-
-  const { width, height } = getThumbnailDimensions();
-
-  return (
-    <div 
-      className={`
-        relative overflow-hidden rounded-lg border-2 border-gray-200 dark:border-gray-600
-        ${isGridView ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}
-        flex items-center justify-center
-        group-hover:border-blue-300 dark:group-hover:border-blue-500
-        transition-all duration-200
-      `}
-      style={{ width: `${width}px`, height: `${height}px`, minHeight: isGridView ? '120px' : '40px' }}
-    >
-      {/* Loading state */}
-      {!imageLoaded && !imageError && label.thumbnail && (
-        <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700"></div>
-      )}
-      
-      {/* Image or fallback */}
-      {label.thumbnail && !imageError ? (
-        <Image 
-          src={label.thumbnail} 
-          alt={label.name}
-          width={width}
-          height={height}
-          className={`
-            object-contain transition-opacity duration-200
-            ${imageLoaded ? 'opacity-100' : 'opacity-0'}
-          `}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
-          style={{ 
-            maxWidth: '100%',
-            maxHeight: '100%',
-            objectFit: 'contain'
-          }}
-        />
-      ) : (
-        <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
-          <TagIcon className={`${isGridView ? 'w-12 h-12' : 'w-6 h-6'} mb-1`} />
-          {isGridView && (
-            <span className="text-xs">Brak podglądu</span>
-          )}
-        </div>
-      )}
-      
-      {/* Overlay with label dimensions */}
-      <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
-        {label.width.toFixed(0)}×{label.height.toFixed(0)}mm
-      </div>
-    </div>
-  );
-};
 
 // Enhanced grid with dynamic columns calculation
 const ResponsiveGrid: React.FC<{
@@ -213,7 +131,26 @@ const ResponsiveGrid: React.FC<{
                 <div className="space-y-3">
                   {/* Grid View - Enhanced */}
                   <div className="flex justify-center">
-                    <SmartThumbnail label={label} scale={scale} isGridView={true} />
+                    <OptimizedThumbnail 
+                      labelId={label.id}
+                      thumbnailUrl={label.thumbnail}
+                      size="md"
+                      alt={label.name}
+                      labelWidth={label.width}
+                      labelHeight={label.height}
+                      maxWidth={280 * scale}
+                      maxHeight={200 * scale}
+                      maintainAspectRatio={true}
+                      fallback={
+                        <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                          <TagIcon className="w-12 h-12 mb-1" />
+                          <span className="text-xs">Brak podglądu</span>
+                          <div className="text-xs mt-1">
+                            {label.width.toFixed(0)}×{label.height.toFixed(0)}mm
+                          </div>
+                        </div>
+                      }
+                    />
                   </div>
                   
                   <div className="space-y-2">
@@ -240,7 +177,22 @@ const ResponsiveGrid: React.FC<{
               ) : (
                 <div className="flex items-center space-x-3">
                   {/* List View - Compact */}
-                  <SmartThumbnail label={label} scale={scale} isGridView={false} />
+                  <OptimizedThumbnail 
+                    labelId={label.id}
+                    thumbnailUrl={label.thumbnail}
+                    size="sm"
+                    alt={label.name}
+                    labelWidth={label.width}
+                    labelHeight={label.height}
+                    maxWidth={80 * scale}
+                    maxHeight={60 * scale}
+                    maintainAspectRatio={true}
+                    fallback={
+                      <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                        <TagIcon className="w-6 h-6" />
+                      </div>
+                    }
+                  />
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
