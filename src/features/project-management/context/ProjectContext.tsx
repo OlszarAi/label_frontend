@@ -1,8 +1,8 @@
 "use client";
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useCallback } from 'react';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { useProjects } from '../hooks/useProjects';
-import { Project, Label } from '../types/project.types';
+import { Project, Label, CreateProjectRequest, UpdateProjectRequest } from '../types/project.types';
 
 interface ProjectContextValue {
   projects: Project[];
@@ -15,8 +15,8 @@ interface ProjectContextValue {
   refreshCurrentProject: (id?: string) => Promise<void>;
   refreshLabels: (projectId?: string) => Promise<void>;
   // Add direct project operations from hook
-  createProject: (projectData: any) => Promise<{ success: boolean; data?: Project; error?: string }>;
-  updateProject: (projectId: string, projectData: any) => Promise<{ success: boolean; data?: Project; error?: string }>;
+  createProject: (projectData: CreateProjectRequest) => Promise<{ success: boolean; data?: Project; error?: string }>;
+  updateProject: (projectId: string, projectData: UpdateProjectRequest) => Promise<{ success: boolean; data?: Project; error?: string }>;
   deleteProject: (projectId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -57,9 +57,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         hasToken: !!token 
       });
     }
-  }, [isAuthenticated, authLoading, token]); // Depend on auth state
+  }, [isAuthenticated, authLoading, token, fetchProjects]); // Depend on auth state
 
-  const refreshProjects = async () => {
+  const refreshProjects = useCallback(async () => {
     if (isAuthenticated && token) {
       console.log('🔄 ProjectContext: Force refreshing projects...');
       // Force fresh fetch by clearing local state first
@@ -67,9 +67,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } else {
       console.log('🔄 ProjectContext: Cannot refresh - not authenticated');
     }
-  };
+  }, [isAuthenticated, token, fetchProjects]);
 
-  const refreshCurrentProject = async (id?: string) => {
+  const refreshCurrentProject = useCallback(async (id?: string) => {
     if (isAuthenticated && token) {
       const target = id || currentProject?.id;
       console.log('🔄 ProjectContext: Refreshing current project:', target);
@@ -77,9 +77,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } else {
       console.log('🔄 ProjectContext: Cannot refresh project - not authenticated');
     }
-  };
+  }, [isAuthenticated, token, currentProject?.id, fetchProject]);
 
-  const refreshLabels = async (projectId?: string) => {
+  const refreshLabels = useCallback(async (projectId?: string) => {
     if (isAuthenticated && token) {
       const target = projectId || currentProject?.id;
       console.log('🔄 ProjectContext: Refreshing labels for project:', target);
@@ -87,7 +87,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } else {
       console.log('🔄 ProjectContext: Cannot refresh labels - not authenticated');
     }
-  };
+  }, [isAuthenticated, token, currentProject?.id, fetchProjectLabels]);
 
   return (
     <ProjectContext.Provider value={{

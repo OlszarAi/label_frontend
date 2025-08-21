@@ -26,8 +26,12 @@ export const QuantitySelectionModal: React.FC<QuantitySelectionModalProps> = ({
   const [uuidLength, setUuidLength] = useState(8);
 
   // Check if design has QR objects or UUID objects
-  const hasQRObjects = design.fabricData.objects.some((obj: any) => obj.type === 'qrcode');
-  const hasUUIDObjects = design.fabricData.objects.some((obj: any) => obj.type === 'uuid');
+  const hasQRObjects = design.fabricData.objects.some((obj: unknown) => {
+    return typeof obj === 'object' && obj !== null && 'type' in obj && obj.type === 'qrcode';
+  });
+  const hasUUIDObjects = design.fabricData.objects.some((obj: unknown) => {
+    return typeof obj === 'object' && obj !== null && 'type' in obj && obj.type === 'uuid';
+  });
 
   const handleQuantityChange = (value: string) => {
     const num = parseInt(value);

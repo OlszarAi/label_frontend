@@ -44,7 +44,7 @@ export const useBulkLabelCreation = ({
         description: `Bulk created: ${options.quantity} labels`,
         width: design.width,
         height: design.height,
-        fabricData: design.fabricData,
+        fabricData: design.fabricData as { version: string; objects: Array<{ type: string; [key: string]: unknown }>; background: string },
         count: options.quantity,
         thumbnail: design.thumbnail,
         qrPrefix: options.qrPrefix || '',

@@ -1,12 +1,17 @@
 import { BulkCreationResult } from '../types/bulk-label.types';
 import { BulkLabelProcessor } from './BulkLabelProcessor';
 
+interface FabricObject {
+  type: string;
+  [key: string]: unknown;
+}
+
 interface CreateBulkLabelsRequest {
   name: string;
   description: string;
   width: number;
   height: number;
-  fabricData: {version: string; objects: unknown[]; background: string};
+  fabricData: {version: string; objects: FabricObject[]; background: string};
   count: number;
   qrPrefix?: string;
   uuidLength?: number;

@@ -19,7 +19,6 @@ interface GalleryFilters {
 interface ImprovedLabelGalleryProps {
   labels: Label[];
   projectId: string;
-  onLabelClick: (label: Label) => void;
   onEditLabel: (label: Label) => void;
   onDeleteLabel: (labelId: string) => void;
   onCreateFromTemplate?: (template: { width: number; height: number; name: string }) => void;
@@ -40,7 +39,6 @@ const formatDimensions = (width: number, height: number) => {
 export function ImprovedLabelGallery({
   labels,
   projectId,
-  onLabelClick,
   onEditLabel,
   onDeleteLabel,
   onCreateFromTemplate,

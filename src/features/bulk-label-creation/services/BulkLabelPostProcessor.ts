@@ -1,5 +1,26 @@
 import { generateUUID } from '../../label-editor/utils/uuid';
 
+interface FabricObject {
+  type: string;
+  text?: string;
+  qrData?: string;
+  sharedUUID?: string;
+  data?: string;
+  [key: string]: unknown;
+}
+
+interface FabricData {
+  version: string;
+  objects: FabricObject[];
+  background: string;
+  [key: string]: unknown;
+}
+
+interface ProcessingResult {
+  fabricData: FabricData;
+  labelUUID: string;
+}
+
 /**
  * Advanced Bulk Label Processing Service
  * 
@@ -16,12 +37,12 @@ export class BulkLabelPostProcessor {
    * This mimics how the main editor handles UUID/QR objects
    */
   static generateUniqueFabricDataSet(
-    templateFabricData: any,
+    templateFabricData: FabricData,
     count: number,
     qrPrefix: string = '',
     uuidLength: number = 8
-  ): Array<{ fabricData: any; labelUUID: string }> {
-    const results: Array<{ fabricData: any; labelUUID: string }> = [];
+  ): ProcessingResult[] {
+    const results: ProcessingResult[] = [];
     
     console.log(`🔧 Processing template for ${count} labels...`);
     console.log('📋 Template fabricData:', templateFabricData);
@@ -47,7 +68,7 @@ export class BulkLabelPostProcessor {
       
       // Process all objects to assign the same UUID to all UUID/QR objects
       if (uniqueFabricData.objects && Array.isArray(uniqueFabricData.objects)) {
-        uniqueFabricData.objects = uniqueFabricData.objects.map((obj: any, objIndex: number) => {
+        uniqueFabricData.objects = uniqueFabricData.objects.map((obj: FabricObject, objIndex: number) => {
           // Handle UUID text objects
           if (obj.type === 'uuid') {
             const updatedObj = {
@@ -89,7 +110,7 @@ export class BulkLabelPostProcessor {
   /**
    * Analyze fabricData to understand what objects need UUID processing
    */
-  static analyzeFabricDataObjects(fabricData: any): {
+  static analyzeFabricDataObjects(fabricData: FabricData): {
     hasUUIDObjects: boolean;
     hasQRObjects: boolean;
     uuidCount: number;
@@ -109,7 +130,7 @@ export class BulkLabelPostProcessor {
     let uuidCount = 0;
     let qrCount = 0;
     
-    fabricData.objects.forEach((obj: any) => {
+    fabricData.objects.forEach((obj: FabricObject) => {
       if (obj.type === 'uuid') uuidCount++;
       if (obj.type === 'qrcode') qrCount++;
     });
@@ -127,7 +148,7 @@ export class BulkLabelPostProcessor {
    * Validate that all UUID/QR objects in a fabricData use the same UUID
    * This ensures consistency like in the main editor
    */
-  static validateLabelUUIDConsistency(fabricData: any, expectedUUID: string): {
+  static validateLabelUUIDConsistency(fabricData: FabricData, expectedUUID: string): {
     isValid: boolean;
     issues: string[];
     foundUUIDs: string[];
@@ -139,7 +160,7 @@ export class BulkLabelPostProcessor {
       return { isValid: true, issues: [], foundUUIDs: [] };
     }
     
-    fabricData.objects.forEach((obj: any, index: number) => {
+    fabricData.objects.forEach((obj: FabricObject, index: number) => {
       if (obj.type === 'uuid') {
         if (obj.text && obj.text !== expectedUUID) {
           issues.push(`UUID object ${index}: text "${obj.text}" ≠ expected "${expectedUUID}"`);
@@ -147,15 +168,15 @@ export class BulkLabelPostProcessor {
         if (obj.sharedUUID && obj.sharedUUID !== expectedUUID) {
           issues.push(`UUID object ${index}: sharedUUID "${obj.sharedUUID}" ≠ expected "${expectedUUID}"`);
         }
-        if (obj.sharedUUID) foundUUIDs.add(obj.sharedUUID);
-        if (obj.text) foundUUIDs.add(obj.text);
+        if (obj.sharedUUID && typeof obj.sharedUUID === 'string') foundUUIDs.add(obj.sharedUUID);
+        if (obj.text && typeof obj.text === 'string') foundUUIDs.add(obj.text);
       }
       
       if (obj.type === 'qrcode') {
         if (obj.sharedUUID && obj.sharedUUID !== expectedUUID) {
           issues.push(`QR object ${index}: sharedUUID "${obj.sharedUUID}" ≠ expected "${expectedUUID}"`);
         }
-        if (obj.sharedUUID) foundUUIDs.add(obj.sharedUUID);
+        if (obj.sharedUUID && typeof obj.sharedUUID === 'string') foundUUIDs.add(obj.sharedUUID);
       }
     });
     
@@ -169,13 +190,13 @@ export class BulkLabelPostProcessor {
   /**
    * Debug function to inspect a fabricData structure
    */
-  static debugFabricData(fabricData: any, labelIndex?: number): void {
+  static debugFabricData(fabricData: FabricData, labelIndex?: number): void {
     const prefix = labelIndex !== undefined ? `Label ${labelIndex}` : 'FabricData';
     console.log(`🔍 ${prefix} Debug:`, {
       version: fabricData?.version,
       background: fabricData?.background,
       objectCount: fabricData?.objects?.length || 0,
-      objects: fabricData?.objects?.map((obj: any, i: number) => ({
+      objects: fabricData?.objects?.map((obj: FabricObject, i: number) => ({
         index: i,
         type: obj.type,
         sharedUUID: obj.sharedUUID,
@@ -190,8 +211,7 @@ export class BulkLabelPostProcessor {
    * @deprecated Use generateUniqueFabricDataSet for new implementations
    */
   static async processCreatedLabels(
-    labelIds: string[], 
-    qrPrefix?: string
+    labelIds: string[]
   ): Promise<{ success: boolean; processedCount: number; errors: string[] }> {
     console.warn('⚠️ BulkLabelPostProcessor.processCreatedLabels is deprecated and disabled.');
     console.warn('⚠️ Use the new bulk creation system with generateUniqueFabricDataSet instead.');

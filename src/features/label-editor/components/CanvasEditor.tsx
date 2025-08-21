@@ -29,6 +29,8 @@ interface CustomFabricObject extends FabricObject {
   customData?: { id: string };
   _isUpdating?: boolean;
   _isReplacingQR?: boolean;
+  _wasManuallyResized?: boolean;
+  _lastSavedScale?: { scaleX: number; scaleY: number };
 }
 
 // Grid line interface
@@ -264,8 +266,10 @@ export const CanvasEditor = ({
           Object.assign(updates, qrUpdates);
         } else if (effectiveType === 'rectangle') {
           // Handle rectangles using separate module
-          const rectUpdates = handleRectangleModified(obj as RectangleCustomFabricObject, canvasObjData);
-          Object.assign(updates, rectUpdates);
+          if (canvasObjData) {
+            const rectUpdates = handleRectangleModified(obj as RectangleCustomFabricObject, canvasObjData);
+            Object.assign(updates, rectUpdates);
+          }
         } else if (effectiveType === 'circle') {
           // Handle circles using separate module
           const circleUpdates = handleCircleModified(obj as CircleCustomFabricObject);
@@ -374,7 +378,7 @@ export const CanvasEditor = ({
       }
       canvas.dispose();
     };
-  }, [onObjectUpdate, onObjectSelect, onWheelZoom, onCanvasReady, dimensions.width, dimensions.height, preferences.grid]);
+  }, [onObjectUpdate, onObjectSelect, onWheelZoom, onCanvasReady, dimensions.width, dimensions.height, preferences.grid, localObjects, objects]);
 
   // Update canvas size and sync objects
   useEffect(() => {
@@ -408,7 +412,16 @@ export const CanvasEditor = ({
     });
 
     // Remove objects that no longer exist in state
-    const stateObjectIds = new Set(objects.map(obj => obj.id));
+    // Combine objects from props and localObjects to get all current objects
+    const allCurrentObjects = [...objects];
+    // Add local objects that aren't in props yet
+    localObjects.forEach(localObj => {
+      if (!objects.some(obj => obj.id === localObj.id)) {
+        allCurrentObjects.push(localObj);
+      }
+    });
+    
+    const stateObjectIds = new Set(allCurrentObjects.map(obj => obj.id));
     currentObjects.forEach(obj => {
       if (obj.customData?.id && !stateObjectIds.has(obj.customData.id)) {
         canvas.remove(obj);
@@ -416,7 +429,7 @@ export const CanvasEditor = ({
     });
 
     // Add or update objects
-    objects.forEach((obj) => {
+    allCurrentObjects.forEach((obj) => {
       const existingFabricObj = existingObjectsMap.get(obj.id);
       
       if (existingFabricObj) {
@@ -647,7 +660,8 @@ export const CanvasEditor = ({
         
         // Add object to local state immediately for synchronous objects only
         // QR codes and images handle this in their async callbacks
-        if (obj.type !== 'qrcode' && obj.type !== 'image') {
+        const asyncTypes: Array<string> = ['qrcode', 'image'];
+        if (!asyncTypes.includes(obj.type)) {
           addObjectToLocalState(obj);
         }
       }
@@ -667,7 +681,7 @@ export const CanvasEditor = ({
     drawGrid(canvas, dimensions, preferences.grid || {});
 
     canvas.renderAll();
-  }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix]);
+  }, [dimensions, zoom, objects, localObjects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix, addObjectToLocalState]);
 
   // Calculate ruler marks based on canvas size with better scaling for small labels
   const widthPx = mmToPx(dimensions.width) * zoom;

@@ -6,13 +6,11 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { useEffect, useState } from 'react';
 import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { 
-  Plus, 
   FileText, 
   User, 
   BarChart3, 
   Clock, 
   Folder, 
-  Edit3,
   ArrowRight,
   Calendar,
   TrendingUp,

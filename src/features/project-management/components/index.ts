@@ -1,4 +1,3 @@
-export { CreateLabelButton } from './CreateLabelButton';
 export { ImprovedLabelGallery } from './ImprovedLabelGallery';
 export { LabelCard } from './LabelCard';
 export { ProjectCard } from './ProjectCard';

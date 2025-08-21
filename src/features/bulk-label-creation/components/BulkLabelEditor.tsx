@@ -48,7 +48,6 @@ export const BulkLabelEditor: React.FC<BulkLabelEditorProps> = ({
     state,
     addObject,
     updateObject,
-    deleteObject,
     selectObject,
     updatePreferences,
     updateZoom,
@@ -203,9 +202,7 @@ export const BulkLabelEditor: React.FC<BulkLabelEditorProps> = ({
           isVisible={showPropertiesPanel}
           onClose={() => setShowPropertiesPanel(false)}
           selectedObject={selectedObjectId ? objects.find(obj => obj.id === selectedObjectId) : null}
-          onUpdateObject={handleObjectUpdate}
-          onDeleteObject={deleteObject}
-          onDuplicateObject={() => {}}
+          onObjectUpdate={handleObjectUpdate}
           dimensions={dimensions}
           onDimensionsChange={updateDimensions}
           preferences={preferences}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { 
@@ -19,12 +19,13 @@ import {
   Eye,
   Menu
 } from 'lucide-react';
-import { useProjectContext } from '@/features/project-management/context/ProjectContext';
 import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { Label } from '@/features/project-management/types/project.types';
 import { BulkExportModal } from './BulkExportModal';
 import { BulkLabelCreationModal } from '@/features/bulk-label-creation';
+import { useOptimizedProject, useOptimizedProjectLabels } from '@/services/optimizedWorkspace.service';
+import { OptimizedThumbnail } from '@/components/ui/OptimizedThumbnail';
 import './workspace.css';
 
 interface WorkspaceProps {
@@ -37,21 +38,29 @@ type SortBy = 'name' | 'created' | 'updated' | 'size';
 
 export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobileMenuToggle }) => {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, token } = useAuthContext();
-  const { currentProject, labels, isLoading, refreshLabels, refreshCurrentProject, error } = useProjectContext();
+  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
   const { deleteLabel } = useProjects();
   
-  console.log('🎯 ProjectWorkspace Debug:', { 
-    projectId, 
-    currentProject: currentProject?.name,
-    labelsCount: labels.length, 
-    isLoading, 
-    error,
-    isAuthenticated,
-    authLoading,
-    hasToken: !!token
-  });
+  // Only fetch data when authenticated
+  const shouldFetch = isAuthenticated && !authLoading;
+  
+  // Use optimized hooks for data fetching
+  const {
+    data: currentProject,
+    loading: projectLoading,
+    error: projectError
+  } = useOptimizedProject(projectId, shouldFetch);
 
+  const {
+    data: labels,
+    loading: labelsLoading,
+    error: labelsError,
+    refresh: refreshLabels
+  } = useOptimizedProjectLabels(projectId, shouldFetch);
+
+  const isLoading = projectLoading || labelsLoading;
+  const error = projectError || labelsError;
+  
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>('masonry');
   const [sortBy, setSortBy] = useState<SortBy>('updated');
@@ -63,24 +72,10 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingLabels, setDeletingLabels] = useState(false);
 
-  // Load project and labels when projectId changes
-  useEffect(() => {
-    if (projectId && isAuthenticated && !authLoading && token) {
-      console.log('🔄 ProjectWorkspace: Loading project and labels for:', projectId);
-      refreshCurrentProject(projectId);
-      refreshLabels(projectId);
-    } else {
-      console.log('🔄 ProjectWorkspace: Not loading project data', { 
-        projectId, 
-        isAuthenticated, 
-        authLoading, 
-        hasToken: !!token 
-      });
-    }
-  }, [projectId, isAuthenticated, authLoading, token]); // Depend on auth state
-
-  // Filter and sort labels
+  // Filter and sort labels - MOVED HERE TO COMPLY WITH HOOKS RULES
   const filteredAndSortedLabels = useMemo(() => {
+    if (!labels) return [];
+    
     const filtered = labels.filter(label => 
       label.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -105,25 +100,21 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
     return filtered;
   }, [labels, searchQuery, sortBy]);
 
-  // Helper functions
+  // Helper functions - MOVED HERE TO COMPLY WITH HOOKS RULES
   const clearSelection = () => setSelectedLabels(new Set());
 
-  const selectAllLabels = () => {
+  const selectAllLabels = useCallback(() => {
     const allLabelIds = new Set(filteredAndSortedLabels.map(label => label.id));
     setSelectedLabels(allLabelIds);
-  };
+  }, [filteredAndSortedLabels]);
 
-  const handleBulkExport = () => {
-    setShowExportModal(true);
-  };
-
-  const handleBulkDelete = () => {
+  const handleBulkDelete = useCallback(() => {
     if (selectedLabels.size > 0) {
       setShowDeleteConfirm(true);
     }
-  };
+  }, [selectedLabels]);
 
-  const confirmBulkDelete = async () => {
+  const confirmBulkDelete = useCallback(async () => {
     if (selectedLabels.size === 0) return;
 
     setDeletingLabels(true);
@@ -144,7 +135,7 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
         // Clear selection after successful deletion
         clearSelection();
         // Refresh labels to update the UI
-        refreshLabels(projectId);
+        refreshLabels();
       }
     } catch (error) {
       console.error('Error during bulk delete:', error);
@@ -152,19 +143,15 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
       setDeletingLabels(false);
       setShowDeleteConfirm(false);
     }
-  };
+  }, [selectedLabels, deleteLabel, refreshLabels]);
 
-  const cancelBulkDelete = () => {
-    setShowDeleteConfirm(false);
-  };
-
-  const handleBulkCreationSuccess = (createdLabels: unknown[]) => {
+  const handleBulkCreationSuccess = useCallback((createdLabels: unknown[]) => {
     setShowBulkCreationModal(false);
     refreshLabels(); // Refresh labels list to show new ones
     console.log(`✅ Successfully created ${createdLabels.length} labels`);
-  };
+  }, [refreshLabels]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - MOVED HERE TO COMPLY WITH HOOKS RULES
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + A to select all
@@ -175,7 +162,6 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
       // Escape to clear selection
       if (e.key === 'Escape') {
         clearSelection();
-        setPreviewLabel(null);
       }
       // Delete key to delete selected labels
       if (e.key === 'Delete' && selectedLabels.size > 0) {
@@ -183,9 +169,97 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedLabels, filteredAndSortedLabels]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectAllLabels, selectedLabels, handleBulkDelete]);
+
+  // Simplified debug logging - only when data changes
+  if (labels && labels.length > 0) {
+    console.log(`✅ ProjectWorkspace loaded ${labels.length} labels for project ${currentProject?.name}`);
+  }
+
+  // Show authentication error if needed
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <div className="workspace-content">
+        <div className="workspace-header">
+          <div className="workspace-header-content">
+            <div className="workspace-title">
+              <h1>Authentication Required</h1>
+              <p>Please log in to access your workspace</p>
+            </div>
+          </div>
+        </div>
+        <div className="auth-error-container">
+          <div className="auth-error">
+            <h3>🔒 Please Log In</h3>
+            <p>You need to be authenticated to view projects and labels.</p>
+            <button 
+              onClick={() => router.push('/login')}
+              className="btn btn-primary"
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="workspace-content">
+        <div className="workspace-loading">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p>Checking authentication...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if authentication-related error
+  if (error === 'AUTHENTICATION_REQUIRED') {
+    return (
+      <div className="workspace-content">
+        <div className="workspace-header">
+          <div className="workspace-header-content">
+            <div className="workspace-title">
+              <h1>Session Expired</h1>
+              <p>Your session has expired. Please log in again.</p>
+            </div>
+          </div>
+        </div>
+        <div className="auth-error-container">
+          <div className="auth-error">
+            <h3>🔒 Session Expired</h3>
+            <p>Your authentication token has expired. Please log in again.</p>
+            <button 
+              onClick={() => {
+                // Clear any cached data and redirect to login
+                localStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_token');
+                router.push('/login');
+              }}
+              className="btn btn-primary"
+            >
+              Log In Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const handleBulkExport = () => {
+    setShowExportModal(true);
+  };
+
+  const cancelBulkDelete = () => {
+    setShowDeleteConfirm(false);
+  };
 
   const handleLabelClick = (label: Label) => {
     // Click toggles selection
@@ -249,18 +323,20 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
           className="label-preview"
           style={{ height: viewMode === 'list' ? '60px' : `${displayHeight}px` }}
         >
-          {label.thumbnail ? (
-            <img 
-              src={label.thumbnail} 
-              alt={label.name}
-              className="label-thumbnail"
-            />
-          ) : (
-            <div className="label-placeholder">
-              <Tags size={24} />
-              <span>{width} × {height}</span>
-            </div>
-          )}
+          <OptimizedThumbnail
+            labelId={label.id}
+            thumbnailUrl={label.thumbnail}
+            size={viewMode === 'list' ? 'sm' : 'md'}
+            alt={label.name}
+            className="label-thumbnail"
+            generateOnError={false}
+            fallback={
+              <div className="label-placeholder">
+                <Tags size={24} />
+                <span>{width} × {height}</span>
+              </div>
+            }
+          />
           
           {/* Quick Actions Overlay */}
           <div className="label-overlay">

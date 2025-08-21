@@ -39,8 +39,6 @@ export const useAuth = () => {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedUser = localStorage.getItem(USER_KEY);
 
-      console.log('Auth check - storedToken:', !!storedToken, 'storedUser:', !!storedUser);
-
       if (!storedToken || !storedUser) {
         setAuthState(prev => ({ ...prev, isLoading: false }));
         return;
@@ -53,11 +51,11 @@ export const useAuth = () => {
         }
       });
 
-      console.log('Auth validation response:', response.status, response.ok);
+      console.log('🔐 useAuth: Auth validation response:', response.status, response.ok);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Auth validation successful:', data);
+        console.log('🔐 useAuth: Auth validation successful:', data);
         setAuthState({
           user: JSON.parse(storedUser),
           token: storedToken,
@@ -65,7 +63,7 @@ export const useAuth = () => {
           isAuthenticated: true,
         });
       } else {
-        console.log('Auth validation failed, clearing storage');
+        console.log('🔐 useAuth: Auth validation failed, clearing storage');
         // Token is invalid, clear storage
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
