@@ -32,8 +32,14 @@ interface FabricObjectData {
   strokeWidth?: number;
   sharedUUID?: string;
   qrData?: string;
+  data?: string; // Może być używane przez niektóre obiekty QR
   qrErrorCorrectionLevel?: string;
   id?: string;
+  // Image specific properties
+  src?: string;
+  imageUrl?: string;
+  scaleX?: number;
+  scaleY?: number;
   customData?: {
     type?: string;
     content?: string;
@@ -42,6 +48,21 @@ interface FabricObjectData {
     foregroundColor?: string;
     backgroundColor?: string;
   };
+}
+
+interface FabricDataPreferences {
+  uuid?: {
+    qrPrefix?: string;
+    uuidLength?: number;
+    labelUUID?: string;
+  };
+}
+
+interface FabricDataWithPreferences {
+  objects: FabricObjectData[];
+  background?: string;
+  version?: string;
+  preferences?: FabricDataPreferences;
 }
 
 // Helper function do tworzenia QR kodów
@@ -80,6 +101,11 @@ const renderLabelToImage = async (
 ): Promise<string | null> => {
   try {
     const { width: widthMm, height: heightMm, fabricData } = labelData;
+    
+    // Pobierz qrPrefix z preferences tej etykiety
+    const qrPrefix = (fabricData as FabricDataWithPreferences).preferences?.uuid?.qrPrefix || '';
+    
+    console.log(`🏷️ Processing label "${labelData.name}" with QR prefix: "${qrPrefix}"`);
     
     // Tworzenie canvas o wysokiej rozdzielczości
     const widthPx = mmToPx(widthMm, dpi);
@@ -204,8 +230,38 @@ const renderLabelToImage = async (
             break;
 
           case 'qrcode':
-            const qrData = objData.qrData || objData.sharedUUID || 'QR';
+            // Sprawdź różne właściwości QR - system bulk może używać 'data'
+            let qrUUID = objData.sharedUUID || 'QR';
+            
+            // Jeśli data zawiera już prefiks, wydobądź sam UUID
+            if (objData.data && objData.data !== objData.sharedUUID) {
+              // Sprawdź czy data zawiera prefiks + UUID
+              if (qrPrefix && objData.data.startsWith(qrPrefix)) {
+                qrUUID = objData.data.substring(qrPrefix.length);
+              } else {
+                // Jeśli nie ma prefiksu ale data jest różna od sharedUUID, użyj data
+                qrUUID = objData.data;
+              }
+            } else if (objData.qrData && objData.qrData !== objData.sharedUUID) {
+              // Podobnie dla qrData
+              if (qrPrefix && objData.qrData.startsWith(qrPrefix)) {
+                qrUUID = objData.qrData.substring(qrPrefix.length);
+              } else {
+                qrUUID = objData.qrData;
+              }
+            }
+            
+            const qrData = qrPrefix ? `${qrPrefix}${qrUUID}` : qrUUID;
             const qrSize = mmToPx(objData.width || 20, dpi);
+            
+            console.log(`🔍 QR Code debug:`, {
+              sharedUUID: objData.sharedUUID,
+              qrData: objData.qrData,
+              data: objData.data,
+              extractedUUID: qrUUID,
+              qrPrefix,
+              finalQRData: qrData
+            });
             
             const qrDataURL = await createQRCodeDataURL(
               qrData,
@@ -227,6 +283,41 @@ const renderLabelToImage = async (
                 hasBorders: false,
               });
               fabricObj = img as CustomFabricObject;
+            }
+            break;
+
+          case 'image':
+            const imageUrl = objData.src || objData.imageUrl;
+            if (imageUrl) {
+              try {
+                const imageObj = await FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' });
+                
+                // Calculate target dimensions in pixels
+                const targetWidthPx = mmToPx(objData.width || 20, dpi);
+                const targetHeightPx = mmToPx(objData.height || 20, dpi);
+                
+                // Calculate scale to fit target dimensions
+                const originalWidth = imageObj.width || 1;
+                const originalHeight = imageObj.height || 1;
+                
+                const scaleX = targetWidthPx / originalWidth;
+                const scaleY = targetHeightPx / originalHeight;
+                
+                imageObj.set({
+                  left: mmToPx(objData.x || 0, dpi),
+                  top: mmToPx(objData.y || 0, dpi),
+                  scaleX: scaleX,
+                  scaleY: scaleY,
+                  selectable: false,
+                  hasControls: false,
+                  hasBorders: false,
+                });
+                
+                fabricObj = imageObj as CustomFabricObject;
+              } catch (imageError) {
+                console.error('Failed to load image for PDF export:', imageUrl, imageError);
+                // Continue without this image rather than failing the whole export
+              }
             }
             break;
 

@@ -1,10 +1,44 @@
 'use client';
 
-import { ExportRequest, LabelExportData } from '../types/export.types';
+import { ExportRequest, LabelExportData, FabricObject } from '../types/export.types';
 import { Label } from '@/features/project-management/types/project.types';
 
 class ExportService {
   private readonly baseUrl = '/api';
+
+  // Helper function to safely convert fabricData
+  private ensureFabricData(fabricData?: Record<string, unknown>): {
+    objects: FabricObject[];
+    background?: string;
+    version?: string;
+    preferences?: {
+      uuid?: {
+        qrPrefix?: string;
+        uuidLength?: number;
+        labelUUID?: string;
+      };
+    };
+  } {
+    if (!fabricData) {
+      return { objects: [], background: '#ffffff' };
+    }
+
+    // Type-safe conversion
+    return {
+      objects: Array.isArray(fabricData.objects) ? fabricData.objects as FabricObject[] : [],
+      background: typeof fabricData.background === 'string' ? fabricData.background : '#ffffff',
+      version: typeof fabricData.version === 'string' ? fabricData.version : undefined,
+      preferences: fabricData.preferences && typeof fabricData.preferences === 'object' 
+        ? fabricData.preferences as {
+            uuid?: {
+              qrPrefix?: string;
+              uuidLength?: number;
+              labelUUID?: string;
+            };
+          }
+        : undefined
+    };
+  }
 
   // Pobieranie danych etykiet potrzebnych do eksportu
   async getLabelExportData(labelIds: string[]): Promise<LabelExportData[]> {
@@ -40,7 +74,7 @@ class ExportService {
         name: label.name,
         width: label.width,
         height: label.height,
-        fabricData: label.fabricData || { objects: [], background: '#ffffff' }
+        fabricData: this.ensureFabricData(label.fabricData)
       }));
 
     } catch (error) {
@@ -77,7 +111,7 @@ class ExportService {
         name: label.name,
         width: label.width,
         height: label.height,
-        fabricData: label.fabricData || { objects: [], background: '#ffffff' }
+        fabricData: this.ensureFabricData(label.fabricData)
       }));
 
     } catch (error) {

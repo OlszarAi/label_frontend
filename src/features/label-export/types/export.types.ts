@@ -1,5 +1,14 @@
 // Types dla systemu eksportu etykiet
 
+export interface FabricObject {
+  type: string;
+  text?: string;
+  qrData?: string;
+  sharedUUID?: string;
+  data?: string;
+  [key: string]: unknown;
+}
+
 export type ExportFormat = 'pdf' | 'png' | 'jpg' | 'svg'; // Na razie tylko PDF, reszta coming soon
 
 export interface ExportOptions {
@@ -37,7 +46,18 @@ export interface LabelExportData {
   name: string;
   width: number;
   height: number;
-  fabricData: Record<string, unknown>;
+  fabricData: {
+    objects: FabricObject[];
+    background?: string;
+    version?: string;
+    preferences?: {
+      uuid?: {
+        qrPrefix?: string;
+        uuidLength?: number;
+        labelUUID?: string;
+      };
+    };
+  };
 }
 
 export interface ExportProgress {
