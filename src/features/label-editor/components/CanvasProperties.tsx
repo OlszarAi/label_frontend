@@ -25,9 +25,9 @@ export const CanvasProperties = ({
   const [showRulerOptions, setShowRulerOptions] = useState(false);
   
   const [localGridValues, setLocalGridValues] = useState({
-    gridSize: preferences.grid.size.toString(),
-    gridColor: preferences.grid.color,
-    gridOpacity: preferences.grid.opacity.toString(),
+    gridSize: (preferences.grid?.size || 5).toString(),
+    gridColor: preferences.grid?.color || '#e0e0e0',
+    gridOpacity: (preferences.grid?.opacity || 0.5).toString(),
   });
 
   const [localRulerValues, setLocalRulerValues] = useState({

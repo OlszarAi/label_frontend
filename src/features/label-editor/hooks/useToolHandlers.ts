@@ -21,8 +21,8 @@ export const useToolHandlers = ({
     const coords = snapCoordinatesToGrid(
       DEFAULT_POSITION.X,
       DEFAULT_POSITION.Y, 
-      state.preferences.grid.size, 
-      state.preferences.grid.snapToGrid
+      state.preferences.grid?.size || 5, 
+      state.preferences.grid?.snapToGrid || false
     );
     addObject({
       type: 'text',
@@ -39,8 +39,8 @@ export const useToolHandlers = ({
     const coords = snapCoordinatesToGrid(
       DEFAULT_POSITION.X,
       DEFAULT_POSITION.Y, 
-      state.preferences.grid.size, 
-      state.preferences.grid.snapToGrid
+      state.preferences.grid?.size || 5, 
+      state.preferences.grid?.snapToGrid || false
     );
     addObject({
       type: 'rectangle',
@@ -56,8 +56,8 @@ export const useToolHandlers = ({
     const coords = snapCoordinatesToGrid(
       DEFAULT_POSITION.X,
       DEFAULT_POSITION.Y, 
-      state.preferences.grid.size, 
-      state.preferences.grid.snapToGrid
+      state.preferences.grid?.size || 5, 
+      state.preferences.grid?.snapToGrid || false
     );
     addObject({
       type: 'circle',
@@ -73,8 +73,8 @@ export const useToolHandlers = ({
     const coords = snapCoordinatesToGrid(
       DEFAULT_POSITION.X,
       DEFAULT_POSITION.Y, 
-      state.preferences.grid.size, 
-      state.preferences.grid.snapToGrid
+      state.preferences.grid?.size || 5, 
+      state.preferences.grid?.snapToGrid || false
     );
     addObject({
       type: 'qrcode',
@@ -91,8 +91,8 @@ export const useToolHandlers = ({
     const coords = snapCoordinatesToGrid(
       DEFAULT_POSITION.X,
       DEFAULT_POSITION.Y, 
-      state.preferences.grid.size, 
-      state.preferences.grid.snapToGrid
+      state.preferences.grid?.size || 5, 
+      state.preferences.grid?.snapToGrid || false
     );
     addObject({
       type: 'uuid',
@@ -109,8 +109,8 @@ export const useToolHandlers = ({
     const coords = snapCoordinatesToGrid(
       DEFAULT_POSITION.X,
       DEFAULT_POSITION.Y, 
-      state.preferences.grid.size, 
-      state.preferences.grid.snapToGrid
+      state.preferences.grid?.size || 5, 
+      state.preferences.grid?.snapToGrid || false
     );
 
     // Calculate dimensions while maintaining aspect ratio

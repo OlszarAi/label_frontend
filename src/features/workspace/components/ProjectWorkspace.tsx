@@ -6,7 +6,6 @@ import {
   Search, 
   Grid3X3, 
   List, 
-  Filter, 
     Plus,
   Download,
   MoreHorizontal,
@@ -21,9 +20,11 @@ import {
   Menu
 } from 'lucide-react';
 import { useProjectContext } from '@/features/project-management/context/ProjectContext';
+import { useProjects } from '@/features/project-management/hooks/useProjects';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { Label } from '@/features/project-management/types/project.types';
 import { BulkExportModal } from './BulkExportModal';
+import { BulkLabelCreationModal } from '@/features/bulk-label-creation';
 import './workspace.css';
 
 interface WorkspaceProps {
@@ -38,6 +39,7 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, token } = useAuthContext();
   const { currentProject, labels, isLoading, refreshLabels, refreshCurrentProject, error } = useProjectContext();
+  const { deleteLabel } = useProjects();
   
   console.log('🎯 ProjectWorkspace Debug:', { 
     projectId, 
@@ -57,6 +59,9 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [previewLabel, setPreviewLabel] = useState<Label | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showBulkCreationModal, setShowBulkCreationModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingLabels, setDeletingLabels] = useState(false);
 
   // Load project and labels when projectId changes
   useEffect(() => {
@@ -76,7 +81,7 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
 
   // Filter and sort labels
   const filteredAndSortedLabels = useMemo(() => {
-    let filtered = labels.filter(label => 
+    const filtered = labels.filter(label => 
       label.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -112,6 +117,53 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
     setShowExportModal(true);
   };
 
+  const handleBulkDelete = () => {
+    if (selectedLabels.size > 0) {
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedLabels.size === 0) return;
+
+    setDeletingLabels(true);
+    
+    try {
+      const labelIds = Array.from(selectedLabels);
+      const deletePromises = labelIds.map(labelId => deleteLabel(labelId));
+      const results = await Promise.all(deletePromises);
+      
+      // Check if all deletions were successful
+      const failedDeletions = results.filter(result => !result.success);
+      
+      if (failedDeletions.length > 0) {
+        console.error('Some labels failed to delete:', failedDeletions);
+        // You might want to show a toast notification here
+      } else {
+        console.log(`✅ Successfully deleted ${labelIds.length} labels`);
+        // Clear selection after successful deletion
+        clearSelection();
+        // Refresh labels to update the UI
+        refreshLabels(projectId);
+      }
+    } catch (error) {
+      console.error('Error during bulk delete:', error);
+    } finally {
+      setDeletingLabels(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const cancelBulkDelete = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  const handleBulkCreationSuccess = (createdLabels: unknown[]) => {
+    setShowBulkCreationModal(false);
+    refreshLabels(); // Refresh labels list to show new ones
+    console.log(`✅ Successfully created ${createdLabels.length} labels`);
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -127,8 +179,7 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
       }
       // Delete key to delete selected labels
       if (e.key === 'Delete' && selectedLabels.size > 0) {
-        // TODO: Implement delete functionality
-        console.log('Delete selected labels:', Array.from(selectedLabels));
+        handleBulkDelete();
       }
     };
 
@@ -326,9 +377,13 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
                 <Download size={16} />
                 Eksportuj
               </button>
-              <button className="action-btn danger">
+              <button 
+                className="action-btn danger"
+                onClick={handleBulkDelete}
+                disabled={deletingLabels}
+              >
                 <Trash2 size={16} />
-                Usuń
+                {deletingLabels ? 'Usuwanie...' : 'Usuń'}
               </button>
               <button 
                 className="action-btn ghost"
@@ -345,6 +400,13 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
               >
                 <Plus size={16} />
                 Nowa etykieta
+              </button>
+              <button 
+                className="action-btn secondary"
+                onClick={() => setShowBulkCreationModal(true)}
+              >
+                <Grid3X3 size={16} />
+                Utwórz masowo
               </button>
             </div>
           )}
@@ -555,6 +617,62 @@ export const ProjectWorkspace: React.FC<WorkspaceProps> = ({ projectId, onMobile
         projectName={currentProject?.name}
       />
 
+      {/* Bulk Label Creation Modal */}
+      <BulkLabelCreationModal
+        isOpen={showBulkCreationModal}
+        onClose={() => setShowBulkCreationModal(false)}
+        projectId={projectId}
+        onSuccess={handleBulkCreationSuccess}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="delete-modal-overlay"
+            onClick={cancelBulkDelete}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="delete-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="delete-modal-content">
+                <div className="delete-modal-icon">
+                  <Trash2 size={32} />
+                </div>
+                <h3 className="delete-modal-title">Usuń etykiety</h3>
+                <p className="delete-modal-message">
+                  Czy na pewno chcesz usunąć {selectedLabels.size} etykiet{selectedLabels.size === 1 ? 'ę' : selectedLabels.size > 4 ? '' : 'y'}? 
+                  <br />
+                  <strong>Tej operacji nie można cofnąć.</strong>
+                </p>
+                <div className="delete-modal-actions">
+                  <button
+                    onClick={cancelBulkDelete}
+                    className="delete-modal-btn-cancel"
+                    disabled={deletingLabels}
+                  >
+                    Anuluj
+                  </button>
+                  <button
+                    onClick={confirmBulkDelete}
+                    className="delete-modal-btn-delete"
+                    disabled={deletingLabels}
+                  >
+                    {deletingLabels ? 'Usuwanie...' : 'Usuń'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -87,18 +87,18 @@ export const useLabelActions = ({
     const projectId = currentLabel?.projectId;
     
     if (hasUnsavedChanges && !autoSave) {
-      if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+      if (confirm('Masz niezapisane zmiany. Czy na pewno chcesz opuścić edytor?')) {
         if (projectId) {
-          router.push(`/projects/${projectId}/labels`);
+          router.push(`/workspace/${projectId}`);
         } else {
-          router.push('/projects');
+          router.push('/workspace');
         }
       }
     } else {
       if (projectId) {
-        router.push(`/projects/${projectId}/labels`);
+        router.push(`/workspace/${projectId}`);
       } else {
-        router.push('/projects');
+        router.push('/workspace');
       }
     }
   }, [router, hasUnsavedChanges, autoSave, currentLabel?.projectId]);

@@ -6,6 +6,9 @@ export { LabelEditor } from './components/LabelEditor';
 // Components
 export { CanvasEditor } from './components/CanvasEditor';
 export { CanvasProperties } from './components/CanvasProperties';
+export { PropertiesPanel } from './components/panels/PropertiesPanel';
+export { ToolboxPanel } from './components/panels/ToolboxPanel';
+export { UserAssetsPanel } from './components/assets/UserAssetsPanel';
 
 // Hooks
 export { useEditorState } from './hooks/useEditorState';

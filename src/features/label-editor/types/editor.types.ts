@@ -6,6 +6,7 @@ export interface LabelDimensions {
 export interface UUIDPreferences {
   uuidLength: number;
   qrPrefix: string; // Prefix used in QR code (e.g., "https://example.com/")
+  labelUUID?: string; // UUID assigned to this specific label
 }
 
 export interface GridPreferences {

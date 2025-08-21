@@ -59,21 +59,29 @@ export const useLabelUUID = (options: UseLabelUUIDOptions = {}): LabelUUIDManage
 
   // Get display UUID (truncated to current length)
   const getDisplayUUID = useCallback((): string => {
-    if (state.labelUUID.length === state.uuidLength) {
-      return state.labelUUID;
-    }
+    let result: string;
     
-    // Truncate or pad as needed
-    if (state.labelUUID.length > state.uuidLength) {
-      return state.labelUUID.substring(0, state.uuidLength);
+    if (state.labelUUID.length === state.uuidLength) {
+      result = state.labelUUID;
+    } else if (state.labelUUID.length > state.uuidLength) {
+      // Truncate
+      result = state.labelUUID.substring(0, state.uuidLength);
     } else {
       // Pad with new random characters
       let uuid = state.labelUUID;
       while (uuid.length < state.uuidLength) {
         uuid += Math.floor(Math.random() * 16).toString(16);
       }
-      return uuid;
+      result = uuid;
     }
+    
+    console.log(`🏷️ getDisplayUUID called:`, {
+      labelUUID: state.labelUUID,
+      uuidLength: state.uuidLength,
+      result: result
+    });
+    
+    return result;
   }, [state.labelUUID, state.uuidLength]);
 
   // Get QR code data with prefix
@@ -97,9 +105,8 @@ export const useLabelUUID = (options: UseLabelUUIDOptions = {}): LabelUUIDManage
       needsRegeneration: false,
     }));
     
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 0);
+    // Usuń setTimeout - niech będzie synchroniczne!
+    isUpdatingRef.current = false;
     
     return newUUID;
   }, [state.labelUUID, state.uuidLength]);
@@ -107,6 +114,8 @@ export const useLabelUUID = (options: UseLabelUUIDOptions = {}): LabelUUIDManage
   // Set specific UUID (for loading existing labels)
   const setUUID = useCallback((uuid: string): void => {
     if (isUpdatingRef.current) return;
+    
+    console.log(`🎯 Setting UUID in manager: ${uuid}`);
     
     isUpdatingRef.current = true;
     
@@ -117,9 +126,8 @@ export const useLabelUUID = (options: UseLabelUUIDOptions = {}): LabelUUIDManage
       needsRegeneration: false,
     }));
     
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 0);
+    // Usuń setTimeout - niech będzie synchroniczne!
+    isUpdatingRef.current = false;
   }, []);
 
   // Update UUID length
@@ -213,10 +221,23 @@ export const ensureLabelUUIDConsistency = (
 
 // Helper to get UUID from existing objects (for migration/consistency)
 export const extractLabelUUID = (objects: CanvasObject[]): string | null => {
+  console.log('🔍 extractLabelUUID debug:', {
+    objectCount: objects.length,
+    objects: objects.map(obj => ({
+      id: obj.id,
+      type: obj.type,
+      sharedUUID: obj.sharedUUID,
+      text: obj.text
+    }))
+  });
+  
   for (const obj of objects) {
     if ((obj.type === 'qrcode' || obj.type === 'uuid') && obj.sharedUUID) {
+      console.log(`🎯 Found UUID in ${obj.type} object: ${obj.sharedUUID}`);
       return obj.sharedUUID;
     }
   }
+  
+  console.log('❌ No UUID found in objects');
   return null;
 };

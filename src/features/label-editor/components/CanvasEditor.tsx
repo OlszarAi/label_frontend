@@ -332,11 +332,11 @@ export const CanvasEditor = ({
         let top = obj.top || 0;
 
         // Apply snap to grid if enabled
-        if (preferences.grid.snapToGrid) {
+        if (preferences.grid?.snapToGrid) {
           const leftMm = pxToMm(left);
           const topMm = pxToMm(top);
-          const snappedLeftMm = snapToGrid(leftMm, preferences.grid.size, true);
-          const snappedTopMm = snapToGrid(topMm, preferences.grid.size, true);
+          const snappedLeftMm = snapToGrid(leftMm, preferences.grid?.size || 5, true);
+          const snappedTopMm = snapToGrid(topMm, preferences.grid?.size || 5, true);
           left = mmToPx(snappedLeftMm);
           top = mmToPx(snappedTopMm);
         }
@@ -394,7 +394,7 @@ export const CanvasEditor = ({
     canvas.setZoom(zoom);
 
     // Draw grid after canvas size update
-    drawGrid(canvas, dimensions, preferences.grid);
+    drawGrid(canvas, dimensions, preferences.grid || {});
 
     // Sync objects
     const currentObjects = canvas.getObjects() as CustomFabricObject[];
@@ -664,7 +664,7 @@ export const CanvasEditor = ({
     });
 
     // Draw grid after all objects are synced
-    drawGrid(canvas, dimensions, preferences.grid);
+    drawGrid(canvas, dimensions, preferences.grid || {});
 
     canvas.renderAll();
   }, [dimensions, zoom, objects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix]);
@@ -675,7 +675,7 @@ export const CanvasEditor = ({
   
   // Simplified ruler step calculation - align with grid when possible
   let rulerStep;
-  const gridSize = preferences.grid.size; // Grid size in mm
+  const gridSize = preferences.grid?.size || 5; // Grid size in mm, fallback to 5
   
   // Try to align ruler with grid first
   if (zoom >= 0.5) {

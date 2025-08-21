@@ -110,11 +110,20 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
         const existingUUID = extractLabelUUID(objects);
         let processedObjects = objects;
         
+        console.log('🔍 UUID extraction debug:', {
+          objects: objects,
+          objectsWithUUID: objects.filter(obj => obj.type === 'uuid' || obj.type === 'qrcode'),
+          extractedUUID: existingUUID,
+          hasQRorUUID: objects.some((obj: CanvasObject) => obj.type === 'qrcode' || obj.type === 'uuid')
+        });
+        
         if (existingUUID) {
+          console.log(`✅ Found existing UUID: ${existingUUID}, setting in manager`);
           // Use existing UUID and ensure consistency - set the UUID in manager first
           labelUUIDManager.setUUID(existingUUID);
           processedObjects = ensureLabelUUIDConsistency(objects, existingUUID);
         } else if (objects.some((obj: CanvasObject) => obj.type === 'qrcode' || obj.type === 'uuid')) {
+          console.log(`⚠️ Found QR/UUID objects but no extractable UUID, using manager UUID: ${labelUUIDManager.labelUUID}`);
           // If we have QR/UUID objects but no UUID, assign the current one
           processedObjects = labelUUIDManager.updateObjectsWithUUID(objects, labelUUIDManager.labelUUID);
         }
@@ -125,14 +134,26 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
           objects: processedObjects,
           selectedObjectId: null,
           preferences: {
+            ...initialPreferences,
             ...preferences,
             uuid: {
+              ...initialPreferences.uuid,
               ...preferences.uuid,
-              uuidLength: existingUUID?.length || preferences.uuid?.uuidLength || 8,
+              // Ustaw labelUUID z etykiety!
+              labelUUID: existingUUID || generateUUID(8),
+              // Nie nadpisuj uuidLength jeśli jest już ustawiony w preferences!
+              uuidLength: preferences.uuid?.uuidLength || existingUUID?.length || initialPreferences.uuid.uuidLength,
             }
           },
         }));
         
+        console.log('📊 Loaded label preferences:', {
+          qrPrefix: preferences.uuid?.qrPrefix,
+          uuidLength: preferences.uuid?.uuidLength,
+          existingUUID: existingUUID,
+          finalQrPrefix: preferences.uuid?.qrPrefix || initialPreferences.uuid.qrPrefix
+        });
+
         // Update UUID manager length to match preferences
         if (preferences.uuid?.uuidLength) {
           labelUUIDManager.updateUUIDLength(preferences.uuid.uuidLength);
@@ -326,17 +347,34 @@ export const useIntegratedEditorState = (labelId?: string, projectId?: string) =
     
     // If it's a QR code or UUID object, ensure it uses the label's UUID
     if (newObject.type === 'qrcode' || newObject.type === 'uuid') {
-      newObject.sharedUUID = labelUUIDManager.labelUUID;
+      // Użyj UUID etykiety z preferences lub znajdź w obiektach
+      let labelUUID = state.preferences.uuid.labelUUID;
+      
+      if (!labelUUID) {
+        // Fallback: znajdź UUID w istniejących obiektach
+        const foundUUID = extractLabelUUID(state.objects);
+        if (foundUUID) {
+          labelUUID = foundUUID;
+        }
+      }
+      
+      if (!labelUUID) {
+        // Fallback: generuj nowy UUID dla etykiety
+        labelUUID = generateUUID(8);
+        console.log(`🆕 Generated new label UUID for object: ${labelUUID}`);
+      }
+      
+      console.log(`🆕 Adding new ${newObject.type} object with label UUID: ${labelUUID}`);
+      
+      newObject.sharedUUID = labelUUID;
       if (newObject.type === 'uuid') {
-        newObject.text = labelUUIDManager.labelUUID;
+        newObject.text = labelUUID;
       }
     }
     
     setState(prev => ({ ...prev, objects: [...prev.objects, newObject] }));
     setHasUnsavedChanges(true);
-  // labelUUIDManager is used but intentionally omitted to prevent re-creation loops
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [state.objects, state.preferences]);
 
   const updateObject = useCallback((id: string, updates: Partial<CanvasObject>) => {
     setState(prev => ({

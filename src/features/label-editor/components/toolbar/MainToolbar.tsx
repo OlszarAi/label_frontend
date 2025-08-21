@@ -92,7 +92,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Content className="bg-gray-900 text-white px-2 py-1 rounded text-xs z-50" sideOffset={5}>
-                  Powrót do projektu
+                  Powrót do workspace
                   <Tooltip.Arrow className="fill-gray-900" />
                 </Tooltip.Content>
               </Tooltip.Portal>
