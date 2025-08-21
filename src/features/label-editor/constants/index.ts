@@ -13,7 +13,7 @@ export const TOOL_TYPES = {
 // Default dimensions (in mm)
 export const DEFAULT_DIMENSIONS = {
   WIDTH: 100,
-  HEIGHT: 50
+  HEIGHT: 100  // Changed from 50 to 100 to make square labels by default
 } as const;
 
 // Default object properties

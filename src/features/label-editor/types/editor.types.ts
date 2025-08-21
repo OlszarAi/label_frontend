@@ -38,6 +38,7 @@ export interface CanvasObject {
   y: number;      // position in mm
   width?: number; // in mm
   height?: number; // in mm
+  angle?: number; // rotation angle in degrees
   text?: string;
   fontSize?: number;
   fontFamily?: string;

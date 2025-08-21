@@ -72,7 +72,9 @@ export const BulkLabelEditor: React.FC<BulkLabelEditorProps> = ({
     selectObject(id);
   }, [selectObject]);
 
-  // Load initial template data
+  // Load initial template data (only once when template changes)
+  // IMPORTANT: Don't include addObject or updateDimensions in deps to prevent
+  // template reloading when user adds objects, which would reset dimensions
   useEffect(() => {
     if (initialTemplate) {
       // Set dimensions
@@ -90,7 +92,7 @@ export const BulkLabelEditor: React.FC<BulkLabelEditorProps> = ({
         });
       }
     }
-  }, [initialTemplate, addObject, updateDimensions]);
+  }, [initialTemplate]); // Removed addObject and updateDimensions to prevent re-execution on every object addition
 
   const handleCanvasReady = useCallback((canvas: Canvas) => {
     canvasRef.current = canvas;

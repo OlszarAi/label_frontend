@@ -53,6 +53,7 @@ export const createQRCodeObject = async (
       top: mmToPx(obj.y),
       scaleX: 1,
       scaleY: 1,
+      angle: obj.angle || 0, // Set rotation angle
       selectable: true,
       hasControls: true,
       hasBorders: true,
@@ -109,6 +110,7 @@ export const updateQRCodeObject = async (
           top: mmToPx(obj.y),
           scaleX: 1,
           scaleY: 1,
+          angle: obj.angle || 0, // Preserve rotation angle
           selectable: true,
           hasControls: true,
           hasBorders: true,
@@ -119,6 +121,11 @@ export const updateQRCodeObject = async (
         (newImg as CustomFabricObject)._lastQRData = currentQRData;
         (newImg as CustomFabricObject)._wasManuallyResized = fabricObj._wasManuallyResized || false;
         (newImg as CustomFabricObject)._lastSavedScale = fabricObj._lastSavedScale || { scaleX: 1, scaleY: 1 };
+        
+        // Preserve angle from original object
+        if (fabricObj.angle) {
+          newImg.set({ angle: fabricObj.angle });
+        }
         
         // Add a small delay to prevent rapid fire updates
         setTimeout(() => {
@@ -138,6 +145,7 @@ export const updateQRCodeObject = async (
     fabricObj.set({
       left: mmToPx(obj.x),
       top: mmToPx(obj.y),
+      angle: obj.angle || 0, // Set rotation angle
     });
     
     // Only update scale if object wasn't manually resized, or if we have saved scale values
@@ -189,6 +197,7 @@ export const handleQRCodeModified = (
     y: pxToMm(fabricObj.top || 0),
     width: pxToMm(newSizePx),
     height: pxToMm(newSizePx), // Keep it square
+    angle: fabricObj.angle || 0, // Save rotation angle
   };
   
   // Clear updating flag after a brief delay

@@ -17,6 +17,7 @@ interface FabricObjectData {
   y?: number;
   width?: number;
   height?: number;
+  angle?: number; // Rotation angle in degrees
   text?: string;
   fontSize?: number;
   fontFamily?: string;
@@ -147,6 +148,7 @@ const renderLabelToImage = async (
             fabricObj = new IText(objData.text || 'Tekst', {
               left: mmToPx(objData.x || 0, dpi),
               top: mmToPx(objData.y || 0, dpi),
+              angle: objData.angle || 0, // Set rotation angle
               fontSize: (objData.fontSize || 12) * (dpi / 96), // Skalowanie czcionki dla DPI
               fontFamily: objData.fontFamily || 'Arial',
               fontWeight: objData.fontWeight || 'normal',
@@ -173,6 +175,7 @@ const renderLabelToImage = async (
               fill: objData.fill || 'transparent',
               stroke: objData.stroke || '#000000',
               strokeWidth: (objData.strokeWidth || 1) * (dpi / 96),
+              angle: objData.angle || 0, // Set rotation angle
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -187,6 +190,7 @@ const renderLabelToImage = async (
               fill: objData.fill || 'transparent',
               stroke: objData.stroke || '#000000',
               strokeWidth: (objData.strokeWidth || 1) * (dpi / 96),
+              angle: objData.angle || 0, // Set rotation angle
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -202,6 +206,7 @@ const renderLabelToImage = async (
             ], {
               stroke: objData.stroke || '#000000',
               strokeWidth: (objData.strokeWidth || 1) * (dpi / 96),
+              angle: objData.angle || 0, // Set rotation angle
               selectable: false,
               hasControls: false,
               hasBorders: false,
@@ -213,6 +218,7 @@ const renderLabelToImage = async (
             fabricObj = new Text(uuidText, {
               left: mmToPx(objData.x || 0, dpi),
               top: mmToPx(objData.y || 0, dpi),
+              angle: objData.angle || 0, // Set rotation angle
               fontSize: (objData.fontSize || 12) * (dpi / 96),
               fontFamily: objData.fontFamily || 'Arial',
               fontWeight: objData.fontWeight || 'normal',
@@ -276,6 +282,7 @@ const renderLabelToImage = async (
               img.set({
                 left: mmToPx(objData.x || 0, dpi),
                 top: mmToPx(objData.y || 0, dpi),
+                angle: objData.angle || 0, // Set rotation angle
                 scaleX: 1,
                 scaleY: 1,
                 selectable: false,
@@ -306,6 +313,7 @@ const renderLabelToImage = async (
                 imageObj.set({
                   left: mmToPx(objData.x || 0, dpi),
                   top: mmToPx(objData.y || 0, dpi),
+                  angle: objData.angle || 0, // Set rotation angle
                   scaleX: scaleX,
                   scaleY: scaleY,
                   selectable: false,

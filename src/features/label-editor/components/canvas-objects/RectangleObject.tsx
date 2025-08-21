@@ -1,6 +1,6 @@
 import { Rect } from 'fabric';
 import { CanvasObject } from '../../types/editor.types';
-import { mmToPx } from '../../utils/dimensions';
+import { mmToPx, pxToMm } from '../../utils/dimensions';
 
 export interface CustomFabricObject extends Rect {
   customData?: { id: string };
@@ -16,6 +16,7 @@ export const createRectangleObject = (obj: CanvasObject): CustomFabricObject => 
     fill: obj.fill || 'transparent',
     stroke: obj.stroke || '#000000',
     strokeWidth: obj.strokeWidth || 1,
+    angle: obj.angle || 0, // Set rotation angle
     selectable: true,
     hasControls: true,
     hasBorders: true,
@@ -34,24 +35,25 @@ export const updateRectangleObject = (
     fill: obj.fill || 'transparent',
     stroke: obj.stroke || '#000000',
     strokeWidth: obj.strokeWidth || 1,
+    angle: obj.angle || 0, // Set rotation angle
   });
 };
 
 export const handleRectangleModified = (
-  fabricObj: CustomFabricObject,
-  obj: CanvasObject
+  fabricObj: CustomFabricObject
 ): Partial<CanvasObject> => {
   // Handle width/height scaling normally - EXACTLY like working rectangle
   const newWidth = fabricObj.width ? fabricObj.width * (fabricObj.scaleX || 1) : 0;
   const newHeight = fabricObj.height ? fabricObj.height * (fabricObj.scaleY || 1) : 0;
   
   const updates: Partial<CanvasObject> = {
-    x: obj.x,
-    y: obj.y,
+    x: pxToMm(fabricObj.left || 0),
+    y: pxToMm(fabricObj.top || 0),
+    angle: fabricObj.angle || 0, // Save rotation angle
   };
   
-  if (newWidth > 0) updates.width = obj.width;
-  if (newHeight > 0) updates.height = obj.height;
+  if (newWidth > 0) updates.width = pxToMm(newWidth);
+  if (newHeight > 0) updates.height = pxToMm(newHeight);
   
   // Reset scale to prevent compound scaling - EXACTLY like working rectangle
   fabricObj.set({ scaleX: 1, scaleY: 1 });

@@ -46,7 +46,7 @@ const initialPreferences: EditorPreferences = {
 };
 
 const initialState: EditorState = {
-  dimensions: { width: 100, height: 50 },
+  dimensions: { width: 100, height: 100 }, // Changed default from 50 to 100 to make it square
   zoom: 1,
   panX: 0,
   panY: 0,

@@ -257,6 +257,7 @@ export const CanvasEditor = ({
         const updates: Partial<CanvasObject> = {
           x: pxToMm(obj.left || 0),
           y: pxToMm(obj.top || 0),
+          angle: obj.angle || 0, // Save rotation angle
         };
 
         // Get the object type from our canvas objects state (with robust fallbacks)
@@ -308,7 +309,7 @@ export const CanvasEditor = ({
         } else if (effectiveType === 'rectangle') {
           // Handle rectangles using separate module
           if (canvasObjData) {
-            const rectUpdates = handleRectangleModified(obj as RectangleCustomFabricObject, canvasObjData);
+            const rectUpdates = handleRectangleModified(obj as RectangleCustomFabricObject);
             Object.assign(updates, rectUpdates);
           }
         } else if (effectiveType === 'circle') {
@@ -483,6 +484,7 @@ export const CanvasEditor = ({
         existingFabricObj.set({
           left: mmToPx(obj.x),
           top: mmToPx(obj.y),
+          angle: obj.angle || 0, // Restore rotation angle
         });
 
         if (obj.type === 'text' && (existingFabricObj.type === 'text' || existingFabricObj.type === 'i-text')) {
@@ -502,6 +504,7 @@ export const CanvasEditor = ({
               lineHeight: obj.lineHeight || 1.2,
               charSpacing: obj.charSpacing || 0,
               fill: obj.fill || '#000000',
+              angle: obj.angle || 0, // Set rotation angle
             });
           } else {
             // Podczas edycji aktualizuj TYLKO właściwości formatowania, NIE tekst
@@ -516,6 +519,7 @@ export const CanvasEditor = ({
               lineHeight: obj.lineHeight || 1.2,
               charSpacing: obj.charSpacing || 0,
               fill: obj.fill || '#000000',
+              angle: obj.angle || 0, // Set rotation angle
             });
             console.log('Skipping text update during editing for object:', obj.id);
           }
@@ -529,6 +533,7 @@ export const CanvasEditor = ({
             y2: mmToPx(obj.y),
             stroke: obj.stroke || '#000000',
             strokeWidth: obj.strokeWidth || 1,
+            angle: obj.angle || 0, // Set rotation angle
           });
         } else if (obj.type === 'uuid' && existingFabricObj.type === 'text') {
           const textObj = existingFabricObj as Text;
@@ -544,6 +549,7 @@ export const CanvasEditor = ({
             lineHeight: obj.lineHeight || 1.2,
             charSpacing: obj.charSpacing || 0,
             fill: obj.fill || '#000000',
+            angle: obj.angle || 0, // Set rotation angle
           });
         } else if (obj.type === 'qrcode' && existingFabricObj.type === 'image') {
           // Handle QR codes using separate module
@@ -579,6 +585,7 @@ export const CanvasEditor = ({
             fabricObj = new IText(obj.text || 'Tekst', {
               left: mmToPx(obj.x),
               top: mmToPx(obj.y),
+              angle: obj.angle || 0, // Set rotation angle
               fontSize: obj.fontSize || 12,
               fontFamily: obj.fontFamily || 'Arial',
               fontWeight: obj.fontWeight || 'normal',
@@ -613,6 +620,7 @@ export const CanvasEditor = ({
             ], {
               stroke: obj.stroke || '#000000',
               strokeWidth: obj.strokeWidth || 1,
+              angle: obj.angle || 0, // Set rotation angle
             }) as CustomFabricObject;
             break;
 
@@ -621,6 +629,7 @@ export const CanvasEditor = ({
             fabricObj = new Text(uuidText, {
               left: mmToPx(obj.x),
               top: mmToPx(obj.y),
+              angle: obj.angle || 0, // Set rotation angle
               fontSize: obj.fontSize || 12,
               fontFamily: obj.fontFamily || 'Arial',
               fontWeight: obj.fontWeight || 'normal',

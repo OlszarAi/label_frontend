@@ -15,6 +15,7 @@ export const createCircleObject = (obj: CanvasObject): CustomFabricObject => {
     fill: obj.fill || '#000000',
     stroke: obj.stroke || '#000000',
     strokeWidth: obj.strokeWidth || 1,
+    angle: obj.angle || 0, // Set rotation angle
     selectable: true,
     hasControls: true,
     hasBorders: true,
@@ -34,6 +35,7 @@ export const updateCircleObject = (
     fill: obj.fill || '#000000',
     stroke: obj.stroke || '#000000',
     strokeWidth: obj.strokeWidth || 1,
+    angle: obj.angle || 0, // Set rotation angle
   });
 };
 
@@ -48,6 +50,7 @@ export const handleCircleModified = (
     y: pxToMm(fabricObj.top || 0),
     width: pxToMm(newDiameter),
     height: pxToMm(newDiameter), // Keep it circular
+    angle: fabricObj.angle || 0, // Save rotation angle
   };
   
   // Reset scale to prevent compound scaling

@@ -65,7 +65,7 @@ export const BulkLabelCreationModal: React.FC<BulkLabelCreationModalProps> = ({
       id: 'new-template',
       name: 'Nowy szablon',
       width: 100,
-      height: 50,
+      height: 100, // Changed from 50 to 100 to match DEFAULT_DIMENSIONS
       fabricData: { version: '6.0.0', objects: [], background: '#ffffff' },
       isUserTemplate: false,
       category: 'custom'

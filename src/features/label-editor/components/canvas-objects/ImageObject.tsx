@@ -22,6 +22,7 @@ export const createImageObject = async (
     img.set({
       left: mmToPx(obj.x),
       top: mmToPx(obj.y),
+      angle: obj.angle || 0, // Set rotation angle
       selectable: true,
       hasControls: true,
       hasBorders: true,
@@ -76,6 +77,7 @@ export const updateImageObject = (
       fabricObj.set({
         left: mmToPx(obj.x),
         top: mmToPx(obj.y),
+        angle: obj.angle || 0, // Set rotation angle
       });
       
       // Only update scale if object wasn't manually resized
@@ -140,6 +142,7 @@ export const handleImageModified = (
     y: pxToMm(fabricObj.top || 0),
     width: pxToMm(newWidthPx),
     height: pxToMm(newHeightPx),
+    angle: fabricObj.angle || 0, // Save rotation angle
   };
   
   // Clear updating flag after a brief delay
