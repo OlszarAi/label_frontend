@@ -31,6 +31,7 @@ interface CustomFabricObject extends FabricObject {
   _isReplacingQR?: boolean;
   _wasManuallyResized?: boolean;
   _lastSavedScale?: { scaleX: number; scaleY: number };
+  _isEditing?: boolean;
 }
 
 // Grid line interface
@@ -207,9 +208,41 @@ export const CanvasEditor = ({
       const obj = e.target as CustomFabricObject;
       if (obj && obj.customData && (obj.type === 'text' || obj.type === 'i-text')) {
         const textObj = obj as IText;
-        if (textObj.text) {
+        // Nie aktualizuj stanu podczas aktywnej edycji - tylko gdy zakończona
+        if (!textObj.isEditing && textObj.text !== undefined) {
           onObjectUpdate(obj.customData.id, { text: textObj.text });
         }
+      }
+    });
+
+    // Add editing state tracking to prevent interference during text editing
+    canvas.on('text:editing:entered', (e: FabricEvent) => {
+      const obj = e.target as CustomFabricObject;
+      if (obj && obj.customData) {
+        obj._isEditing = true;
+        console.log('Text editing started for object:', obj.customData.id);
+      }
+    });
+
+    canvas.on('text:editing:exited', (e: FabricEvent) => {
+      const obj = e.target as CustomFabricObject;
+      if (obj && obj.customData) {
+        obj._isEditing = false;
+        console.log('Text editing finished for object:', obj.customData.id);
+        // Force final update when editing is finished
+        const textObj = obj as IText;
+        if (textObj.text !== undefined) {
+          onObjectUpdate(obj.customData.id, { text: textObj.text });
+        }
+      }
+    });
+
+    // Zapobiegaj niepotrzebnym aktualizacjom podczas zaznaczania tekstu
+    canvas.on('text:selection:changed', (e: FabricEvent) => {
+      // Nie wykonuj żadnych akcji - po prostu pozwól na zaznaczanie
+      const obj = e.target as CustomFabricObject;
+      if (obj && obj.customData) {
+        console.log('Text selection changed for object:', obj.customData.id);
       }
     });
 
@@ -454,19 +487,38 @@ export const CanvasEditor = ({
 
         if (obj.type === 'text' && (existingFabricObj.type === 'text' || existingFabricObj.type === 'i-text')) {
           const textObj = existingFabricObj as IText;
-          textObj.set({
-            text: obj.text || 'Tekst',
-            fontSize: obj.fontSize || 12,
-            fontFamily: obj.fontFamily || 'Arial',
-            fontWeight: obj.fontWeight || 'normal',
-            fontStyle: obj.fontStyle || 'normal',
-            underline: obj.underline || false,
-            linethrough: obj.linethrough || false,
-            textAlign: obj.textAlign || 'left',
-            lineHeight: obj.lineHeight || 1.2,
-            charSpacing: obj.charSpacing || 0,
-            fill: obj.fill || '#000000',
-          });
+          
+          // CAŁKOWICIE pomiń aktualizację tekstu podczas edycji
+          if (!textObj.isEditing && !existingFabricObj._isEditing) {
+            textObj.set({
+              text: obj.text || 'Tekst',
+              fontSize: obj.fontSize || 12,
+              fontFamily: obj.fontFamily || 'Arial',
+              fontWeight: obj.fontWeight || 'normal',
+              fontStyle: obj.fontStyle || 'normal',
+              underline: obj.underline || false,
+              linethrough: obj.linethrough || false,
+              textAlign: obj.textAlign || 'left',
+              lineHeight: obj.lineHeight || 1.2,
+              charSpacing: obj.charSpacing || 0,
+              fill: obj.fill || '#000000',
+            });
+          } else {
+            // Podczas edycji aktualizuj TYLKO właściwości formatowania, NIE tekst
+            textObj.set({
+              fontSize: obj.fontSize || 12,
+              fontFamily: obj.fontFamily || 'Arial',
+              fontWeight: obj.fontWeight || 'normal',
+              fontStyle: obj.fontStyle || 'normal',
+              underline: obj.underline || false,
+              linethrough: obj.linethrough || false,
+              textAlign: obj.textAlign || 'left',
+              lineHeight: obj.lineHeight || 1.2,
+              charSpacing: obj.charSpacing || 0,
+              fill: obj.fill || '#000000',
+            });
+            console.log('Skipping text update during editing for object:', obj.id);
+          }
         } else if (obj.type === 'rectangle' && existingFabricObj.type === 'rect') {
           updateRectangleObject(existingFabricObj as RectangleCustomFabricObject, obj);
         } else if (obj.type === 'circle' && existingFabricObj.type === 'circle') {
@@ -513,7 +565,11 @@ export const CanvasEditor = ({
           updateImageObject(existingFabricObj as ImageCustomFabricObject, obj);
         }
         
-        existingFabricObj.setCoords();
+        // Nie wykonuj setCoords() podczas edycji tekstu - może przerwać edycję
+        if (!(existingFabricObj.type === 'i-text' && (existingFabricObj as IText).isEditing) && 
+            !existingFabricObj._isEditing) {
+          existingFabricObj.setCoords();
+        }
       } else {
         // Create new object
         let fabricObj: CustomFabricObject;
@@ -691,7 +747,15 @@ export const CanvasEditor = ({
     // Draw grid after all objects are synced
     drawGrid(canvas, dimensions, preferences.grid || {});
 
-    canvas.renderAll();
+    // Sprawdź czy jakiś tekst jest edytowany przed renderowaniem
+    const hasEditingText = canvas.getObjects().some(obj => {
+      const customObj = obj as CustomFabricObject;
+      return (obj.type === 'i-text' && (obj as IText).isEditing) || customObj._isEditing;
+    });
+
+    if (!hasEditingText) {
+      canvas.renderAll();
+    }
   }, [dimensions, zoom, objects, localObjects, selectedObjectId, preferences.grid, preferences.uuid.qrPrefix, addObjectToLocalState]);
 
   // Calculate ruler marks based on canvas size with better scaling for small labels
